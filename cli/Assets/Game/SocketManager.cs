@@ -22,14 +22,22 @@ namespace Assets.Game
 
         private void Awake()
         {
-            Debug.Assert(Instance == null);
-            Instance = this;
+            if(Instance == null)
+            {
+                Debug.Assert(Instance == null);
+                Instance = this;
+
+                DontDestroyOnLoad(this.gameObject);
+            }
+            else
+            {
+                Debug.Log("SocketManager is already exist, remove self");
+                GameObject.Destroy(this.gameObject);
+            }
         }
 
         private void Start()
         {
-            DontDestroyOnLoad(this.gameObject);
-
             DoOpen();
         }
 
@@ -37,8 +45,10 @@ namespace Assets.Game
         {
             DoClose();
 
-            Debug.Assert(Instance == this);
-            Instance = null;
+            if (Instance == this)
+            {
+                Instance = null;
+            }
         }
 
         bool DoOpen()
