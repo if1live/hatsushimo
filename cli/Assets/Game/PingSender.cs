@@ -2,6 +2,7 @@ using Newtonsoft.Json;
 using Quobject.SocketIoClientDotNet.Client;
 using System;
 using System.Threading.Tasks;
+using UniRx;
 using UnityEngine;
 
 namespace Assets.Game
@@ -10,6 +11,23 @@ namespace Assets.Game
     {
         const string EVENT_STATUS_PING = "status-ping";
         const string EVENT_STATUS_PONG = "status-pong";
+
+        public ReactiveProperty<long> Latency {
+            get { return _latency; }
+            private set { _latency = value; }
+        }
+        ReactiveProperty<long> _latency = new ReactiveProperty<long>(99999);
+
+        public PingSender(long intervalMillis)
+        {
+            var mgr = SocketManager.Instance;
+            Debug.Assert(mgr != null);
+
+            mgr.IsReady.Where(isReady => isReady == true).Subscribe(_ =>
+            {
+                Initialize(mgr.Socket, intervalMillis);
+            });
+        }
 
         struct StatusPing
         {
@@ -45,19 +63,19 @@ namespace Assets.Game
                 string str = data.ToString();
                 var ctx = JsonConvert.DeserializeObject<StatusPong>(str);
                 var now = GetTimestamp();
-                var diff = now - ctx.ts;
-                Debug.Log($"ping: {diff}ms");
+                var latency = now - ctx.ts;
+                Latency.Value = latency;
             });
         }
 
-        public async void Initialize(Socket socket)
+        async void Initialize(Socket socket, long intervalMillis)
         {
             RegisterHandler(socket);
 
             while(true)
             {
                 SendPing(socket);
-                await Task.Delay(TimeSpan.FromSeconds(5));
+                await Task.Delay(TimeSpan.FromMilliseconds(intervalMillis));
             }
         }
     }
