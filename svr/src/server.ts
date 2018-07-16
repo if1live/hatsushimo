@@ -6,11 +6,25 @@ const app = express();
 const server = createServer(app);
 const io = socketIo(server);
 
+class User {
+  socketId: string;
+
+  constructor(socketId: string) {
+    this.socketId = socketId;
+  }  
+}
+
+let users: User[] = [];
+
 io.on('connect', (client) => {
-  console.log('a user connected');
+  const user = new User(client.id);
+  users.push(user);
+
+  console.log(`user connected - id=${user.socketId}, current_user=${users.length}`);
 
   client.on('disconnect', () => {
-    console.log('user disconnected');
+    users = users.filter(x => x !== user);
+    console.log(`user disconnected - id=${user.socketId}, current_user=${users.length}`);
   });
 
   client.on('status-ping', (data) => {
