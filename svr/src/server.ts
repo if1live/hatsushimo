@@ -1,7 +1,6 @@
-import { createServer, Server } from 'http';
+import { createServer } from 'http';
 import { default as express } from 'express';
 import { default as socketIo } from 'socket.io';
-import { COPYFILE_FICLONE } from 'constants';
 
 const app = express();
 const server = createServer(app);
@@ -80,6 +79,11 @@ io.on('connect', (client) => {
 
   // 플레이어들의 위치를 주기적으로 보내주기
   // TODO: zone 구현하기. 몇명 없을때는 필요없을거같다
+});
+
+app.get('/status/users', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(JSON.stringify(users, null, 2));
 });
 
 server.listen(3000, () => {
