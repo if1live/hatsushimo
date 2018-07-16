@@ -66,7 +66,7 @@ io.on('connect', (client) => {
     user.ready = true;
 
     const x = (Math.random() - 0.5) * 10;
-    const y = (Math.random() - 0.5) * 100;
+    const y = (Math.random() - 0.5) * 10;
     user.setPosition(x, y);
 
     console.log(`user ready - id=${user.socketId}`);
