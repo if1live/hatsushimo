@@ -1,21 +1,25 @@
 import { createServer } from 'http';
 import { default as express } from 'express';
 import { default as socketIo } from 'socket.io';
+import { default as uuidv1 } from 'uuid/v1';
 
 const app = express();
 const server = createServer(app);
 const io = socketIo(server);
 
 class User {
-  socketId: string;
+  client: SocketIO.Socket;
+  
+  uuid: string;
   nickname: string;
   ready: boolean;
 
   posX: number;
   posY: number;
 
-  constructor(socketId: string) {
-    this.socketId = socketId;
+  constructor(client: SocketIO.Socket, uuid: string) {
+    this.client = client;
+    this.uuid = uuid;
     this.nickname = '[BLANK]';
     this.ready = false;
   }  
@@ -29,14 +33,15 @@ class User {
 let users: User[] = [];
 
 io.on('connect', (client) => {
-  const user = new User(client.id);
+  const uuid = uuidv1();
+  const user = new User(client, uuid);
   users.push(user);
 
-  console.log(`user connected - id=${user.socketId}, current_user=${users.length}`);
+  console.log(`user connected - uuid=${user.uuid}, current_user=${users.length}`);
 
   client.on('disconnect', () => {
     users = users.filter(x => x !== user);
-    console.log(`user disconnected - id=${user.socketId}, current_user=${users.length}`);
+    console.log(`user disconnected - uuid=${user.uuid}, current_user=${users.length}`);
   });
 
   client.on('status-ping', (data) => {
@@ -44,7 +49,8 @@ io.on('connect', (client) => {
   });
 
   client.on('room-join-req', (data) => {
-    const nickname = data.nickname;
+    const ctx = JSON.parse(data);
+    const nickname = ctx.nickname;
     user.nickname = nickname;
 
     const room_id = 'todo-support-multi-room';
@@ -69,7 +75,7 @@ io.on('connect', (client) => {
     const y = (Math.random() - 0.5) * 10;
     user.setPosition(x, y);
 
-    console.log(`user ready - id=${user.socketId}`);
+    console.log(`user ready - uuid=${user.uuid}`);
 
     client.emit('ready-resp', {
       posX: user.posX,
