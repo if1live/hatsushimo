@@ -18,15 +18,39 @@ namespace Assets.Game
         }
         ReactiveProperty<long> _latency = new ReactiveProperty<long>(99999);
 
+        readonly long intervalMillis;
+
         public PingSender(long intervalMillis)
+        {
+            this.intervalMillis = intervalMillis;
+        }
+
+        public void Setup()
         {
             var mgr = SocketManager.Instance;
             Debug.Assert(mgr != null);
 
-            mgr.IsReady.Where(isReady => isReady == true).Subscribe(_ =>
+            mgr.IsReady.Where(isReady => isReady == true).Subscribe(async _ =>
             {
-                Initialize(mgr.Socket, intervalMillis);
+                var socket = mgr.Socket;
+                RegisterHandler(socket);
+
+                while (true)
+                {
+                    SendPing(socket);
+                    await Task.Delay(TimeSpan.FromMilliseconds(intervalMillis));
+                }
             });
+        }
+
+        public void Cleanup()
+        {
+            var mgr = SocketManager.Instance;
+            if (mgr)
+            {
+                var socket = mgr.Socket;
+                UnRegisterHandler(socket);
+            }
         }
 
         struct StatusPing
@@ -68,15 +92,9 @@ namespace Assets.Game
             });
         }
 
-        async void Initialize(Socket socket, long intervalMillis)
+        void UnRegisterHandler(Socket socket)
         {
-            RegisterHandler(socket);
-
-            while(true)
-            {
-                SendPing(socket);
-                await Task.Delay(TimeSpan.FromMilliseconds(intervalMillis));
-            }
+            socket.Off(EVENT_STATUS_PONG);
         }
     }
 }

@@ -19,11 +19,18 @@ namespace Assets.Game
         private void Start()
         {
             sender = new PingSender(intervalMillis);
+            sender.Setup();
+
             sender.Latency.ObserveOnMainThread().Subscribe(latency =>
             {
                 var msg = $"ping: {latency}ms";
                 pingText.text = msg;
             });
+        }
+
+        private void OnDestroy()
+        {
+            sender.Cleanup();
         }
     }
 }
