@@ -1,3 +1,4 @@
+using Assets.Game.Types;
 using Newtonsoft.Json;
 using UniRx;
 using UnityEngine;
@@ -8,34 +9,22 @@ namespace Assets.Game
 {
     class JoinButton : MonoBehaviour
     {
-        const string EVENT_ROOM_JOIN_REQUEST = "room-join-req";
-        const string EVENT_ROOM_JOIN_RESPONSE = "room-join-resp";
+        const string EVENT_ROOM_JOIN = "room-join";
 
-        struct RoomJoinRequest
-        {
-            public string nickname;
-        }
-
-        class RoomJoinResponse
-        {
-            public bool ok;
-            public string room_id;
-            public string player_id;
-            public string nickname;
-        }
-
-        ReactiveProperty<RoomJoinResponse> OnRoomJoinResponse {
+        ReactiveProperty<JoinResponseResponse> OnRoomJoinResponse {
             get { return _onRoomJoinResponse; }
         }
-        ReactiveProperty<RoomJoinResponse> _onRoomJoinResponse = new ReactiveProperty<RoomJoinResponse>(null);
+        ReactiveProperty<JoinResponseResponse> _onRoomJoinResponse = new ReactiveProperty<JoinResponseResponse>(null);
 
-        public Button button = null;
+        public Button joinButton = null;
         public InputField nickField = null;
+        public InputField roomField = null;
 
         void Awake()
         {
-            Debug.Assert(button != null);
+            Debug.Assert(joinButton != null);
             Debug.Assert(nickField != null);
+            Debug.Assert(roomField != null);
         }
 
         void Start()
@@ -43,28 +32,23 @@ namespace Assets.Game
             var mgr = SocketManager.Instance;
             mgr.IsReady.ObserveOnMainThread().Where(isReady => isReady == true).Subscribe(_ =>
             {
-                var socket = mgr.Socket;
-                button.onClick.AddListener(OnSubmit);
-                button.interactable = true;
+                var socket = mgr.MySocket;
+                joinButton.onClick.AddListener(OnSubmit);
+                joinButton.interactable = true;
 
-                socket.On(EVENT_ROOM_JOIN_RESPONSE, (data) =>
-                {
-                    var str = data.ToString();
-                    var ctx = JsonConvert.DeserializeObject<RoomJoinResponse>(str);
-                    OnRoomJoinResponse.Value = ctx;
-                });
+                socket.On<JoinResponseResponse>(EVENT_ROOM_JOIN, (ctx) => OnRoomJoinResponse.Value = ctx);
             });
 
             OnRoomJoinResponse.ObserveOnMainThread().Where(resp => resp != null).Subscribe(ctx =>
             {
                 Debug.Log($"room id: {ctx.room_id}");
 
-                var player = PlayerModel.Instance;
-                player.RoomID = ctx.room_id;
-                player.PlayerID = ctx.player_id;
-                player.Nickname = ctx.nickname;
-                
+                var conn = Connection.Instance;
+                conn.RoomID = ctx.room_id;
+                conn.PlayerID = ctx.player_id;
+                conn.Nickname = ctx.nickname;
 
+                // TOOD async scene loading
                 SceneManager.LoadScene("Game", LoadSceneMode.Single);
             });
         }
@@ -74,8 +58,8 @@ namespace Assets.Game
             var mgr = SocketManager.Instance;
             if (mgr)
             {
-                var socket = mgr.Socket;
-                socket.Off(EVENT_ROOM_JOIN_RESPONSE);
+                var socket = mgr.MySocket;
+                socket.Off(EVENT_ROOM_JOIN);
             }
         }
 
@@ -87,13 +71,18 @@ namespace Assets.Game
                 return;
             }
 
-            var socket = SocketManager.Instance.Socket;
-            var ctx = new RoomJoinRequest { nickname = nickname };
-            var json = JsonConvert.SerializeObject(ctx);
-            socket.Emit(EVENT_ROOM_JOIN_REQUEST, json);
+            var roomID = roomField.text.Trim();
+            if (roomID.Length == 0)
+            {
+                return;
+            }
+
+            var socket = SocketManager.Instance.MySocket;
+            var ctx = new JoinRequestPacket { nickname = nickname, room_id = roomID };
+            socket.Emit(EVENT_ROOM_JOIN, ctx);
 
             // 중복 클릭 방지
-            button.interactable = false;
+            joinButton.interactable = false;
         }
     }
 }

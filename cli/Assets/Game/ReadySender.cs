@@ -1,34 +1,19 @@
-using Newtonsoft.Json;
-using UniRx;
-
 namespace Assets.Game
 {
     class ReadySender
     {
-        const string EVENT_READY_REQUEST = "ready-req";
-        const string EVENT_READY_RESPONSE = "ready-resp";
-
-        struct ReadyResponse
-        {
-            public float posX;
-            public float posY;
-        }
+        const string EVENT_READY = "ready";
 
         public void Setup()
         {
-            var socket = SocketManager.Instance.Socket;
-            socket.On(EVENT_READY_RESPONSE, (data) =>
+            var socket = SocketManager.Instance.MySocket;
+            socket.On(EVENT_READY, () =>
             {
-                var str = data.ToString();
-                var ctx = JsonConvert.DeserializeObject<ReadyResponse>(str);
-
-                var player = PlayerModel.Instance;
-                player.IsReady.Value = true;
-                player.PosX = ctx.posX;
-                player.PosY = ctx.posY;
+                var conn = Connection.Instance;
+                conn.IsReady.Value = true;
             });
 
-            socket.Emit(EVENT_READY_REQUEST);
+            socket.Emit(EVENT_READY);
         }
 
         public void Cleanup()
@@ -36,8 +21,8 @@ namespace Assets.Game
             var mgr = SocketManager.Instance;
             if (mgr == null) { return; }
 
-            var socket = mgr.Socket;
-            socket.Off(EVENT_READY_RESPONSE);
+            var socket = mgr.MySocket;
+            socket.Off(EVENT_READY);
         }
     }
 }

@@ -1,5 +1,4 @@
-using Newtonsoft.Json;
-using Quobject.SocketIoClientDotNet.Client;
+using Assets.Game.Types;
 using System;
 using System.Threading.Tasks;
 using UniRx;
@@ -9,8 +8,8 @@ namespace Assets.Game
 {
     class PingSender
     {
-        const string EVENT_STATUS_PING = "status-ping";
-        const string EVENT_STATUS_PONG = "status-pong";
+        public const string EVENT_STATUS_PING = "status-ping";
+        public const string EVENT_STATUS_PONG = "status-pong";
 
         public ReactiveProperty<long> Latency {
             get { return _latency; }
@@ -32,7 +31,7 @@ namespace Assets.Game
 
             mgr.IsReady.Where(isReady => isReady == true).Subscribe(async _ =>
             {
-                var socket = mgr.Socket;
+                var socket = mgr.MySocket;
                 RegisterHandler(socket);
 
                 while (true)
@@ -48,19 +47,9 @@ namespace Assets.Game
             var mgr = SocketManager.Instance;
             if (mgr)
             {
-                var socket = mgr.Socket;
+                var socket = mgr.MySocket;
                 UnRegisterHandler(socket);
             }
-        }
-
-        struct StatusPing
-        {
-            public long ts;
-        }
-
-        struct StatusPong
-        {
-            public long ts;
         }
 
         long GetTimestamp()
@@ -72,27 +61,24 @@ namespace Assets.Game
             return ts;
         }
 
-        void SendPing(Socket socket)
+        void SendPing(MySocket socket)
         {
             var ts = GetTimestamp();
             var ctx = new StatusPing() { ts = ts };
-            var json = JsonConvert.SerializeObject(ctx);
-            socket.Emit(EVENT_STATUS_PING, json);
+            socket.Emit(EVENT_STATUS_PING, ctx);
         }
 
-        void RegisterHandler(Socket socket)
+        void RegisterHandler(MySocket socket)
         {
-            socket.On(EVENT_STATUS_PONG, (data) =>
+            socket.On<StatusPong>(EVENT_STATUS_PONG, (ctx) =>
             {
-                string str = data.ToString();
-                var ctx = JsonConvert.DeserializeObject<StatusPong>(str);
                 var now = GetTimestamp();
                 var latency = now - ctx.ts;
                 Latency.Value = latency;
             });
         }
 
-        void UnRegisterHandler(Socket socket)
+        void UnRegisterHandler(MySocket socket)
         {
             socket.Off(EVENT_STATUS_PONG);
         }
