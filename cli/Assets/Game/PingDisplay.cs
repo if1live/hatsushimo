@@ -21,7 +21,7 @@ namespace Assets.Game
             sender = new PingSender(intervalMillis);
             sender.Setup();
 
-            sender.Latency.ObserveOnMainThread().Subscribe(latency =>
+            sender.LatencyObservable.ObserveOnMainThread().Subscribe(latency =>
             {
                 var msg = $"ping: {latency}ms";
                 pingText.text = msg;

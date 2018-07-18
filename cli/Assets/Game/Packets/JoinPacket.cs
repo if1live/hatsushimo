@@ -1,4 +1,4 @@
-namespace Assets.Game.Types
+namespace Assets.Game.Packets
 {
     struct JoinRequestPacket
     {
@@ -6,11 +6,10 @@ namespace Assets.Game.Types
         public string room_id;
     }
 
-    class JoinResponseResponse
+    class JoinResponsePacket
     {
-        public bool ok;
+        public int player_id;
         public string room_id;
-        public string player_id;
         public string nickname;
     }
 }

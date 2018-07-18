@@ -1,21 +1,16 @@
-using Assets.Game.Types;
+using Assets.Game.Packets;
 using System;
 using System.Threading.Tasks;
 using UniRx;
-using UnityEngine;
 
 namespace Assets.Game
 {
     class PingSender
     {
-        public const string EVENT_STATUS_PING = "status-ping";
-        public const string EVENT_STATUS_PONG = "status-pong";
-
-        public ReactiveProperty<long> Latency {
-            get { return _latency; }
-            private set { _latency = value; }
+        public IObservable<long> LatencyObservable {
+            get { return latency.AsObservable(); }
         }
-        ReactiveProperty<long> _latency = new ReactiveProperty<long>(99999);
+        ReactiveProperty<long> latency = new ReactiveProperty<long>(99999);
 
         readonly long intervalMillis;
 
@@ -26,61 +21,49 @@ namespace Assets.Game
 
         public void Setup()
         {
-            var mgr = SocketManager.Instance;
-            Debug.Assert(mgr != null);
-
-            mgr.IsReady.Where(isReady => isReady == true).Subscribe(async _ =>
+            ConnectionManager.Instance.ReadyObservable.Subscribe(async conn =>
             {
-                var socket = mgr.MySocket;
-                RegisterHandler(socket);
+                RegisterHandler(conn);
 
+                var delay = TimeSpan.FromMilliseconds(intervalMillis);
                 while (true)
                 {
-                    SendPing(socket);
-                    await Task.Delay(TimeSpan.FromMilliseconds(intervalMillis));
+                    SendPing(conn);
+                    await Task.Delay(delay);
                 }
             });
         }
 
         public void Cleanup()
         {
-            var mgr = SocketManager.Instance;
+            var mgr = ConnectionManager.Instance;
             if (mgr)
             {
-                var socket = mgr.MySocket;
-                UnRegisterHandler(socket);
+                var conn = mgr.Conn;
+                UnRegisterHandler(conn);
             }
         }
 
-        long GetTimestamp()
+        void SendPing(Connection conn)
         {
-            var now = DateTime.UtcNow;
-            var zero = new DateTime(1970, 1, 1, 0, 0, 0);
-            var diff = now - zero;
-            var ts = (long)(diff.TotalMilliseconds);
-            return ts;
-        }
-
-        void SendPing(MySocket socket)
-        {
-            var ts = GetTimestamp();
+            var ts = TimeUtils.GetTimestamp();
             var ctx = new StatusPing() { ts = ts };
-            socket.Emit(EVENT_STATUS_PING, ctx);
+            conn.Emit(Events.STATUS_PING, ctx);
         }
 
-        void RegisterHandler(MySocket socket)
+        void RegisterHandler(Connection conn)
         {
-            socket.On<StatusPong>(EVENT_STATUS_PONG, (ctx) =>
+            conn.On<StatusPong>(Events.STATUS_PONG, (ctx) =>
             {
-                var now = GetTimestamp();
-                var latency = now - ctx.ts;
-                Latency.Value = latency;
+                var now = TimeUtils.GetTimestamp();
+                var diff = now - ctx.ts;
+                latency.Value = diff;
             });
         }
 
-        void UnRegisterHandler(MySocket socket)
+        void UnRegisterHandler(Connection conn)
         {
-            socket.Off(EVENT_STATUS_PONG);
+            conn.Off(Events.STATUS_PONG);
         }
     }
 }

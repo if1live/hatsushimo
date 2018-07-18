@@ -1,10 +1,12 @@
 import { createServer } from 'http';
 import { default as express } from 'express';
 import { default as socketIo } from 'socket.io';
-import { default as uuidv1 } from 'uuid/v1';
 
 import { Player } from './player';
 import { RoomManager } from './room';
+import { IDGenerator } from './idgen';
+import * as H from './helpers';
+import * as P from './packets';
 
 const app = express();
 const server = createServer(app);
@@ -13,56 +15,42 @@ const io = socketIo(server);
 const players: Player[] = [];
 const roomManager = new RoomManager();
 
-interface RoomJoinRequest {
-  nickname: string;
-  room_id: string;
-}
-
-interface RoomJoinResponse {
-  ok: boolean;
-  room_id: string;
-  player_id: string;
-  nickname: string;
-}
-
-interface MoveRequest {
-  dirX: number;
-  dirY: number;
-}
+// 플레이어에게는 고유번호 붙인다
+// 어떤 방에 들어가든 id는 유지된다
+const playerIDGenerator = IDGenerator(1, 100000);
 
 io.on('connect', (client) => {
-  const uuid = uuidv1();
-  const player = new Player(client, uuid);
+  const id = playerIDGenerator.next().value;
+  const player = new Player(client, id);
   players.push(player);
 
-  console.log(`user connect - id=${player.playerID}, current_user=${players.length}`);
+  console.log(`user connect - id=${player.ID}, current_user=${players.length}`);
 
   client.on('disconnect', () => {
-    if(player.roomID) {
+    if (player.roomID) {
       const room = roomManager.getRoom(player.roomID);
       room.LeavePlayer(player);
     }
 
     const found = players.findIndex(x => x == player);
     players.splice(found, 1);
-    console.log(`user disconnect - id=${player.playerID}, current_user=${players.length}`);
+    console.log(`user disconnect - id=${player.ID}, current_user=${players.length}`);
   });
 
   client.on('status-ping', (data) => {
     client.emit('status-pong', data);
   });
 
-  client.on('room-join', (req: RoomJoinRequest) => {
+  client.on('room-join', (req: P.RoomJoinRequestPacket) => {
     const nickname = req.nickname;
     player.nickname = nickname;
 
     const room = roomManager.getRoom(req.room_id);
     room.JoinPlayer(player);
 
-    const resp: RoomJoinResponse = {
-      ok: true,
-      room_id: room.roomID,
-      player_id: player.playerID,
+    const resp: P.RoomJoinResponsePacket = {
+      room_id: room.ID,
+      player_id: player.ID,
       nickname,
     };
     client.emit('room-join', resp);
@@ -78,22 +66,21 @@ io.on('connect', (client) => {
     const y = (Math.random() - 0.5) * 10;
     player.setPosition(x, y);
 
-    console.log(`user ready - id=${player.playerID}`);
+    console.log(`user ready - id=${player.ID}`);
 
     client.emit('ready');
   });
 
-  client.on('move', (req: MoveRequest) => {
+  client.on('move', (req: P.MoveRequestPacket) => {
     const speed = 10;
-    const len = Math.sqrt(req.dirX * req.dirX + req.dirY * req.dirY);
-    
-    if(len === 0) {
+    const len = H.getLengthVec2(req.dir);
+
+    if (len === 0) {
       player.setVelocity(0, 0, speed);
 
     } else {
-      const dirX = req.dirX / len;
-      const dirY = req.dirY / len;
-      player.setVelocity(dirX, dirY, speed);
+      const dir = H.normalizeVec2(req.dir);
+      player.setVelocity(dir[0], dir[1], speed);
     }
   });
 });

@@ -6,6 +6,7 @@ namespace Assets.Game
 {
     class GameMain : MonoBehaviour
     {
+        /*
         public Text waitingText = null;
 
         public Text statusText = null;
@@ -46,5 +47,6 @@ namespace Assets.Game
         {
             readySender.Cleanup();
         }
+        */
     }
 }

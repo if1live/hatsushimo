@@ -2,25 +2,25 @@ export class Player {
   // 접속 정보
   client: SocketIO.Socket;
 
-  playerID: string;
+  ID: number;
   roomID: string | null;
   nickname: string;
 
   ready: boolean;
 
-  // 게임 상태
   posX: number;
   posY: number;
 
-  // 방향
   dirX: number;
   dirY: number;
   speed: number;
 
-  constructor(client: SocketIO.Socket, uuid: string) {
+  score: number;
+
+  constructor(client: SocketIO.Socket, id: number) {
     this.client = client;
 
-    this.playerID = uuid;
+    this.ID = id;
     this.roomID = null;
     this.nickname = '[BLANK]';
 
@@ -36,9 +36,9 @@ export class Player {
     return obj;
   }
 
-  setPosition(posX: number, posY: number) {
-    this.posX = posX;
-    this.posY = posY;
+  setPosition(x: number, y: number) {
+    this.posX = x;
+    this.posY = y;
   }
 
   setVelocity(dirX: number, dirY: number, speed: number) {

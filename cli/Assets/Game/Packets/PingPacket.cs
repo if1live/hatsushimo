@@ -1,4 +1,4 @@
-namespace Assets.Game.Types
+namespace Assets.Game.Packets
 {
     struct StatusPing
     {

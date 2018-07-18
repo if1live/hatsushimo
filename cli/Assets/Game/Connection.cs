@@ -1,31 +1,52 @@
-using UniRx;
+using Newtonsoft.Json.Linq;
+using Quobject.SocketIoClientDotNet.Client;
+using System;
 
 namespace Assets.Game
 {
     class Connection
     {
-        public readonly static Connection Instance = new Connection();
-
-        public string PlayerID { get; set; }
+        // socket
+        public int PlayerID { get; set; }
         public string RoomID { get; set; }
         public string Nickname { get; set; }
 
-        public ReactiveProperty<bool> IsReady {
-            get { return _isReady; }
-        }
-        ReactiveProperty<bool> _isReady = new ReactiveProperty<bool>(false);
+        public Socket RawSocket { set; private get; }
 
-        public Connection()
+        public void Emit<TContext>(string eventString, TContext ctx)
         {
-            Reset();
+            if(RawSocket == null) { return; }
+            var jobj = JObject.FromObject(ctx);
+            RawSocket.Emit(eventString, jobj);
         }
 
-        public void Reset()
+        public void Emit(string eventString)
         {
-            PlayerID = "";
-            RoomID = "";
-            Nickname = "";
-            IsReady.Value = false;
+            if (RawSocket == null) { return; }
+            RawSocket.Emit(eventString);
+        }
+
+        public void On<TContext>(string eventString, Action<TContext> fn)
+        {
+            if (RawSocket == null) { return; }
+            RawSocket.On(eventString, (data) =>
+            {
+                var jobj = data as JObject;
+                var ctx = jobj.ToObject<TContext>();
+                fn(ctx);
+            });
+        }
+
+        public void On(string eventString, Action fn)
+        {
+            if (RawSocket == null) { return; }
+            RawSocket.On(eventString, fn);
+        }
+
+        public void Off(string eventString)
+        {
+            if (RawSocket == null) { return; }
+            RawSocket.Off(eventString);
         }
     }
 }

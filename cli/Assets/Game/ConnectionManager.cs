@@ -1,28 +1,31 @@
 using Quobject.SocketIoClientDotNet.Client;
+using System;
 using UniRx;
 using UnityEngine;
 
 namespace Assets.Game
 {
-    class SocketManager : MonoBehaviour
+    class ConnectionManager : MonoBehaviour
     {
-        public static SocketManager Instance { get; private set; }
+        public static ConnectionManager Instance { get; private set; }
 
         public string address = "http://127.0.0.1:3000";
 
         Socket _socket;
-        public MySocket MySocket { get; private set; }
+        public Connection Conn { get { return _conn; } }
+        Connection _conn = new Connection();
 
-        public ReactiveProperty<bool> IsReady {
-            get { return _isReady; }
-            private set { _isReady = value; }
+        public IObservable<Connection> ReadyObservable {
+            get
+            {
+                return isReady.Where(x => x == true).Select(_ => Conn).AsObservable();
+            }
         }
-        ReactiveProperty<bool> _isReady = new ReactiveProperty<bool>(false);
-
+        ReactiveProperty<bool> isReady = new ReactiveProperty<bool>(false);
 
         private void Awake()
         {
-            if(Instance == null)
+            if (Instance == null)
             {
                 Debug.Assert(Instance == null);
                 Instance = this;
@@ -31,7 +34,7 @@ namespace Assets.Game
             }
             else
             {
-                Debug.Log("SocketManager is already exist, remove self");
+                Debug.Log("ConnectionManager is already exist, remove self");
                 GameObject.Destroy(this.gameObject);
             }
         }
@@ -53,17 +56,14 @@ namespace Assets.Game
 
         bool DoOpen()
         {
-            if (_socket != null)
-            {
-                return false;
-            }
+            if (_socket != null) { return false; }
 
             _socket = IO.Socket(address);
-            MySocket = new MySocket(_socket);
-            MySocket.On(Socket.EVENT_CONNECT, () =>
+            Conn.RawSocket = _socket;
+            Conn.On(Socket.EVENT_CONNECT, () =>
             {
                 Debug.Log("connect");
-                IsReady.Value = true;
+                isReady.Value = true;
             });
 
             return true;
@@ -71,12 +71,9 @@ namespace Assets.Game
 
         bool DoClose()
         {
-            if (_socket == null)
-            {
-                return false;
-            }
+            if (_socket == null) { return false; }
 
-            MySocket = null;
+            Conn.RawSocket = null;
             _socket.Disconnect();
             _socket = null;
             return true;

@@ -1,21 +1,25 @@
 using UnityEngine;
 using UniRx;
 using System.Collections.Generic;
-using Assets.Game.Types;
+using Assets.Game.Packets;
+using System;
 
 namespace Assets.Game
 {
-    class PlayerManager : MonoBehaviour 
+    class PlayerManager : MonoBehaviour
     {
         public Player prefab_enemy;
         public Player prefab_my;
 
-        Dictionary<string, Player> playerTable = new Dictionary<string, Player>();
+        Dictionary<int, Player> playerTable = new Dictionary<int, Player>();
         Player myPlayer = null;
 
-        ReactiveProperty<PlayerPositionPacket> packet = new ReactiveProperty<PlayerPositionPacket>(null);
+        IObservable<PlayerPacket> PacketObservable {
+            get { return packet.Where(x => x != null).AsObservable(); }
+        }
+        ReactiveProperty<PlayerPacket> packet = new ReactiveProperty<PlayerPacket>(null);
 
-        const string EVENT_PLAYER_POSITIONS = "player-positions";
+
 
         private void Start()
         {
@@ -23,15 +27,15 @@ namespace Assets.Game
             myPlayer = Instantiate(prefab_my);
             myPlayer.transform.SetParent(transform);
 
-            var socket = SocketManager.Instance.MySocket;
-            socket.On<PlayerPositionPacket>(EVENT_PLAYER_POSITIONS, (ctx) =>
+            var conn = ConnectionManager.Instance.Conn;
+            conn.On<PlayerPacket>(Events.PLAYER_STATUS, (ctx) =>
             {
                 packet.Value = ctx;
             });
 
-            packet.Where(x => x != null).ObserveOnMainThread().Subscribe(ctx =>
+            PacketObservable.ObserveOnMainThread().Subscribe(ctx =>
             {
-                var myID = Connection.Instance.PlayerID;
+                var myID = conn.PlayerID;
 
                 var myStatus = ctx.GetMyPlayer(myID);
                 myPlayer.ApplyStatus(myStatus);
@@ -39,13 +43,14 @@ namespace Assets.Game
                 foreach (var p in ctx.GetEnemyPlayers(myID))
                 {
                     Player player = null;
-                    if (!playerTable.TryGetValue(p.playerID, out player))
+                    if (!playerTable.TryGetValue(p.id, out player))
                     {
                         player = Instantiate(prefab_enemy);
                         player.transform.SetParent(transform);
-                        playerTable[p.playerID] = player;
+                        playerTable[p.id] = player;
                     }
 
+                    //TODO 객체 생성과 위치 정보는 분리되어있다
                     player.ApplyStatus(p);
                 }
             });
@@ -53,11 +58,11 @@ namespace Assets.Game
 
         private void OnDestroy()
         {
-            var mgr = SocketManager.Instance;
+            var mgr = ConnectionManager.Instance;
             if (!mgr) { return; }
 
-            var socket = mgr.MySocket;
-            socket.Off(EVENT_PLAYER_POSITIONS);
+            var conn = mgr.Conn;
+            conn.Off(Events.PLAYER_STATUS);
         }
     }
 }

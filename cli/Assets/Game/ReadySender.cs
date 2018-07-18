@@ -1,19 +1,21 @@
+using Assets.Game.Packets;
+
 namespace Assets.Game
 {
     class ReadySender
     {
-        const string EVENT_READY = "ready";
-
+        /*
+         * TODO
         public void Setup()
         {
             var socket = SocketManager.Instance.MySocket;
-            socket.On(EVENT_READY, () =>
+            socket.On(Events.READY, () =>
             {
                 var conn = Connection.Instance;
                 conn.IsReady.Value = true;
             });
 
-            socket.Emit(EVENT_READY);
+            socket.Emit(Events.READY);
         }
 
         public void Cleanup()
@@ -22,7 +24,8 @@ namespace Assets.Game
             if (mgr == null) { return; }
 
             var socket = mgr.MySocket;
-            socket.Off(EVENT_READY);
+            socket.Off(Events.READY);
         }
+        */
     }
 }

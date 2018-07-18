@@ -1,4 +1,5 @@
-using Assets.Game.Types;
+using Assets.Game.Packets;
+using System;
 using UniRx;
 using UnityEngine;
 
@@ -6,7 +7,8 @@ namespace Assets.Game
 {
     class Player : MonoBehaviour
     {
-        public string playerID;
+        public int id;
+        public string nickname;
 
         public float DirX;
         public float DirY;
@@ -15,31 +17,45 @@ namespace Assets.Game
         public bool IsOwner {
             get
             {
-                var myid = Connection.Instance.PlayerID;
-                return (myid == playerID);
+                var conn = ConnectionManager.Instance.Conn;
+                var myid = conn.PlayerID;
+                return (myid == id);
             }
         }
 
-        ReactiveProperty<PlayerContext> status = new ReactiveProperty<PlayerContext>(null);
+        IObservable<PlayerStatus> StatusObservable {
+            get { return status.Where(x => x != null).AsObservable(); }
+        }
+        ReactiveProperty<PlayerStatus> status = new ReactiveProperty<PlayerStatus>(null);
+
+        IObservable<PlayerInfo> InfoObservable {
+            get { return info.Where(x => x != null).AsObservable(); }
+        }
+        ReactiveProperty<PlayerInfo> info = new ReactiveProperty<PlayerInfo>(null);
+
+        public void ApplyStatus(PlayerStatus s) { status.Value = s; }
+        public void ApplyInfo(PlayerInfo s) { info.Value = s; }
+
 
         private void Start()
         {
-            // TODO remove null check
-            status.Where(x => x != null).ObserveOnMainThread().Subscribe(ctx =>
+            StatusObservable.ObserveOnMainThread().Subscribe(ctx =>
             {
-                playerID = ctx.playerID;
-                DirX = ctx.dirX;
-                DirY = ctx.dirY;
+                Debug.Assert(ctx.id == id, "id mismatch");
+
+                DirX = ctx.dir_x;
+                DirY = ctx.dir_y;
                 Speed = ctx.speed;
 
-                var pos = new Vector3(ctx.posX, ctx.posY, 0);
+                var pos = new Vector3(ctx.pos_x, ctx.pos_y, 0);
                 transform.position = pos;
             });
-        }
 
-        public void ApplyStatus(PlayerContext ctx)
-        {
-            status.Value = ctx;
+            InfoObservable.ObserveOnMainThread().Subscribe(ctx =>
+            {
+                id = ctx.id;
+                nickname = ctx.nickname;
+            });
         }
 
         private void Update()
@@ -53,8 +69,8 @@ namespace Assets.Game
             bool packetExist = false;
             var packet = new MovePacket()
             {
-                dirX = 0,
-                dirY = 0,
+                dir_x = 0,
+                dir_y = 0,
             };
 
             // TODO 키 입력에 따라서 움직이기
@@ -62,35 +78,35 @@ namespace Assets.Game
             // TODO 가상패드같은거로 바꾸는게 좋을거같은데
             if(Input.GetKey(KeyCode.UpArrow))
             {
-                packet.dirY = +1;
+                packet.dir_y = +1;
                 packetExist = true;
             }
             if(Input.GetKey(KeyCode.DownArrow))
             {
-                packet.dirY = -1;
+                packet.dir_y = -1;
                 packetExist = true;
             }
             if(Input.GetKey(KeyCode.LeftArrow))
             {
-                packet.dirX = -1;
+                packet.dir_x = -1;
                 packetExist = true;
             }
             if(Input.GetKey(KeyCode.RightArrow))
             {
-                packet.dirX = +1;
+                packet.dir_x = +1;
                 packetExist = true;
             }
             
 
             if(packetExist)
             {
-                var socket = SocketManager.Instance.MySocket;
-                socket.Emit("move", packet);
+                var conn = ConnectionManager.Instance.Conn;
+                conn.Emit("move", packet);
             }
             else
             {
-                var socket = SocketManager.Instance.MySocket;
-                socket.Emit("move", packet);
+                var conn = ConnectionManager.Instance.Conn;
+                conn.Emit("move", packet);
             }
         }
     }
