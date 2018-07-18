@@ -73,13 +73,13 @@ io.on('connect', (client) => {
 
   client.on('move', (req: P.MoveRequestPacket) => {
     const speed = 10;
-    const len = H.getLengthVec2(req.dir);
+    const len = H.getLengthVec2(req.dir_x, req.dir_y);
 
     if (len === 0) {
       player.setVelocity(0, 0, speed);
 
     } else {
-      const dir = H.normalizeVec2(req.dir);
+      const dir = H.normalizeVec2(req.dir_x, req.dir_y);
       player.setVelocity(dir[0], dir[1], speed);
     }
   });
