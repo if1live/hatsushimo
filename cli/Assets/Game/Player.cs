@@ -55,6 +55,9 @@ namespace Assets.Game
             {
                 id = ctx.id;
                 nickname = ctx.nickname;
+
+                var pos = new Vector3(ctx.pos_x, ctx.pos_y, 0);
+                transform.position = pos;
             });
         }
 

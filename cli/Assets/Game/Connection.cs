@@ -1,4 +1,5 @@
 using Newtonsoft.Json.Linq;
+using Quobject.EngineIoClientDotNet.ComponentEmitter;
 using Quobject.SocketIoClientDotNet.Client;
 using System;
 
@@ -47,6 +48,12 @@ namespace Assets.Game
         {
             if (RawSocket == null) { return; }
             RawSocket.Off(eventString);
+        }
+
+        public void Off(string eventString, IListener fn)
+        {
+            if(RawSocket == null) { return; }
+            RawSocket.Off(eventString, fn);
         }
     }
 }

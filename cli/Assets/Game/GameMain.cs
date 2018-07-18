@@ -1,3 +1,5 @@
+using Assets.Game.Packets;
+using System;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,32 +8,24 @@ namespace Assets.Game
 {
     class GameMain : MonoBehaviour
     {
-        /*
         public Text waitingText = null;
-
         public Text statusText = null;
 
-        ReadySender readySender = new ReadySender();
+        IObservable<bool> ReadyObservable {
+            get { return ready.Where(x => x == true).AsObservable(); }
+        }
+        ReactiveProperty<bool> ready = new ReactiveProperty<bool>(false);
 
         private void Start()
         {
-            readySender.Setup();
+            var conn = ConnectionManager.Instance.Conn;
+            conn.On(Events.PLAYER_READY, () => ready.Value = true);
 
-            var conn = Connection.Instance;
-            conn.IsReady.ObserveOnMainThread()
-                .Where(isReady => isReady)
-                .Subscribe(_ =>
+            ReadyObservable.ObserveOnMainThread().Subscribe(_ =>
             {
                 waitingText.gameObject.SetActive(false);
-            });
-        }
 
-        public void Update()
-        {
-            // TODO 상태가 바뀌었을때만 객체를 다시 생성하면 성능이 좋아질것이다
-            var conn = Connection.Instance;
-            if(conn.IsReady.Value)
-            {
+                // 접속 정보는 접속후에 내용이 바뀔일은 없을것이다
                 var lines = new string[]
                 {
                     $"room_id: {conn.RoomID}",
@@ -40,13 +34,15 @@ namespace Assets.Game
                 };
                 var msg = string.Join("\n", lines);
                 statusText.text = msg;
-            }
+            });
+
+            conn.Emit(Events.PLAYER_READY);
         }
 
         private void OnDestroy()
         {
-            readySender.Cleanup();
+            // TOOD
+            // ready의 특정 콜백만 제거하는 방법이 있나?
         }
-        */
     }
 }

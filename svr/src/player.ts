@@ -6,8 +6,6 @@ export class Player {
   roomID: string | null;
   nickname: string;
 
-  ready: boolean;
-
   posX: number;
   posY: number;
 
@@ -24,10 +22,9 @@ export class Player {
     this.roomID = null;
     this.nickname = '[BLANK]';
 
-    this.ready = false;
-
     this.setPosition(0, 0);
     this.setVelocity(0, 0, 1);
+    this.score = 0;
   }
 
   toJson() {

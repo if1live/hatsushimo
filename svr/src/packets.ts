@@ -14,10 +14,14 @@ export interface MoveRequestPacket {
   dir_y: number;
 }
 
+// 생성 기준 좌표만 알려주기
+// 이동 정보같은건 다른 패킷으로 받을수 있다
 export interface PlayerListPacket {
   players: {
     id: number;
     nickname: string;
+    pos_x: number;
+    pos_y: number;
   }[];
 }
 
@@ -39,4 +43,19 @@ export interface LeaderboardPacket {
     score: number;
     ranking: number;
   }[];
+}
+
+export interface PlayerSpawnPacket {
+  id: number;
+  nickname: string;
+  pos_x: number;
+  pos_y: number;
+}
+
+export interface PlayerDeadPacket {
+  id: number;
+}
+
+export interface PlayerLeavePacket {
+  id: number;
 }

@@ -7,6 +7,7 @@ import { RoomManager } from './room';
 import { IDGenerator } from './idgen';
 import * as H from './helpers';
 import * as P from './packets';
+import * as E from './events';
 
 const app = express();
 const server = createServer(app);
@@ -19,17 +20,17 @@ const roomManager = new RoomManager();
 // 어떤 방에 들어가든 id는 유지된다
 const playerIDGenerator = IDGenerator(1, 100000);
 
-io.on('connect', (client) => {
+io.on(E.CONNECT, (client) => {
   const id = playerIDGenerator.next().value;
   const player = new Player(client, id);
   players.push(player);
 
   console.log(`user connect - id=${player.ID}, current_user=${players.length}`);
 
-  client.on('disconnect', () => {
+  client.on(E.DISCONNECT, () => {
     if (player.roomID) {
       const room = roomManager.getRoom(player.roomID);
-      room.LeavePlayer(player);
+      room.leavePlayer(player);
     }
 
     const found = players.findIndex(x => x == player);
@@ -37,41 +38,44 @@ io.on('connect', (client) => {
     console.log(`user disconnect - id=${player.ID}, current_user=${players.length}`);
   });
 
-  client.on('status-ping', (data) => {
-    client.emit('status-pong', data);
+  // ping
+  client.on(E.STATUS_PING, (data) => {
+    client.emit(E.STATUS_PONG, data);
   });
 
-  client.on('room-join', (req: P.RoomJoinRequestPacket) => {
+  // room
+  client.on(E.ROOM_JOIN, (req: P.RoomJoinRequestPacket) => {
     const nickname = req.nickname;
     player.nickname = nickname;
 
     const room = roomManager.getRoom(req.room_id);
-    room.JoinPlayer(player);
+    room.joinPlayer(player);
 
     const resp: P.RoomJoinResponsePacket = {
       room_id: room.ID,
       player_id: player.ID,
       nickname,
     };
-    client.emit('room-join', resp);
+    client.emit(E.ROOM_JOIN, resp);
+  });
+
+  client.on(E.ROOM_LEAVE, () => {
+    if (!player.roomID) { return; }
+    const room = roomManager.getRoom(player.roomID);
+    room.leavePlayer(player);
+    client.emit(E.ROOM_LEAVE);
   });
 
   // 방에 접속하면 클라이언트에서 게임씬 로딩을 시작한다
   // 로딩이 끝난 다음부터 객체가 의미있도록 만들고싶다
   // 게임 로딩이 끝나기전에는 무적으로 만드는게 목적
-  client.on('ready', () => {
-    player.ready = true;
-
-    const x = (Math.random() - 0.5) * 10;
-    const y = (Math.random() - 0.5) * 10;
-    player.setPosition(x, y);
-
-    console.log(`user ready - id=${player.ID}`);
-
-    client.emit('ready');
+  client.on(E.PLAYER_READY, () => {
+    if (!player.roomID) { return; }
+    const room = roomManager.getRoom(player.roomID);
+    room.spawnPlayer(player);
   });
 
-  client.on('move', (req: P.MoveRequestPacket) => {
+  client.on(E.MOVE, (req: P.MoveRequestPacket) => {
     const speed = 10;
     const len = H.getLengthVec2(req.dir_x, req.dir_y);
 
