@@ -5,6 +5,9 @@ namespace Assets.Game.Packets
         public const string STATUS_PING = "status-ping";
         public const string STATUS_PONG = "status-pong";
 
+        public const string HELLO = "hello";
+        public const string WELCOME = "welcome";
+
         public const string ROOM_JOIN = "room-join";
         public const string ROOM_LEAVE = "room-leave";
 

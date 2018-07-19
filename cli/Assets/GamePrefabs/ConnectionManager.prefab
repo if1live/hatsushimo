@@ -52,3 +52,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   address: http://127.0.0.1:3000
+  version: 1234

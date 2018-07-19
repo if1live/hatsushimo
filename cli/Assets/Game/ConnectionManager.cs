@@ -1,3 +1,4 @@
+using Assets.Game.Packets;
 using Quobject.SocketIoClientDotNet.Client;
 using System;
 using UniRx;
@@ -10,6 +11,7 @@ namespace Assets.Game
         public static ConnectionManager Instance { get; private set; }
 
         public string address = "http://127.0.0.1:3000";
+        public int version = 1234;
 
         Socket _socket;
         public Connection Conn { get { return _conn; } }
@@ -62,8 +64,23 @@ namespace Assets.Game
             Conn.RawSocket = _socket;
             Conn.On(Socket.EVENT_CONNECT, () =>
             {
-                Debug.Log("connect");
-                isReady.Value = true;
+                Debug.Log("connect... send hello");
+                Conn.Emit(Events.HELLO);
+            });
+
+            Conn.On<WelcomePacket>(Events.WELCOME, (packet) =>
+            {
+                var cli = version;
+                var svr = packet.version;
+                if (cli == svr)
+                {
+                    Debug.Log($"api version={svr}");
+                    isReady.Value = true;
+                }
+                else
+                {
+                    Debug.LogWarning($"version mismatch: cli={cli} / svr={svr}");
+                }
             });
 
             return true;

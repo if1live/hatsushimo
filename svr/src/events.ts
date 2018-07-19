@@ -1,6 +1,9 @@
 export const CONNECT = 'connect';
 export const DISCONNECT = 'disconnect';
 
+export const HELLO = 'hello';
+export const WELCOME = 'welcome';
+
 export const STATUS_PING = 'status-ping';
 export const STATUS_PONG = 'status-pong';
 

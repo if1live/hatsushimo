@@ -1,3 +1,4 @@
+using Assets.Game.Packets;
 using Newtonsoft.Json.Linq;
 using Quobject.EngineIoClientDotNet.ComponentEmitter;
 using Quobject.SocketIoClientDotNet.Client;
@@ -28,6 +29,12 @@ namespace Assets.Game
             RawSocket.Emit(eventString, bytes);
         }
 
+        public void EmitPacket(string eventString, ISerializePacket packet)
+        {
+            if (RawSocket == null) { return; }
+            EmitBytes(eventString, packet.Serialize());
+        }
+
         public void Emit(string eventString)
         {
             if (RawSocket == null) { return; }
@@ -54,6 +61,20 @@ namespace Assets.Game
                 var bytes = data as byte[];
                 Debug.Assert(bytes != null, "cannot casting to byte array");
                 fn(bytes);
+            });
+        }
+
+        public void OnPacket<TPacket>(string eventString, Action<TPacket> fn)
+            where TPacket : IDeserializePacket, new()
+        {
+            if(RawSocket == null) { return; }
+            RawSocket.On(eventString, (data) =>
+            {
+                var bytes = data as byte[];
+                Debug.Assert(bytes != null, "cannot casting to byte array");
+                TPacket packet = new TPacket();
+                packet.Deserialize(bytes);
+                fn(packet);
             });
         }
 

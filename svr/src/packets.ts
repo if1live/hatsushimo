@@ -1,5 +1,36 @@
 import { ReplicationActions } from "./events";
 
+export interface Serializable {
+  serialize(): Buffer;
+}
+
+export interface Deserializable {
+  deserialize(data: Buffer): void;
+}
+
+export class StatusPingPacket implements Deserializable {
+  millis: number;
+
+  deserialize(data: Buffer) {
+    this.millis = data.readUInt32LE(0);
+  }
+}
+
+export class StatusPongPacket implements Serializable {
+  millis: number;
+
+  serialize(): Buffer {
+    const buffer = new Buffer(4);
+    buffer.writeInt32LE(this.millis, 0);   
+    return buffer;
+  }
+}
+
+// 게임 작동에 필요한 상수 및 검증 코드 알려주기
+export interface WelcomePacket {
+  version: number;
+}
+
 export interface RoomJoinRequestPacket {
   nickname: string;
   room_id: string;

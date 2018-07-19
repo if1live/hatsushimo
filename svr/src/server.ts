@@ -39,12 +39,22 @@ io.on(E.CONNECT, (client) => {
     console.log(`user disconnect - id=${player.ID}, current_user=${players.length}`);
   });
 
+  // hello
+  client.on(E.HELLO, () => {
+    const packet: P.WelcomePacket = {
+      version: 1234,
+    };
+    client.emit(E.WELCOME, packet);
+  });
+
   // ping
   client.on(E.STATUS_PING, (data: Buffer) => {
-    const millis = data.readUInt32LE(0);
-    const buffer = new Buffer(4);
-    buffer.writeInt32LE(millis, 0);
-    client.emit(E.STATUS_PONG, buffer);
+    const ping = new P.StatusPingPacket();
+    ping.deserialize(data);
+
+    const pong = new P.StatusPongPacket();
+    pong.millis = ping.millis;
+    client.emit(E.STATUS_PONG, pong.serialize());
   });
 
   // room

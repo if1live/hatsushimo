@@ -18,7 +18,6 @@ namespace Assets.Game
         }
         ReactiveProperty<RoomJoinResponsePacket> joinResp = new ReactiveProperty<RoomJoinResponsePacket>(null);
 
-
         private void Awake()
         {
             Debug.Assert(nicknameField != null);

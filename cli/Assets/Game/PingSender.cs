@@ -47,18 +47,19 @@ namespace Assets.Game
 
         void SendPing(Connection conn)
         {
-            var millis = TimeUtils.NowMillis;
-            byte[] bytes = BitConverter.GetBytes(millis);
-            conn.EmitBytes(Events.STATUS_PING, bytes);
+            var packet = new StatusPingPacket()
+            {
+                millis = TimeUtils.NowMillis,
+            };
+            conn.EmitPacket(Events.STATUS_PING, packet);
         }
 
         void RegisterHandler(Connection conn)
         {
-            conn.OnBytes(Events.STATUS_PONG, (bytes) =>
+            conn.OnPacket<StatusPongPacket>(Events.STATUS_PONG, (packet) =>
             {
-                int millis = BitConverter.ToInt32(bytes, 0);
                 int now = TimeUtils.NowMillis;
-                int diff = now - millis;
+                int diff = now - packet.millis;
                 latency.Value = diff;
             });
         }
