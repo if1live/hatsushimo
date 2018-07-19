@@ -1,3 +1,5 @@
+import * as C from './config';
+
 export class Player {
   // 접속 정보
   client: SocketIO.Socket;
@@ -42,5 +44,25 @@ export class Player {
     this.dirX = dirX;
     this.dirY = dirY;
     this.speed = speed;
+  }
+
+  moveDelta(dx: number, dy: number) {
+    const halfw = C.ROOM_WIDTH * 0.5;
+    const halfh = C.ROOM_HEIGHT * 0.5;
+
+    this.posX += dx;
+    this.posY += dy;
+    if (this.posX < -halfw) {
+      this.posX = -halfw;
+    }
+    if (this.posX > halfw) {
+      this.posX = halfw;
+    }
+    if (this.posY < -halfh) {
+      this.posY = -halfh;
+    }
+    if (this.posY > halfh) {
+      this.posY = halfh;
+    }
   }
 }

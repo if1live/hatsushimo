@@ -12,3 +12,10 @@ export const getLengthVec2 = (x: number, y: number): number => {
   const len = Math.sqrt(x * x + y * y);
   return len;
 }
+
+export const generateRandomPosition = (w: number, h: number): [number, number] => {
+  const x = (Math.random() - 0.5) * w;
+  const y = (Math.random() - 0.5) * h;
+  return [x, y];
+}
+

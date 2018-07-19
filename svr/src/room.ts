@@ -1,7 +1,11 @@
 import { Player } from './player';
-import { IDGenerator } from './idgen';
+import { makeFoodID } from './idgen';
 import * as P from './packets';
 import * as E from './events';
+import * as H from './helpers';
+import * as C from './config';
+
+const INVALID_LOOP_HANDLER = -1;
 
 export class Room {
   players: Player[];
@@ -24,10 +28,10 @@ export class Room {
     this.waitingPlayers = [];
 
     // 방에서만 사용하는 객체는 id를 따로 발급
-    this.foodIDGen = IDGenerator(100001, 100000);
+    this.foodIDGen = makeFoodID();
 
-    this.gameLoopHandler = -1;
-    this.networkLoopHandler = -1;
+    this.gameLoopHandler = INVALID_LOOP_HANDLER;
+    this.networkLoopHandler = INVALID_LOOP_HANDLER;
   }
 
   spawnPlayer(player: Player) {
@@ -69,9 +73,8 @@ export class Room {
     if (newPlayer.roomID !== null) { return false; }
 
     newPlayer.roomID = this.ID;
-    const x = (Math.random() - 0.5) * 10;
-    const y = (Math.random() - 0.5) * 10;
-    newPlayer.setPosition(x, y);
+    const pos = H.generateRandomPosition(C.ROOM_WIDTH, C.ROOM_HEIGHT);
+    newPlayer.setPosition(pos[0], pos[1]);
     this.waitingPlayers.push(newPlayer);
 
     console.log(`join room - room=${this.ID} player=${newPlayer.ID} room_size=${this.players.length}`);
@@ -112,8 +115,7 @@ export class Room {
     this.players.forEach(player => {
       const dx = player.dirX * player.speed * dt;
       const dy = player.dirY * player.speed * dt;
-      player.posX += dx;
-      player.posY += dy;
+      player.moveDelta(dx, dy);
     });
   }
 
@@ -158,8 +160,8 @@ export class RoomManager {
     clearInterval(room.gameLoopHandler);
     clearInterval(room.networkLoopHandler);
 
-    room.gameLoopHandler = -1;
-    room.networkLoopHandler = -1;
+    room.gameLoopHandler = INVALID_LOOP_HANDLER;
+    room.networkLoopHandler = INVALID_LOOP_HANDLER;
 
     this.rooms.delete(roomID);
     return true;

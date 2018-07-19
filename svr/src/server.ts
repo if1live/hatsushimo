@@ -4,10 +4,11 @@ import { default as socketIo } from 'socket.io';
 
 import { Player } from './player';
 import { RoomManager } from './room';
-import { IDGenerator } from './idgen';
+import { makePlayerID } from './idgen';
 import * as H from './helpers';
 import * as P from './packets';
 import * as E from './events';
+import * as C from './config';
 
 const app = express();
 const server = createServer(app);
@@ -18,7 +19,7 @@ const roomManager = new RoomManager();
 
 // 플레이어에게는 고유번호 붙인다
 // 어떤 방에 들어가든 id는 유지된다
-const playerIDGenerator = IDGenerator(1, 100000);
+const playerIDGenerator = makePlayerID();
 
 io.on(E.CONNECT, (client) => {
   const id = playerIDGenerator.next().value;
@@ -95,6 +96,7 @@ app.get('/status/users', (req, res) => {
   res.send(JSON.stringify(players.map(u => u.toJson()), null, 2));
 });
 
-server.listen(3000, () => {
-  console.log('listening on *:3000');
+const port = C.SERVER_PORT;
+server.listen(port, () => {
+  console.log(`listening on *:${port}`);
 });
