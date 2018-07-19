@@ -5,6 +5,7 @@ import { Events as E, ReplicationActions } from './events';
 import * as H from './helpers';
 import * as C from './config';
 import { Food } from './items';
+import { Leaderboard } from './leaderboard';
 
 const INVALID_LOOP_HANDLER = -1;
 
@@ -20,6 +21,8 @@ export class Room {
 
   foodIDGen: Generator;
 
+  leaderboard: Leaderboard;
+
   // handler
   gameLoopHandler: number;
   networkLoopHandler: number;
@@ -33,6 +36,8 @@ export class Room {
 
     // 방에서만 사용하는 객체는 id를 따로 발급
     this.foodIDGen = makeFoodID();
+
+    this.leaderboard = new Leaderboard(this.players);
 
     this.gameLoopHandler = INVALID_LOOP_HANDLER;
     this.networkLoopHandler = INVALID_LOOP_HANDLER;
@@ -49,21 +54,26 @@ export class Room {
     const found = this.waitingPlayers.findIndex(p => p == player);
     if (found < 0) { return; }
 
-    // 기존 유저들에게 새로 생성된 플레이어 정보를 알려주기
-    const spawnPacket = player.makeSpawnPacket();
-    this.players.map(p => {
-      p.conn.emit(E.REPLICATION_ACTION, spawnPacket);
-    });
-    console.log(`ready room - room=${this.ID} player=${player.ID} room_size=${this.players.length}`);
-
+    // 유저를 로직에 합류시킴
+    const prevPlayers = [].concat(this.players);
     this.waitingPlayers.splice(found, 1);
     this.players.push(player);
 
-    // 접속한 유저에게 합류 메세지 보내기
+    // 신규 유저에게 월드 정보 알려주기
+    // 월드 정보 이외에도 리더보드 같이 변경될때만 알려주는 정보도 알려주기
+    player.conn.emit(E.REPLICATION_ALL, this.makeReplicationPacket());
+    player.conn.emit(E.LEADERBOARD, this.leaderboard.makeLeaderboardPacket());
+
+    // 접속한 유저에게 완료 신호 보냄
+    // 게임 로직을 돌릴수 있다는 신호임
     player.conn.emit(E.PLAYER_READY);
 
-    // 신규 유저에게 월드 정보 알려주기
-    player.conn.emit(E.REPLICATION_ALL, this.makeReplicationPacket());
+    // 기존 유저들에게 새로 생성된 플레이어 정보를 알려주기
+    const spawnPacket = player.makeSpawnPacket();
+    prevPlayers.map(p => {
+      p.conn.emit(E.REPLICATION_ACTION, spawnPacket);
+    });
+    console.log(`ready room - room=${this.ID} player=${player.ID} room_size=${this.players.length}`);
   }
 
   joinPlayer(newPlayer: Player): boolean {
@@ -186,31 +196,15 @@ export class Room {
   }
 
   leaderboardLoop() {
-    const sortedPlayers = this.players.sort((a, b) => b.score - a.score);
-    const highRanks = sortedPlayers.slice(0, 5).map((p, idx): P.RankElement => {
-      const rank = idx + 1;
-      return {
-        id: p.ID,
-        score: p.score,
-        rank,
-      };
-    });
-
-    this.players.forEach(player => {
-      const found = this.players.findIndex(x => x == player);
-      const rank = found + 1;
-      const my: P.RankElement = {
-        id: player.ID,
-        score: player.score,
-        rank,
-      };
-
-      const packet: P.LeaderboardPacket = {
-        leaderboard: highRanks,
-        my,
-      };
-      player.conn.emit(E.LEADERBOARD, packet);
-    });
+    // 리더보드 변경 사항이 있는 경우에만 전송
+    const newLeaderboard = new Leaderboard(this.players);
+    if (!this.leaderboard.isLeaderboardEqual(newLeaderboard)) {
+      this.leaderboard = newLeaderboard;
+      const packet = newLeaderboard.makeLeaderboardPacket();
+      this.players.forEach(player => {
+        player.conn.emit(E.LEADERBOARD, packet);
+      });
+    }
   }
 
   sendFoodCreatePacket(food: Food) {

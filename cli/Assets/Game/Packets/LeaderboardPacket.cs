@@ -15,7 +15,7 @@ namespace Assets.Game.Packets
 
     class LeaderboardPacket
     {
-        public Rank[] leaderboard;
-        public Rank my;
+        public int players;
+        public Rank[] top;
     }
 }

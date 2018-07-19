@@ -96,6 +96,6 @@ export interface RankElement {
   rank: number;
 }
 export interface LeaderboardPacket {
-  leaderboard: RankElement[];
-  my: RankElement;
+  top: RankElement[];
+  players: number;
 }

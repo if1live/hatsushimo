@@ -33,21 +33,15 @@ namespace Assets.Game.Packets
                 Debug.Assert(replication != null);
 
                 var sb = new StringBuilder();
-                foreach (var r in p.leaderboard)
+                foreach (var r in p.top)
                 {
                     var player = replication.FindPlayer(r.id);
                     Debug.Assert(player != null, $"cannot player id={r.id}");
                     sb.AppendLine($"{r.rank} name={player.nickname}: id={r.id} score={r.score}");
                 }
-
-                if (p.my != null)
-                {
-                    var my = p.my;
-                    var player = replication.FindPlayer(my.id);
-                    sb.AppendLine($"my rank={my.rank} name={player.nickname} : id={my.id} score={my.score}");
-                }
-
+                sb.AppendLine($"players = {p.players}");
                 message.text = sb.ToString();
+
             }).AddTo(gameObject);
         }
 
