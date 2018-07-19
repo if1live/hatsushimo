@@ -59,3 +59,19 @@ export interface PlayerDeadPacket {
 export interface PlayerLeavePacket {
   id: number;
 }
+
+export interface StaticItemListPacket {
+  items: StaticItemCreatePacket[];
+}
+
+export interface StaticItemCreatePacket {
+  type: string;
+  id: number;
+  pos_x: number;
+  pos_y: number;
+}
+
+export interface StaticItemRemovePacket {
+  type: string;
+  id: number;
+}

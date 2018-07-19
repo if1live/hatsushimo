@@ -49,6 +49,7 @@ io.on(E.CONNECT, (client) => {
 
   // room
   client.on(E.ROOM_JOIN, (req: P.RoomJoinRequestPacket) => {
+    player.reset();
     const nickname = req.nickname;
     player.nickname = nickname;
 

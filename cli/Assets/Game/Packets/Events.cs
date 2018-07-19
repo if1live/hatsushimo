@@ -19,5 +19,9 @@ namespace Assets.Game.Packets
         public const string PLAYER_DEAD = "player-dead";
         public const string PLAYER_LEAVE = "player-leave";
         public const string PLAYER_READY = "player-ready";
+
+        public const string STATIC_ITEM_LIST = "static-item-list";
+        public const string STATIC_ITEM_CREATE = "static-item-create";
+        public const string STATIC_ITEM_REMOVE = "static-item-remove";
     }
 }

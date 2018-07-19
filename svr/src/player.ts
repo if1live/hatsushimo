@@ -22,8 +22,12 @@ export class Player {
 
     this.ID = id;
     this.roomID = null;
-    this.nickname = '[BLANK]';
 
+    this.reset();
+  }
+
+  reset() {
+    this.nickname = '[BLANK]';
     this.setPosition(0, 0);
     this.setVelocity(0, 0, 1);
     this.score = 0;

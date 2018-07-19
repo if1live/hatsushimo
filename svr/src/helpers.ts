@@ -13,6 +13,10 @@ export const getLengthVec2 = (x: number, y: number): number => {
   return len;
 }
 
+export const getLengthSquare2 = (x: number, y: number): number => {
+  return x * x + y * y;
+}
+
 export const generateRandomPosition = (w: number, h: number): [number, number] => {
   const x = (Math.random() - 0.5) * w;
   const y = (Math.random() - 0.5) * h;

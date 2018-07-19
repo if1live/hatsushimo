@@ -26,6 +26,7 @@ export const PLAYER_READY = 'player-ready';
 
 // 바닥에 배치되는 점수 아이템 같은거
 // 움직이지 않는 아이템은 좌표 추적이 필요 없다
+export const STATIC_ITEM_LIST = 'static-item-list';
 export const STATIC_ITEM_CREATE = 'static-item-create';
 export const STATIC_ITEM_REMOVE = 'static-item-remove';
 

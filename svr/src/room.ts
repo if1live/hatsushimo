@@ -7,7 +7,24 @@ import * as C from './config';
 
 const INVALID_LOOP_HANDLER = -1;
 
+class Food {
+  ID: number;
+  type: string;
+  posX: number;
+  posY: number;
+  score: number;
+
+  constructor(id: number, posX: number, posY: number, score: number) {
+    this.ID = id;
+    this.type = 'food';
+    this.posX = posX;
+    this.posY = posY;
+    this.score = score;
+  }
+}
+
 export class Room {
+  foods: Food[];
   players: Player[];
 
   // 로직에 직접 참가하지 않는 유저목록
@@ -24,6 +41,7 @@ export class Room {
 
   constructor(id: string) {
     this.ID = id;
+    this.foods = [];
     this.players = [];
     this.waitingPlayers = [];
 
@@ -32,6 +50,12 @@ export class Room {
 
     this.gameLoopHandler = INVALID_LOOP_HANDLER;
     this.networkLoopHandler = INVALID_LOOP_HANDLER;
+
+    // 방 만들때 음식 미리 만들기
+    for (var i = 0; i < C.FOOD_COUNT; i++) {
+      const food = this.makeFood();
+      this.foods.push(food);
+    }
   }
 
   spawnPlayer(player: Player) {
@@ -56,17 +80,29 @@ export class Room {
     // 접속한 유저에게 합류 메세지 보내기
     player.client.emit(E.PLAYER_READY);
 
-    // 접속한 유저에게 유저 전체 목록 알려주기
+    // 신규 유저에게 유저 전체 목록 알려주기
     const players = this.players.map(p => ({
       id: p.ID,
       nickname: p.nickname,
       pos_x: p.posX,
       pos_y: p.posY,
     }));
-    const listPacket: P.PlayerListPacket = {
+    const playerListPacket: P.PlayerListPacket = {
       players: players,
     };
-    player.client.emit(E.PLAYER_LIST, listPacket);
+    player.client.emit(E.PLAYER_LIST, playerListPacket);
+
+    // 신규 유저에게 아이템 목록 알려주기
+    const items = this.foods.map(f => ({
+      id: f.ID,
+      type: f.type,
+      pos_x: f.posX,
+      pos_y: f.posY,
+    }));
+    const itemListPacket: P.StaticItemListPacket = {
+      items: items,
+    };
+    player.client.emit(E.STATIC_ITEM_LIST, itemListPacket);
   }
 
   joinPlayer(newPlayer: Player): boolean {
@@ -110,13 +146,62 @@ export class Room {
   }
 
   gameLoop() {
-    // TODO ready player 목록은 자주쓰니까 함수로 빼면 좋을거같다
     const dt = 1 / 60;
+
     this.players.forEach(player => {
       const dx = player.dirX * player.speed * dt;
       const dy = player.dirY * player.speed * dt;
       player.moveDelta(dx, dy);
     });
+
+    // 음식 생성
+    const requiredFoodCount = C.FOOD_COUNT - this.foods.length;
+    for (var i = 0; i < requiredFoodCount; i++) {
+      const food = this.makeFood();
+      this.foods.push(food);
+      this.sendFoodCreatePacket(food);
+    }
+
+    // 음식을 먹으면 점수를 올리고 음식을 목록에서 삭제
+    // TODO quad tree 같은거 쓰면 최적화 가능
+    this.players.forEach(player => {
+      const gainedFoods = this.foods.map((food, idx) => ({
+        food: food,
+        index: idx,
+      })).filter(pair => {
+        const food = pair.food;
+        const p1 = [player.posX, player.posY];
+        const p2 = [food.posX, food.posY];
+        const diffx = p1[0] - p2[0];
+        const diffy = p1[1] - p2[1];
+        const lenSquare = H.getLengthSquare2(diffx, diffy);
+        const ALLOW_DISTANCE = 1;
+        return lenSquare < ALLOW_DISTANCE * ALLOW_DISTANCE;
+      });
+
+      // 먹은 플레이어는 점수 획득
+      gainedFoods.map(pair => pair.food).forEach(food => {
+        player.score += food.score;
+      });
+
+      // 모든 플레이어에게 삭제 패킷 보내기
+      gainedFoods.map(pair => pair.food).forEach(food => {
+        this.sendFoodRemovePacket(food);
+      });
+
+      // 배열의 뒤에서부터 제거하면 검색으로 찾은 인덱스를 그대로 쓸수있다
+      gainedFoods.map(pair => pair.index).sort((a, b) => b - a).forEach(idx => {
+        this.foods.splice(idx, 1);
+      });
+    });
+  }
+
+  makeFood(): Food {
+    const pos = H.generateRandomPosition(C.ROOM_WIDTH, C.ROOM_HEIGHT);
+    const score = 1;
+    const id = this.foodIDGen.next().value;
+    const food = new Food(id, pos[0], pos[1], score);
+    return food;
   }
 
   networkLoop() {
@@ -132,6 +217,32 @@ export class Room {
         })),
       };
       player.client.emit(E.PLAYER_STATUS, packet);
+    });
+  }
+
+  sendFoodCreatePacket(food: Food) {
+    // 모든 유저에게 아이템 생성 패킷 전송
+    // TODO broadcast emit
+    const packet: P.StaticItemCreatePacket = {
+      id: food.ID,
+      pos_x: food.posX,
+      pos_y: food.posY,
+      type: food.type,
+    };
+    this.players.map(p => p.client).forEach(client => {
+      client.emit(E.STATIC_ITEM_CREATE, packet);
+    });
+  }
+
+  sendFoodRemovePacket(food: Food) {
+    this.players.forEach(p => {
+      const packet: P.StaticItemRemovePacket = {
+        id: food.ID,
+        type: food.type,
+      };
+      const client = p.client;
+      client.emit(E.STATIC_ITEM_REMOVE, packet);
+      console.log(`sent food remove packet : ${JSON.stringify(packet)}`)
     });
   }
 }
