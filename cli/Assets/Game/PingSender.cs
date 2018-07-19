@@ -2,15 +2,16 @@ using Assets.Game.Packets;
 using System;
 using System.Threading.Tasks;
 using UniRx;
+using UnityEngine;
 
 namespace Assets.Game
 {
     class PingSender
     {
-        public IObservable<long> LatencyObservable {
+        public IObservable<int> LatencyObservable {
             get { return latency.AsObservable(); }
         }
-        ReactiveProperty<long> latency = new ReactiveProperty<long>(99999);
+        ReactiveProperty<int> latency = new ReactiveProperty<int>(99999);
 
         readonly long intervalMillis;
 
@@ -46,17 +47,18 @@ namespace Assets.Game
 
         void SendPing(Connection conn)
         {
-            var ts = TimeUtils.GetTimestamp();
-            var ctx = new StatusPing() { ts = ts };
-            conn.Emit(Events.STATUS_PING, ctx);
+            var millis = TimeUtils.NowMillis;
+            byte[] bytes = BitConverter.GetBytes(millis);
+            conn.EmitBytes(Events.STATUS_PING, bytes);
         }
 
         void RegisterHandler(Connection conn)
         {
-            conn.On<StatusPong>(Events.STATUS_PONG, (ctx) =>
+            conn.OnBytes(Events.STATUS_PONG, (bytes) =>
             {
-                var now = TimeUtils.GetTimestamp();
-                var diff = now - ctx.ts;
+                int millis = BitConverter.ToInt32(bytes, 0);
+                int now = TimeUtils.NowMillis;
+                int diff = now - millis;
                 latency.Value = diff;
             });
         }

@@ -2,6 +2,7 @@ using Newtonsoft.Json.Linq;
 using Quobject.EngineIoClientDotNet.ComponentEmitter;
 using Quobject.SocketIoClientDotNet.Client;
 using System;
+using UnityEngine;
 
 namespace Assets.Game
 {
@@ -21,6 +22,12 @@ namespace Assets.Game
             RawSocket.Emit(eventString, jobj);
         }
 
+        public void EmitBytes(string eventString, byte[] bytes)
+        {
+            if(RawSocket == null) { return; }
+            RawSocket.Emit(eventString, bytes);
+        }
+
         public void Emit(string eventString)
         {
             if (RawSocket == null) { return; }
@@ -33,8 +40,20 @@ namespace Assets.Game
             RawSocket.On(eventString, (data) =>
             {
                 var jobj = data as JObject;
+                Debug.Assert(jobj != null, "cannot casting to JObject");
                 var ctx = jobj.ToObject<TContext>();
                 fn(ctx);
+            });
+        }
+
+        public void OnBytes(string eventString, Action<byte[]> fn)
+        {
+            if (RawSocket == null) { return; }
+            RawSocket.On(eventString, (data) =>
+            {
+                var bytes = data as byte[];
+                Debug.Assert(bytes != null, "cannot casting to byte array");
+                fn(bytes);
             });
         }
 

@@ -40,8 +40,11 @@ io.on(E.CONNECT, (client) => {
   });
 
   // ping
-  client.on(E.STATUS_PING, (data) => {
-    client.emit(E.STATUS_PONG, data);
+  client.on(E.STATUS_PING, (data: Buffer) => {
+    const millis = data.readUInt32LE(0);
+    const buffer = new Buffer(4);
+    buffer.writeInt32LE(millis, 0);
+    client.emit(E.STATUS_PONG, buffer);
   });
 
   // room
