@@ -13,10 +13,10 @@ namespace Assets.Game
         public InputField roomField;
         public Button joinButton;
 
-        IObservable<JoinResponsePacket> JoinResponseObservable {
+        IObservable<RoomJoinResponsePacket> JoinResponseObservable {
             get { return joinResp.Where(x => x != null).AsObservable(); }
         }
-        ReactiveProperty<JoinResponsePacket> joinResp = new ReactiveProperty<JoinResponsePacket>(null);
+        ReactiveProperty<RoomJoinResponsePacket> joinResp = new ReactiveProperty<RoomJoinResponsePacket>(null);
 
 
         private void Awake()
@@ -31,7 +31,7 @@ namespace Assets.Game
             ConnectionManager.Instance.ReadyObservable.ObserveOnMainThread().Subscribe(conn =>
             {
                 joinButton.interactable = true;
-                conn.On<JoinResponsePacket>(Events.ROOM_JOIN, (ctx) => joinResp.Value = ctx);
+                conn.On<RoomJoinResponsePacket>(Events.ROOM_JOIN, (ctx) => joinResp.Value = ctx);
             }).AddTo(gameObject);
 
             joinButton.OnClickAsObservable().Subscribe(_ =>
@@ -43,7 +43,7 @@ namespace Assets.Game
                 if (roomID.Length == 0) { return; }
 
                 var conn = ConnectionManager.Instance.Conn;
-                var ctx = new JoinRequestPacket
+                var ctx = new RoomJoinRequestPacket
                 {
                     nickname = nickname,
                     room_id = roomID

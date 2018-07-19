@@ -56,12 +56,7 @@ io.on(E.CONNECT, (client) => {
     const room = roomManager.getRoom(req.room_id);
     room.joinPlayer(player);
 
-    const resp: P.RoomJoinResponsePacket = {
-      room_id: room.ID,
-      player_id: player.ID,
-      nickname,
-    };
-    client.emit(E.ROOM_JOIN, resp);
+    client.emit(E.ROOM_JOIN, room.makeRoomJoinResponsePacket(player));
   });
 
   client.on(E.ROOM_LEAVE, () => {

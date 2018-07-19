@@ -2,28 +2,6 @@ using System.Linq;
 
 namespace Assets.Game.Packets
 {
-    public class PlayerInfo
-    {
-        public int id;
-        public string nickname;
-        public float pos_x;
-        public float pos_y;
-    }
-
-    public class PlayerListPacket
-    {
-        public PlayerInfo[] players;
-
-        public PlayerInfo[] GetEnemyPlayers(int id)
-        {
-            return players.Where(x => x.id != id).ToArray();
-        }
-        public PlayerInfo GetMyPlayer(int id)
-        {
-            return players.Where(x => x.id == id).First();
-        }
-    }
-
     // TODO 이동 관련 정보는 최적화 가능할거같은데
     public class PlayerStatus
     {

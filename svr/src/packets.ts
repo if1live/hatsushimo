@@ -14,12 +14,16 @@ export interface MoveRequestPacket {
   dir_y: number;
 }
 
-// 생성 기준 좌표만 알려주기
-// 이동 정보같은건 다른 패킷으로 받을수 있다
-export interface PlayerListPacket {
+export interface ReplicationPacket {
   players: {
     id: number;
     nickname: string;
+    pos_x: number;
+    pos_y: number;
+  }[];
+  items: {
+    id: number;
+    type: string;
     pos_x: number;
     pos_y: number;
   }[];
@@ -60,10 +64,6 @@ export interface PlayerLeavePacket {
   id: number;
 }
 
-export interface StaticItemListPacket {
-  items: StaticItemCreatePacket[];
-}
-
 export interface StaticItemCreatePacket {
   type: string;
   id: number;
@@ -72,6 +72,5 @@ export interface StaticItemCreatePacket {
 }
 
 export interface StaticItemRemovePacket {
-  type: string;
   id: number;
 }

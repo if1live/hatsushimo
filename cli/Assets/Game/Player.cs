@@ -28,13 +28,13 @@ namespace Assets.Game
         }
         ReactiveProperty<PlayerStatus> status = new ReactiveProperty<PlayerStatus>(null);
 
-        IObservable<PlayerInfo> InfoObservable {
-            get { return info.Where(x => x != null).AsObservable(); }
+        IObservable<PlayerReplication> InfoObservable {
+            get { return replication.Where(x => x != null).AsObservable(); }
         }
-        ReactiveProperty<PlayerInfo> info = new ReactiveProperty<PlayerInfo>(null);
+        ReactiveProperty<PlayerReplication> replication = new ReactiveProperty<PlayerReplication>(null);
 
         public void ApplyStatus(PlayerStatus s) { status.Value = s; }
-        public void ApplyInfo(PlayerInfo s) { info.Value = s; }
+        public void ApplyReplication(PlayerReplication s) { replication.Value = s; }
 
 
         private void Start()

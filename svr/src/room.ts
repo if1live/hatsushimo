@@ -4,24 +4,9 @@ import * as P from './packets';
 import * as E from './events';
 import * as H from './helpers';
 import * as C from './config';
+import { Food } from './items';
 
 const INVALID_LOOP_HANDLER = -1;
-
-class Food {
-  ID: number;
-  type: string;
-  posX: number;
-  posY: number;
-  score: number;
-
-  constructor(id: number, posX: number, posY: number, score: number) {
-    this.ID = id;
-    this.type = 'food';
-    this.posX = posX;
-    this.posY = posY;
-    this.score = score;
-  }
-}
 
 export class Room {
   foods: Food[];
@@ -63,12 +48,7 @@ export class Room {
     if (found < 0) { return; }
 
     // 기존 유저들에게 새로 생성된 플레이어 정보를 알려주기
-    const spawnPacket: P.PlayerSpawnPacket = {
-      id: player.ID,
-      nickname: player.nickname,
-      pos_x: player.posX,
-      pos_y: player.posY,
-    };
+    const spawnPacket = player.makeSpawnPacket();
     this.players.map(p => {
       p.client.emit(E.PLAYER_SPAWN, spawnPacket);
     });
@@ -80,29 +60,8 @@ export class Room {
     // 접속한 유저에게 합류 메세지 보내기
     player.client.emit(E.PLAYER_READY);
 
-    // 신규 유저에게 유저 전체 목록 알려주기
-    const players = this.players.map(p => ({
-      id: p.ID,
-      nickname: p.nickname,
-      pos_x: p.posX,
-      pos_y: p.posY,
-    }));
-    const playerListPacket: P.PlayerListPacket = {
-      players: players,
-    };
-    player.client.emit(E.PLAYER_LIST, playerListPacket);
-
-    // 신규 유저에게 아이템 목록 알려주기
-    const items = this.foods.map(f => ({
-      id: f.ID,
-      type: f.type,
-      pos_x: f.posX,
-      pos_y: f.posY,
-    }));
-    const itemListPacket: P.StaticItemListPacket = {
-      items: items,
-    };
-    player.client.emit(E.STATIC_ITEM_LIST, itemListPacket);
+    // 신규 유저에게 월드 정보 알려주기
+    player.client.emit(E.REPLICATION, this.makeReplicationPacket());
   }
 
   joinPlayer(newPlayer: Player): boolean {
@@ -134,11 +93,8 @@ export class Room {
     }
 
     // 방을 나갔다는것을 다른 유저도 알아야한다
-    const packet: P.PlayerLeavePacket = {
-      id: player.ID,
-    };
     this.players.map(p => {
-      p.client.emit(E.PLAYER_LEAVE, packet);
+      p.client.emit(E.PLAYER_LEAVE, player.makeLeavePacket());
     });
 
     console.log(`leave room - room=${this.ID} player=${player.ID} room_size=${this.players.length}`);
@@ -223,12 +179,7 @@ export class Room {
   sendFoodCreatePacket(food: Food) {
     // 모든 유저에게 아이템 생성 패킷 전송
     // TODO broadcast emit
-    const packet: P.StaticItemCreatePacket = {
-      id: food.ID,
-      pos_x: food.posX,
-      pos_y: food.posY,
-      type: food.type,
-    };
+    const packet = food.makeCreatePacket();
     this.players.map(p => p.client).forEach(client => {
       client.emit(E.STATIC_ITEM_CREATE, packet);
     });
@@ -236,14 +187,40 @@ export class Room {
 
   sendFoodRemovePacket(food: Food) {
     this.players.forEach(p => {
-      const packet: P.StaticItemRemovePacket = {
-        id: food.ID,
-        type: food.type,
-      };
+      const packet = food.makeRemovePacket();
       const client = p.client;
       client.emit(E.STATIC_ITEM_REMOVE, packet);
       console.log(`sent food remove packet : ${JSON.stringify(packet)}`)
     });
+  }
+
+  makeRoomJoinResponsePacket(player: Player): P.RoomJoinResponsePacket {
+    return {
+      room_id: this.ID,
+      player_id: player.ID,
+      nickname: player.nickname,
+    };
+  }
+
+  makeReplicationPacket(): P.ReplicationPacket {
+    const players = this.players.map(p => ({
+      id: p.ID,
+      nickname: p.nickname,
+      pos_x: p.posX,
+      pos_y: p.posY,
+    }));
+    const foods = this.foods.map(f => ({
+      id: f.ID,
+      type: f.type,
+      pos_x: f.posX,
+      pos_y: f.posY,
+    }));
+    const items = [].concat(foods);
+
+    return {
+      players: players,
+      items: items,
+    };
   }
 }
 

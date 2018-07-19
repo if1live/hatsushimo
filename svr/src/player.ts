@@ -1,4 +1,5 @@
 import * as C from './config';
+import * as P from './packets';
 
 export class Player {
   // 접속 정보
@@ -68,5 +69,26 @@ export class Player {
     if (this.posY > halfh) {
       this.posY = halfh;
     }
+  }
+
+  makeSpawnPacket(): P.PlayerSpawnPacket {
+    return {
+      id: this.ID,
+      nickname: this.nickname,
+      pos_x: this.posX,
+      pos_y: this.posY,
+    };
+  }
+
+  makeLeavePacket(): P.PlayerLeavePacket {
+    return {
+      id: this.ID,
+    };
+  }
+
+  makeDeadPacket(): P.PlayerDeadPacket {
+    return {
+      id: this.ID,
+    };
   }
 }

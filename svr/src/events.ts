@@ -12,8 +12,9 @@ export const LEADERBOARD = 'leaderboard';
 
 export const MOVE = 'move';
 
-export const PLAYER_LIST = 'player-list';
 export const PLAYER_STATUS = 'player-status';
+
+export const REPLICATION = 'replication';
 
 // 플레이어 객체의 생존을 관리하는 명령
 // 객체의 위치 정보는 주기적으로 내려가지만
@@ -26,7 +27,6 @@ export const PLAYER_READY = 'player-ready';
 
 // 바닥에 배치되는 점수 아이템 같은거
 // 움직이지 않는 아이템은 좌표 추적이 필요 없다
-export const STATIC_ITEM_LIST = 'static-item-list';
 export const STATIC_ITEM_CREATE = 'static-item-create';
 export const STATIC_ITEM_REMOVE = 'static-item-remove';
 
