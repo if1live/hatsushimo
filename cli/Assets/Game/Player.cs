@@ -23,23 +23,23 @@ namespace Assets.Game
             }
         }
 
-        IObservable<PlayerStatus> StatusObservable {
-            get { return status.Where(x => x != null).AsObservable(); }
-        }
-        ReactiveProperty<PlayerStatus> status = new ReactiveProperty<PlayerStatus>(null);
-
-        IObservable<PlayerReplication> InfoObservable {
+        IObservable<ReplicationActionPacket> ReplicationObservable {
             get { return replication.Where(x => x != null).AsObservable(); }
         }
-        ReactiveProperty<PlayerReplication> replication = new ReactiveProperty<PlayerReplication>(null);
+        ReactiveProperty<ReplicationActionPacket> replication = new ReactiveProperty<ReplicationActionPacket>(null);
 
-        public void ApplyStatus(PlayerStatus s) { status.Value = s; }
-        public void ApplyReplication(PlayerReplication s) { replication.Value = s; }
+        IObservable<PlayerInitial> InitialObservable {
+            get { return initial.Where(x => x != null).AsObservable(); }
+        }
+        ReactiveProperty<PlayerInitial> initial = new ReactiveProperty<PlayerInitial>(null);
+
+        public void ApplyInitial(PlayerInitial s) { initial.Value = s; }
+        public void ApplyReplication(ReplicationActionPacket p) { replication.Value = p; }
 
 
         private void Start()
         {
-            StatusObservable.ObserveOnMainThread().Subscribe(packet =>
+            ReplicationObservable.ObserveOnMainThread().Subscribe(packet =>
             {
                 Debug.Assert(packet.id == id, $"id mismatch: my={id} packet={packet.id}");
 
@@ -51,7 +51,7 @@ namespace Assets.Game
                 transform.position = pos;
             }).AddTo(gameObject);
 
-            InfoObservable.ObserveOnMainThread().Subscribe(ctx =>
+            InitialObservable.ObserveOnMainThread().Subscribe(ctx =>
             {
                 id = ctx.id;
                 nickname = ctx.nickname;

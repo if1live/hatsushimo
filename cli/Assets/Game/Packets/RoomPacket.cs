@@ -15,35 +15,8 @@ namespace Assets.Game.Packets
         public string nickname;
     }
 
-    class PlayerReplication
+    class RoomLeavePacket
     {
-        public int id;
-        public string nickname;
-        public float pos_x;
-        public float pos_y;
-    }
-
-    class ItemReplication
-    {
-        public int id;
-        public string type;
-        public float pos_x;
-        public float pos_y;
-    }
-
-    class ReplicationPacket
-    {
-        public PlayerReplication[] players;
-        public ItemReplication[] items;
-
-        public PlayerReplication[] GetOtherPlayers(int myid)
-        {
-            return players.Where(x => x.id != myid).ToArray();
-        }
-
-        public PlayerReplication GetMyPlayer(int myid)
-        {
-            return players.Where(x => x.id == myid).First();
-        }
+        public int player_id;
     }
 }

@@ -1,5 +1,6 @@
 import * as C from './config';
 import * as P from './packets';
+import { ReplicationActions } from './events';
 
 export class Player {
   // 접속 정보
@@ -71,24 +72,21 @@ export class Player {
     }
   }
 
-  makeSpawnPacket(): P.PlayerSpawnPacket {
+  makeSpawnPacket(): P.ReplicationActionPacket {
     return {
+      action: ReplicationActions.Create,
       id: this.ID,
-      nickname: this.nickname,
+      type: 'player',
       pos_x: this.posX,
       pos_y: this.posY,
+      dir_x: this.dirX,
+      dir_y: this.dirY,
+      speed: this.speed,
+      extra: this.nickname,
     };
   }
 
-  makeLeavePacket(): P.PlayerLeavePacket {
-    return {
-      id: this.ID,
-    };
-  }
-
-  makeDeadPacket(): P.PlayerDeadPacket {
-    return {
-      id: this.ID,
-    };
+  makeDeadPacket(): P.ReplicationActionPacket {
+    return P.makeReplicationRemovePacket(this.ID);
   }
 }

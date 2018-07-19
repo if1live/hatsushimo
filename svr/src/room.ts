@@ -50,7 +50,7 @@ export class Room {
     // 기존 유저들에게 새로 생성된 플레이어 정보를 알려주기
     const spawnPacket = player.makeSpawnPacket();
     this.players.map(p => {
-      p.client.emit(E.PLAYER_SPAWN, spawnPacket);
+      p.client.emit(E.REPLICATION_ACTION, spawnPacket);
     });
     console.log(`ready room - room=${this.ID} player=${player.ID} room_size=${this.players.length}`);
 
@@ -61,7 +61,7 @@ export class Room {
     player.client.emit(E.PLAYER_READY);
 
     // 신규 유저에게 월드 정보 알려주기
-    player.client.emit(E.REPLICATION, this.makeReplicationPacket());
+    player.client.emit(E.REPLICATION_ALL, this.makeReplicationPacket());
   }
 
   joinPlayer(newPlayer: Player): boolean {
@@ -93,8 +93,9 @@ export class Room {
     }
 
     // 방을 나갔다는것을 다른 유저도 알아야한다
+    const leavePacket = this.makeRoomLeaveResponsePacket(player.ID);
     this.players.map(p => {
-      p.client.emit(E.PLAYER_LEAVE, player.makeLeavePacket());
+      p.client.emit(E.ROOM_LEAVE, leavePacket);
     });
 
     console.log(`leave room - room=${this.ID} player=${player.ID} room_size=${this.players.length}`);
@@ -162,17 +163,23 @@ export class Room {
 
   networkLoop() {
     this.players.forEach(player => {
-      const packet: P.PlayerStatusPacket = {
-        players: this.players.map(p => ({
+      const actions = this.players.map(p => {
+        const packet: P.ReplicationActionPacket = {
+          action: E.ReplicationActions.Update,
           id: p.ID,
+          type: 'player',
           pos_x: p.posX,
           pos_y: p.posY,
           dir_x: p.dirX,
           dir_y: p.dirY,
           speed: p.speed,
-        })),
+        };
+        return packet;
+      });
+      const packet: P.ReplicationBulkActionPacket = {
+        actions: actions,
       };
-      player.client.emit(E.PLAYER_STATUS, packet);
+      player.client.emit(E.REPLICATION_BULK_ACTION, packet);
     });
   }
 
@@ -181,7 +188,7 @@ export class Room {
     // TODO broadcast emit
     const packet = food.makeCreatePacket();
     this.players.map(p => p.client).forEach(client => {
-      client.emit(E.STATIC_ITEM_CREATE, packet);
+      client.emit(E.REPLICATION_ACTION, packet);
     });
   }
 
@@ -189,7 +196,7 @@ export class Room {
     this.players.forEach(p => {
       const packet = food.makeRemovePacket();
       const client = p.client;
-      client.emit(E.STATIC_ITEM_REMOVE, packet);
+      client.emit(E.REPLICATION_ACTION, packet);
       console.log(`sent food remove packet : ${JSON.stringify(packet)}`)
     });
   }
@@ -202,7 +209,13 @@ export class Room {
     };
   }
 
-  makeReplicationPacket(): P.ReplicationPacket {
+  makeRoomLeaveResponsePacket(id: number): P.RoomLeavePacket {
+    return {
+      player_id: id,
+    };
+  }
+
+  makeReplicationPacket(): P.ReplicationAllPacket {
     const players = this.players.map(p => ({
       id: p.ID,
       nickname: p.nickname,

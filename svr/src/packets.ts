@@ -1,3 +1,5 @@
+import { ReplicationActions } from "./events";
+
 export interface RoomJoinRequestPacket {
   nickname: string;
   room_id: string;
@@ -9,12 +11,16 @@ export interface RoomJoinResponsePacket {
   nickname: string;
 }
 
+export interface RoomLeavePacket {
+  player_id: number;
+}
+
 export interface MoveRequestPacket {
   dir_x: number;
   dir_y: number;
 }
 
-export interface ReplicationPacket {
+export interface ReplicationAllPacket {
   players: {
     id: number;
     nickname: string;
@@ -29,48 +35,34 @@ export interface ReplicationPacket {
   }[];
 }
 
-export interface PlayerStatusPacket {
-  players: {
-    id: number;
-
-    pos_x: number;
-    pos_y: number;
-    dir_x: number;
-    dir_y: number;
-    speed: number;
-  }[];
+export interface ReplicationActionPacket {
+  action: ReplicationActions;
+  id: number;
+  type?: string;
+  pos_x?: number;
+  pos_y?: number;
+  dir_x?: number;
+  dir_y?: number;
+  speed?: number;
+  extra?: string;
 }
+
+export const makeReplicationRemovePacket = (id: number): ReplicationActionPacket => {
+  return {
+    action: ReplicationActions.Remove,
+    id: id,
+  };
+}
+
+export interface ReplicationBulkActionPacket {
+  actions: ReplicationActionPacket[];
+}
+
 
 export interface LeaderboardPacket {
-  players: {
+  ranks: {
     id: number;
     score: number;
-    ranking: number;
+    rank: number;
   }[];
-}
-
-export interface PlayerSpawnPacket {
-  id: number;
-  nickname: string;
-  pos_x: number;
-  pos_y: number;
-}
-
-export interface PlayerDeadPacket {
-  id: number;
-}
-
-export interface PlayerLeavePacket {
-  id: number;
-}
-
-export interface StaticItemCreatePacket {
-  type: string;
-  id: number;
-  pos_x: number;
-  pos_y: number;
-}
-
-export interface StaticItemRemovePacket {
-  id: number;
 }

@@ -12,16 +12,10 @@ namespace Assets.Game.Packets
 
         public const string MOVE = "move";
 
-        public const string PLAYER_STATUS = "player-status";
+        public const string REPLICATION_ALL = "replication-all";
+        public const string REPLICATION_ACTION = "replication-action";
+        public const string REPLICATION_BULK_ACTION = "replication-bulk-action";
 
-        public const string REPLICATION = "replication";
-
-        public const string PLAYER_SPAWN = "player-spawn";
-        public const string PLAYER_DEAD = "player-dead";
-        public const string PLAYER_LEAVE = "player-leave";
         public const string PLAYER_READY = "player-ready";
-
-        public const string STATIC_ITEM_CREATE = "static-item-create";
-        public const string STATIC_ITEM_REMOVE = "static-item-remove";
     }
 }

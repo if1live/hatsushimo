@@ -14,81 +14,43 @@ namespace Assets.Game
 
         Dictionary<int, Food> foodTable = new Dictionary<int, Food>();
         Dictionary<int, Player> playerTable = new Dictionary<int, Player>();
-        Player myPlayer = null;
 
-        IObservable<ReplicationPacket> ReplicationObservable {
+        IObservable<ReplicationAllPacket> ReplicationAllObservable {
+            get { return replicationAll.Where(x => x != null).AsObservable(); }
+        }
+        ReactiveProperty<ReplicationAllPacket> replicationAll = new ReactiveProperty<ReplicationAllPacket>(null);
+
+        IObservable<ReplicationActionPacket> ReplicationObservable {
             get { return replication.Where(x => x != null).AsObservable(); }
         }
-        ReactiveProperty<ReplicationPacket> replication = new ReactiveProperty<ReplicationPacket>(null);
+        ReactiveProperty<ReplicationActionPacket> replication = new ReactiveProperty<ReplicationActionPacket>(null);
 
-        IObservable<StaticItemCreatePacket> ItemCreateObservable {
-            get { return itemCreate.Where(x => x != null).AsObservable(); }
+        IObservable<ReplicationBulkActionPacket> ReplicationBulkObservable {
+            get { return replicationBulk.Where(x => x != null).AsObservable(); }
         }
-        ReactiveProperty<StaticItemCreatePacket> itemCreate = new ReactiveProperty<StaticItemCreatePacket>(null);
-
-        IObservable<StaticItemRemovePacket> ItemRemoveObservable {
-            get { return itemRemove.Where(x => x != null).AsObservable(); }
-        }
-        ReactiveProperty<StaticItemRemovePacket> itemRemove = new ReactiveProperty<StaticItemRemovePacket>(null);
-
-        IObservable<PlayerStatusPacket> PlayerStatusObservable {
-            get { return playerStatus.Where(x => x != null).AsObservable(); }
-        }
-        ReactiveProperty<PlayerStatusPacket> playerStatus = new ReactiveProperty<PlayerStatusPacket>(null);
-
-        IObservable<PlayerSpawnPacket> PlayerSpawnObservable {
-            get { return playerSpawn.Where(x => x != null).AsObservable(); }
-        }
-        ReactiveProperty<PlayerSpawnPacket> playerSpawn = new ReactiveProperty<PlayerSpawnPacket>(null);
-
-        IObservable<PlayerDeadPacket> PlayerDeadObservable {
-            get { return playerDead.Where(x => x != null).AsObservable(); }
-        }
-        ReactiveProperty<PlayerDeadPacket> playerDead = new ReactiveProperty<PlayerDeadPacket>(null);
-
-        IObservable<PlayerLeavePacket> PlayerLeaveObservable {
-            get { return playerLeave.Where(x => x != null).AsObservable(); }
-        }
-        ReactiveProperty<PlayerLeavePacket> playerLeave = new ReactiveProperty<PlayerLeavePacket>(null);
+        ReactiveProperty<ReplicationBulkActionPacket> replicationBulk = new ReactiveProperty<ReplicationBulkActionPacket>(null);
 
         private void Start()
         {
             var conn = ConnectionManager.Instance.Conn;
 
-            // 플레이어 자신은 항상 존재한다
-            myPlayer = Instantiate(prefab_my);
-            myPlayer.transform.SetParent(transform);
-            myPlayer.id = conn.PlayerID;
-
-            conn.On<ReplicationPacket>(Events.REPLICATION, (p) => replication.Value = p);
-
-            conn.On<PlayerSpawnPacket>(Events.PLAYER_SPAWN, (p) => playerSpawn.Value = p);
-            conn.On<PlayerDeadPacket>(Events.PLAYER_DEAD, (p) => playerDead.Value = p);
-            conn.On<PlayerLeavePacket>(Events.PLAYER_LEAVE, (p) => playerLeave.Value = p);
-            conn.On<PlayerStatusPacket>(Events.PLAYER_STATUS, (p) => playerStatus.Value = p);
-
-            conn.On<StaticItemCreatePacket>(Events.STATIC_ITEM_CREATE, (p) => itemCreate.Value = p);
-            conn.On<StaticItemRemovePacket>(Events.STATIC_ITEM_REMOVE, (p) => itemRemove.Value = p);
+            conn.On<ReplicationAllPacket>(Events.REPLICATION_ALL, (p) => replicationAll.Value = p);
+            conn.On<ReplicationActionPacket>(Events.REPLICATION_ACTION, (p) => replication.Value = p);
+            conn.On<ReplicationBulkActionPacket>(Events.REPLICATION_BULK_ACTION, (p) => replicationBulk.Value = p);
 
             conn.On(Events.PLAYER_READY, () =>
             {
                 Debug.Log("player ready");
             });
 
-            ReplicationObservable.ObserveOnMainThread().Subscribe(ctx =>
+            ReplicationAllObservable.ObserveOnMainThread().Subscribe(ctx =>
             {
-                var myID = conn.PlayerID;
-
-                // 내 플레이어 생성
-                var my = ctx.GetMyPlayer(myID);
-                myPlayer.ApplyReplication(my);
-
-                // 다른 플레이어 생성
-                foreach (var p in ctx.GetOtherPlayers(myID))
+                // 플레이어 생성
+                foreach (var p in ctx.players)
                 {
                     var pos = new Vector3(p.pos_x, p.pos_y, 0);
-                    var player = GetOrCreatePlayer(prefab_enemy, p.id, pos);
-                    player.ApplyReplication(p);
+                    var player = GetOrCreatePlayer(p.id, pos);
+                    player.ApplyInitial(p);
                 }
 
                 // 아이템 생성
@@ -100,53 +62,91 @@ namespace Assets.Game
 
             }).AddTo(gameObject);
 
-            // TODO 좌표 정보 동기화
-            PlayerStatusObservable.ObserveOnMainThread().Subscribe(ctx =>
+            ReplicationBulkObservable.ObserveOnMainThread().Subscribe(packet =>
             {
-                var myID = conn.PlayerID;
-
-                var myStatus = ctx.GetMyPlayer(myID);
-                myPlayer.ApplyStatus(myStatus);
-
-                foreach (var p in ctx.GetEnemyPlayers(myID))
+                foreach(var act in packet.actions)
                 {
-                    Player player = playerTable[p.id];
-                    player.ApplyStatus(p);
+                    HandleReplicationAction(act);
                 }
             }).AddTo(gameObject);
 
-
-            PlayerSpawnObservable.ObserveOnMainThread().Subscribe(ctx =>
+            ReplicationObservable.ObserveOnMainThread().Subscribe(packet =>
             {
-                Debug.Assert(playerTable.ContainsKey(ctx.id) == false, "already id exist");
-                var pos = new Vector3(ctx.pos_x, ctx.pos_y, 0);
-                var player = CreatePlayer(prefab_enemy, ctx.id, pos);
-
-            }).AddTo(gameObject);
-
-            PlayerDeadObservable.ObserveOnMainThread().Subscribe(packet =>
-            {
-                RemovePlayer(packet.id);
-            }).AddTo(gameObject);
-
-            PlayerLeaveObservable.ObserveOnMainThread().Subscribe(packet =>
-            {
-                RemovePlayer(packet.id);
-            }).AddTo(gameObject);
-
-            ItemCreateObservable.ObserveOnMainThread().Subscribe(packet =>
-            {
-                // TODO food
-                var pos = new Vector3(packet.pos_x, packet.pos_y, 0);
-                CreateFood(packet.id, pos);
-            }).AddTo(gameObject);
-
-            ItemRemoveObservable.ObserveOnMainThread().Subscribe(packet =>
-            {
-                // TODO food
-                RemoveFood(packet.id);
-            }).AddTo(gameObject);
+                HandleReplicationAction(packet);
+            });
         }
+
+        void HandleReplicationAction(ReplicationActionPacket packet)
+        {
+            switch (packet.action)
+            {
+                case ReplicationActions.Create:
+                    HandleReplicationCreate(packet);
+                    break;
+                case ReplicationActions.Update:
+                    HandleReplicationUpdate(packet);
+                    break;
+                case ReplicationActions.Remove:
+                    HandleReplicationRemove(packet);
+                    break;
+                default:
+                    break;
+            };
+        }
+
+        void HandleReplicationCreate(ReplicationActionPacket packet)
+        {
+            var conn = ConnectionManager.Instance.Conn;
+            var myid = conn.PlayerID;
+            var id = packet.id;
+            var x = packet.pos_x;
+            var y = packet.pos_y;
+            var pos = new Vector3(x, y, 0);
+
+            if (packet.type == "player")
+            {
+                var player = CreatePlayer(id, pos);
+                player.ApplyReplication(packet);
+            }
+            else if(packet.type == "food")
+            {
+                CreateFood(id, pos);
+            }
+        }
+
+        void HandleReplicationUpdate(ReplicationActionPacket packet)
+        {
+            var id = packet.id;
+            if(packet.type == "player")
+            {
+                var player = playerTable[id];
+                player.ApplyReplication(packet);
+            }
+        }
+
+        void HandleReplicationRemove(ReplicationActionPacket packet)
+        {
+            var conn = ConnectionManager.Instance.Conn;
+            var myid = conn.PlayerID;
+            var id = packet.id;
+
+            if (myid == id)
+            {
+                // TODO 자신이 죽는 경우
+                Debug.Log("TODO self remove");
+            }
+            else if(playerTable.ContainsKey(id))
+            {
+                RemovePlayer(id);
+            }
+            else if (foodTable.ContainsKey(id))
+            {
+                RemoveFood(id);
+            }
+        }
+
+
+        
 
         Food CreateFood(int id, Vector3 pos)
         {
@@ -167,9 +167,17 @@ namespace Assets.Game
             Destroy(item.gameObject);
         }
 
-        Player CreatePlayer(Player prefab, int id, Vector3 pos)
+        Player GetPlayerPrefab(int id)
+        {
+            var conn = ConnectionManager.Instance.Conn;
+            var myid = conn.PlayerID;
+            return (myid == id) ? prefab_my : prefab_enemy;
+        }
+
+        Player CreatePlayer(int id, Vector3 pos)
         {
             Debug.Assert(playerTable.ContainsKey(id) == false, $"player={id} already exist in player table");
+            var prefab = GetPlayerPrefab(id);
             var player = Instantiate(prefab);
             playerTable[id] = player;
             player.transform.SetParent(transform);
@@ -179,15 +187,14 @@ namespace Assets.Game
             return player;
         }
 
-        Player GetOrCreatePlayer(Player prefab, int id, Vector3 pos)
+        Player GetOrCreatePlayer(int id, Vector3 pos)
         {
             Player player = null;
             if (!playerTable.TryGetValue(id, out player))
             {
-                player = Instantiate(prefab);
-                player.transform.SetParent(transform);
-                playerTable[id] = player;
+                player = CreatePlayer(id, pos);
             }
+            player.transform.position = pos;
             return player;
         }
 
@@ -205,15 +212,11 @@ namespace Assets.Game
             if (!mgr) { return; }
 
             var conn = mgr.Conn;
-            conn.Off(Events.PLAYER_STATUS);
-
             conn.Off(Events.PLAYER_READY);
-            conn.Off(Events.PLAYER_SPAWN);
-            conn.Off(Events.PLAYER_DEAD);
-            conn.Off(Events.PLAYER_LEAVE);
 
-            conn.Off(Events.STATIC_ITEM_CREATE);
-            conn.Off(Events.STATIC_ITEM_REMOVE);
+            conn.Off(Events.REPLICATION_ALL);
+            conn.Off(Events.REPLICATION_ACTION);
+            conn.Off(Events.REPLICATION_BULK_ACTION);
         }
     }
 }
