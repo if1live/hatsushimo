@@ -79,12 +79,13 @@ namespace Assets.Game
             if (packetExist)
             {
                 var conn = ConnectionManager.Instance.Conn;
-                conn.Emit("move", packet);
+                conn.Emit(Events.MOVE, packet);
             }
             else
             {
                 var conn = ConnectionManager.Instance.Conn;
-                conn.Emit("move", packet);
+                conn.Emit(Events.MOVE, packet);
+
             }
         }
 

@@ -1,24 +1,33 @@
 namespace Assets.Game.Packets
 {
-    class Events
+    public enum Events
     {
-        public const string STATUS_PING = "status-ping";
-        public const string STATUS_PONG = "status-pong";
+        HELLO = 1,
+        WELCOME,
 
-        public const string HELLO = "hello";
-        public const string WELCOME = "welcome";
+        STATUS_PING,
+        STATUS_PONG,
 
-        public const string ROOM_JOIN = "room-join";
-        public const string ROOM_LEAVE = "room-leave";
+        ROOM_JOIN,
+        ROOM_LEAVE,
 
-        public const string LEADERBOARD = "leaderboard";
+        LEADERBOARD,
 
-        public const string MOVE = "move";
+        MOVE,
 
-        public const string REPLICATION_ALL = "replication-all";
-        public const string REPLICATION_ACTION = "replication-action";
-        public const string REPLICATION_BULK_ACTION = "replication-bulk-action";
+        REPLICATION_ALL,
+        REPLICATION_ACTION,
+        REPLICATION_BULK_ACTION,
 
-        public const string PLAYER_READY = "player-ready";
+        PLAYER_READY,
+    }
+
+    public static class EventsExtensions
+    {
+        public static string MakeString(this Events ev)
+        {
+            int val = (int)ev;
+            return val.ToString();
+        }
     }
 }

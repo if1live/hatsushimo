@@ -1,10 +1,11 @@
 import * as C from './config';
 import * as P from './packets';
 import { ReplicationActions } from './events';
+import { Connection } from './connection';
 
 export class Player {
   // 접속 정보
-  client: SocketIO.Socket;
+  conn: Connection;
 
   ID: number;
   roomID: string | null;
@@ -19,8 +20,8 @@ export class Player {
 
   score: number;
 
-  constructor(client: SocketIO.Socket, id: number) {
-    this.client = client;
+  constructor(conn: Connection, id: number) {
+    this.conn = conn;
 
     this.ID = id;
     this.roomID = null;
@@ -37,7 +38,7 @@ export class Player {
 
   toJson() {
     const obj = Object.assign({}, this);
-    obj.client = undefined;
+    obj.conn = undefined;
     return obj;
   }
 

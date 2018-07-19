@@ -16,35 +16,35 @@ namespace Assets.Game
 
         public Socket RawSocket { set; private get; }
 
-        public void Emit<TContext>(string eventString, TContext ctx)
+        public void Emit<TContext>(Events ev, TContext ctx)
         {
             if(RawSocket == null) { return; }
             var jobj = JObject.FromObject(ctx);
-            RawSocket.Emit(eventString, jobj);
+            RawSocket.Emit(ev.MakeString(), jobj);
         }
 
-        public void EmitBytes(string eventString, byte[] bytes)
+        public void EmitBytes(Events ev, byte[] bytes)
         {
             if(RawSocket == null) { return; }
-            RawSocket.Emit(eventString, bytes);
+            RawSocket.Emit(ev.MakeString(), bytes);
         }
 
-        public void EmitPacket(string eventString, ISerializePacket packet)
+        public void EmitPacket(Events ev, ISerializePacket packet)
         {
             if (RawSocket == null) { return; }
-            EmitBytes(eventString, packet.Serialize());
+            EmitBytes(ev, packet.Serialize());
         }
 
-        public void Emit(string eventString)
+        public void Emit(Events ev)
         {
             if (RawSocket == null) { return; }
-            RawSocket.Emit(eventString);
+            RawSocket.Emit(ev.MakeString());
         }
 
-        public void On<TContext>(string eventString, Action<TContext> fn)
+        public void On<TContext>(Events ev, Action<TContext> fn)
         {
             if (RawSocket == null) { return; }
-            RawSocket.On(eventString, (data) =>
+            RawSocket.On(ev.MakeString(), (data) =>
             {
                 var jobj = data as JObject;
                 Debug.Assert(jobj != null, "cannot casting to JObject");
@@ -53,10 +53,10 @@ namespace Assets.Game
             });
         }
 
-        public void OnBytes(string eventString, Action<byte[]> fn)
+        public void OnBytes(Events ev, Action<byte[]> fn)
         {
             if (RawSocket == null) { return; }
-            RawSocket.On(eventString, (data) =>
+            RawSocket.On(ev.MakeString(), (data) =>
             {
                 var bytes = data as byte[];
                 Debug.Assert(bytes != null, "cannot casting to byte array");
@@ -64,11 +64,11 @@ namespace Assets.Game
             });
         }
 
-        public void OnPacket<TPacket>(string eventString, Action<TPacket> fn)
+        public void OnPacket<TPacket>(Events ev, Action<TPacket> fn)
             where TPacket : IDeserializePacket, new()
         {
             if(RawSocket == null) { return; }
-            RawSocket.On(eventString, (data) =>
+            RawSocket.On(ev.MakeString(), (data) =>
             {
                 var bytes = data as byte[];
                 Debug.Assert(bytes != null, "cannot casting to byte array");
@@ -78,22 +78,22 @@ namespace Assets.Game
             });
         }
 
-        public void On(string eventString, Action fn)
+        public void On(Events ev, Action fn)
         {
             if (RawSocket == null) { return; }
-            RawSocket.On(eventString, fn);
+            RawSocket.On(ev.MakeString(), fn);
         }
 
-        public void Off(string eventString)
+        public void Off(Events ev)
         {
             if (RawSocket == null) { return; }
-            RawSocket.Off(eventString);
+            RawSocket.Off(ev.MakeString());
         }
 
-        public void Off(string eventString, IListener fn)
+        public void Off(Events ev, IListener fn)
         {
             if(RawSocket == null) { return; }
-            RawSocket.Off(eventString, fn);
+            RawSocket.Off(ev.MakeString(), fn);
         }
     }
 }

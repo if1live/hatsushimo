@@ -1,7 +1,7 @@
 import { Player } from './player';
 import { makeFoodID } from './idgen';
 import * as P from './packets';
-import * as E from './events';
+import { Events as E, ReplicationActions } from './events';
 import * as H from './helpers';
 import * as C from './config';
 import { Food } from './items';
@@ -50,7 +50,7 @@ export class Room {
     // 기존 유저들에게 새로 생성된 플레이어 정보를 알려주기
     const spawnPacket = player.makeSpawnPacket();
     this.players.map(p => {
-      p.client.emit(E.REPLICATION_ACTION, spawnPacket);
+      p.conn.emit(E.REPLICATION_ACTION, spawnPacket);
     });
     console.log(`ready room - room=${this.ID} player=${player.ID} room_size=${this.players.length}`);
 
@@ -58,10 +58,10 @@ export class Room {
     this.players.push(player);
 
     // 접속한 유저에게 합류 메세지 보내기
-    player.client.emit(E.PLAYER_READY);
+    player.conn.emit(E.PLAYER_READY);
 
     // 신규 유저에게 월드 정보 알려주기
-    player.client.emit(E.REPLICATION_ALL, this.makeReplicationPacket());
+    player.conn.emit(E.REPLICATION_ALL, this.makeReplicationPacket());
   }
 
   joinPlayer(newPlayer: Player): boolean {
@@ -95,7 +95,7 @@ export class Room {
     // 방을 나갔다는것을 다른 유저도 알아야한다
     const leavePacket = this.makeRoomLeaveResponsePacket(player.ID);
     this.players.map(p => {
-      p.client.emit(E.ROOM_LEAVE, leavePacket);
+      p.conn.emit(E.ROOM_LEAVE, leavePacket);
     });
 
     console.log(`leave room - room=${this.ID} player=${player.ID} room_size=${this.players.length}`);
@@ -165,7 +165,7 @@ export class Room {
     this.players.forEach(player => {
       const actions = this.players.map(p => {
         const packet: P.ReplicationActionPacket = {
-          action: E.ReplicationActions.Update,
+          action: ReplicationActions.Update,
           id: p.ID,
           type: 'player',
           pos_x: p.posX,
@@ -179,7 +179,7 @@ export class Room {
       const packet: P.ReplicationBulkActionPacket = {
         actions: actions,
       };
-      player.client.emit(E.REPLICATION_BULK_ACTION, packet);
+      player.conn.emit(E.REPLICATION_BULK_ACTION, packet);
     });
   }
 
@@ -187,7 +187,7 @@ export class Room {
     // 모든 유저에게 아이템 생성 패킷 전송
     // TODO broadcast emit
     const packet = food.makeCreatePacket();
-    this.players.map(p => p.client).forEach(client => {
+    this.players.map(p => p.conn).forEach(client => {
       client.emit(E.REPLICATION_ACTION, packet);
     });
   }
@@ -195,7 +195,7 @@ export class Room {
   sendFoodRemovePacket(food: Food) {
     this.players.forEach(p => {
       const packet = food.makeRemovePacket();
-      const client = p.client;
+      const client = p.conn;
       client.emit(E.REPLICATION_ACTION, packet);
       console.log(`sent food remove packet : ${JSON.stringify(packet)}`)
     });

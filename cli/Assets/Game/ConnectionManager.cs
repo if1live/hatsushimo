@@ -62,7 +62,8 @@ namespace Assets.Game
 
             _socket = IO.Socket(address);
             Conn.RawSocket = _socket;
-            Conn.On(Socket.EVENT_CONNECT, () =>
+
+            _socket.On(Socket.EVENT_CONNECT, () =>
             {
                 Debug.Log("connect... send hello");
                 Conn.Emit(Events.HELLO);

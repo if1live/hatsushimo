@@ -1,28 +1,26 @@
-export const CONNECT = 'connect';
-export const DISCONNECT = 'disconnect';
+export enum Events {
+  HELLO = 1,
+  WELCOME,
 
-export const HELLO = 'hello';
-export const WELCOME = 'welcome';
+  STATUS_PING,
+  STATUS_PONG,
 
-export const STATUS_PING = 'status-ping';
-export const STATUS_PONG = 'status-pong';
+  ROOM_JOIN,
+  ROOM_LEAVE,
 
-export const ROOM_JOIN = 'room-join';
-export const ROOM_LEAVE = 'room-leave';
+  LEADERBOARD,
 
-// 리더보드 정보를 주기적으로 내려주기
-export const LEADERBOARD = 'leaderboard';
+  MOVE,
 
-export const MOVE = 'move';
+  REPLICATION_ALL,
+  REPLICATION_ACTION,
+  REPLICATION_BULK_ACTION,
 
-export const REPLICATION_ALL = 'replication-all';
-export const REPLICATION_ACTION = 'replication-action';
-export const REPLICATION_BULK_ACTION = 'replication-bulk-action';
+  PLAYER_READY,
+}
 
 export enum ReplicationActions {
   Create = 'create',
   Update = 'update',
   Remove = 'remove',
 }
-
-export const PLAYER_READY = 'player-ready';

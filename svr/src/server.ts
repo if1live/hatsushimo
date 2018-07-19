@@ -5,9 +5,10 @@ import { default as socketIo } from 'socket.io';
 import { Player } from './player';
 import { RoomManager } from './room';
 import { makePlayerID } from './idgen';
+import { Connection } from './connection';
 import * as H from './helpers';
 import * as P from './packets';
-import * as E from './events';
+import { Events as E } from './events';
 import * as C from './config';
 
 const app = express();
@@ -21,14 +22,15 @@ const roomManager = new RoomManager();
 // 어떤 방에 들어가든 id는 유지된다
 const playerIDGenerator = makePlayerID();
 
-io.on(E.CONNECT, (client) => {
+io.on('connect', (client) => {
+  const conn = new Connection(client);
   const id = playerIDGenerator.next().value;
-  const player = new Player(client, id);
+  const player = new Player(conn, id);
   players.push(player);
 
   console.log(`user connect - id=${player.ID}, current_user=${players.length}`);
 
-  client.on(E.DISCONNECT, () => {
+  client.on('disconnect', () => {
     if (player.roomID) {
       const room = roomManager.getRoom(player.roomID);
       room.leavePlayer(player);
@@ -40,25 +42,25 @@ io.on(E.CONNECT, (client) => {
   });
 
   // hello
-  client.on(E.HELLO, () => {
+  conn.on(E.HELLO, () => {
     const packet: P.WelcomePacket = {
       version: 1234,
     };
-    client.emit(E.WELCOME, packet);
+    conn.emit(E.WELCOME, packet);
   });
 
   // ping
-  client.on(E.STATUS_PING, (data: Buffer) => {
+  conn.on(E.STATUS_PING, (data: Buffer) => {
     const ping = new P.StatusPingPacket();
     ping.deserialize(data);
 
     const pong = new P.StatusPongPacket();
     pong.millis = ping.millis;
-    client.emit(E.STATUS_PONG, pong.serialize());
+    conn.emit(E.STATUS_PONG, pong.serialize());
   });
 
   // room
-  client.on(E.ROOM_JOIN, (req: P.RoomJoinRequestPacket) => {
+  conn.on(E.ROOM_JOIN, (req: P.RoomJoinRequestPacket) => {
     player.reset();
     const nickname = req.nickname;
     player.nickname = nickname;
@@ -66,26 +68,26 @@ io.on(E.CONNECT, (client) => {
     const room = roomManager.getRoom(req.room_id);
     room.joinPlayer(player);
 
-    client.emit(E.ROOM_JOIN, room.makeRoomJoinResponsePacket(player));
+    conn.emit(E.ROOM_JOIN, room.makeRoomJoinResponsePacket(player));
   });
 
-  client.on(E.ROOM_LEAVE, () => {
+  conn.on(E.ROOM_LEAVE, () => {
     if (!player.roomID) { return; }
     const room = roomManager.getRoom(player.roomID);
     room.leavePlayer(player);
-    client.emit(E.ROOM_LEAVE);
+    conn.emit(E.ROOM_LEAVE);
   });
 
   // 방에 접속하면 클라이언트에서 게임씬 로딩을 시작한다
   // 로딩이 끝난 다음부터 객체가 의미있도록 만들고싶다
   // 게임 로딩이 끝나기전에는 무적으로 만드는게 목적
-  client.on(E.PLAYER_READY, () => {
+  conn.on(E.PLAYER_READY, () => {
     if (!player.roomID) { return; }
     const room = roomManager.getRoom(player.roomID);
     room.spawnPlayer(player);
   });
 
-  client.on(E.MOVE, (req: P.MoveRequestPacket) => {
+  conn.on(E.MOVE, (req: P.MoveRequestPacket) => {
     const speed = 10;
     const len = H.getLengthVec2(req.dir_x, req.dir_y);
 
