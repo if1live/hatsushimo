@@ -1,6 +1,6 @@
 namespace Assets.Game.Packets
 {
-    class PlayerInitial
+    public class PlayerInitial
     {
         public int id;
         public string nickname;
@@ -8,7 +8,7 @@ namespace Assets.Game.Packets
         public float pos_y;
     }
 
-    class ItemInitial
+    public class ItemInitial
     {
         public int id;
         public string type;
@@ -29,7 +29,7 @@ namespace Assets.Game.Packets
         public const string Remove = "remove";
     }
 
-    class ReplicationActionPacket
+    public class ReplicationActionPacket
     {
         public string action;
         public int id;

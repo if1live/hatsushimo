@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Assets.Game
 {
-    class Player : MonoBehaviour
+    public class Player : MonoBehaviour
     {
         public int id;
         public string nickname;

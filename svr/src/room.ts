@@ -23,6 +23,7 @@ export class Room {
   // handler
   gameLoopHandler: number;
   networkLoopHandler: number;
+  leaderboardLoopHandler: number;
 
   constructor(id: string) {
     this.ID = id;
@@ -35,6 +36,7 @@ export class Room {
 
     this.gameLoopHandler = INVALID_LOOP_HANDLER;
     this.networkLoopHandler = INVALID_LOOP_HANDLER;
+    this.leaderboardLoopHandler = INVALID_LOOP_HANDLER;
 
     // 방 만들때 음식 미리 만들기
     for (var i = 0; i < C.FOOD_COUNT; i++) {
@@ -183,6 +185,34 @@ export class Room {
     });
   }
 
+  leaderboardLoop() {
+    const sortedPlayers = this.players.sort((a, b) => b.score - a.score);
+    const highRanks = sortedPlayers.slice(0, 5).map((p, idx): P.RankElement => {
+      const rank = idx + 1;
+      return {
+        id: p.ID,
+        score: p.score,
+        rank,
+      };
+    });
+
+    this.players.forEach(player => {
+      const found = this.players.findIndex(x => x == player);
+      const rank = found + 1;
+      const my: P.RankElement = {
+        id: player.ID,
+        score: player.score,
+        rank,
+      };
+
+      const packet: P.LeaderboardPacket = {
+        leaderboard: highRanks,
+        my,
+      };
+      player.conn.emit(E.LEADERBOARD, packet);
+    });
+  }
+
   sendFoodCreatePacket(food: Food) {
     // 모든 유저에게 아이템 생성 패킷 전송
     // TODO broadcast emit
@@ -250,7 +280,8 @@ export class RoomManager {
   private createRoom(roomID: string): Room {
     const room = new Room(roomID);
     room.gameLoopHandler = setInterval(room.gameLoop.bind(room), 1000 / 60);
-    room.networkLoopHandler = setInterval(room.networkLoop.bind(room), 100);
+    room.networkLoopHandler = setInterval(room.networkLoop.bind(room), 1000 / C.SEND_RATE_COORD);
+    room.leaderboardLoopHandler = setInterval(room.leaderboardLoop.bind(room), 1000 / C.SEND_RATE_LEADERBOARD);
     return room;
   }
 
@@ -260,9 +291,11 @@ export class RoomManager {
 
     clearInterval(room.gameLoopHandler);
     clearInterval(room.networkLoopHandler);
+    clearInterval(room.leaderboardLoopHandler);
 
     room.gameLoopHandler = INVALID_LOOP_HANDLER;
     room.networkLoopHandler = INVALID_LOOP_HANDLER;
+    room.leaderboardLoopHandler = INVALID_LOOP_HANDLER;
 
     this.rooms.delete(roomID);
     return true;

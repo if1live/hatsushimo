@@ -21,7 +21,7 @@ export class StatusPongPacket implements Serializable {
 
   serialize(): Buffer {
     const buffer = new Buffer(4);
-    buffer.writeInt32LE(this.millis, 0);   
+    buffer.writeInt32LE(this.millis, 0);
     return buffer;
   }
 }
@@ -90,10 +90,12 @@ export interface ReplicationBulkActionPacket {
 }
 
 
+export interface RankElement {
+  id: number;
+  score: number;
+  rank: number;
+}
 export interface LeaderboardPacket {
-  ranks: {
-    id: number;
-    score: number;
-    rank: number;
-  }[];
+  leaderboard: RankElement[];
+  my: RankElement;
 }

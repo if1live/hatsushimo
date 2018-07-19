@@ -6,8 +6,10 @@ using UnityEngine;
 
 namespace Assets.Game
 {
-    class ReplicationManager : MonoBehaviour 
+    public class ReplicationManager : MonoBehaviour 
     {
+        public static ReplicationManager Instance;
+
         public Player prefab_enemy;
         public Player prefab_my;
         public Food prefab_food;
@@ -29,6 +31,12 @@ namespace Assets.Game
             get { return replicationBulk.Where(x => x != null).AsObservable(); }
         }
         ReactiveProperty<ReplicationBulkActionPacket> replicationBulk = new ReactiveProperty<ReplicationBulkActionPacket>(null);
+
+        private void Awake()
+        {
+            Debug.Assert(Instance == null);
+            Instance = this;
+        }
 
         private void Start()
         {
@@ -198,6 +206,11 @@ namespace Assets.Game
             return player;
         }
 
+        public Player FindPlayer(int id)
+        {
+            return playerTable[id];
+        }
+
         void RemovePlayer(int id)
         {
             Debug.Assert(playerTable.ContainsKey(id) == true, $"player={id} not exist");
@@ -208,6 +221,9 @@ namespace Assets.Game
 
         private void OnDestroy()
         {
+            Debug.Assert(Instance != null);
+            Instance = null;
+
             var mgr = ConnectionManager.Instance;
             if (!mgr) { return; }
 

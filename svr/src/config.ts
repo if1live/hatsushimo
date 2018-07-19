@@ -4,3 +4,6 @@ export const ROOM_HEIGHT = 30;
 export const SERVER_PORT = 3000;
 
 export const FOOD_COUNT = 10;
+
+export const SEND_RATE_COORD = 15;
+export const SEND_RATE_LEADERBOARD = 15;
