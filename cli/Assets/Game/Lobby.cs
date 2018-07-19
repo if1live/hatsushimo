@@ -32,7 +32,7 @@ namespace Assets.Game
             {
                 joinButton.interactable = true;
                 conn.On<JoinResponsePacket>(Events.ROOM_JOIN, (ctx) => joinResp.Value = ctx);
-            });
+            }).AddTo(gameObject);
 
             joinButton.OnClickAsObservable().Subscribe(_ =>
             {
@@ -56,7 +56,7 @@ namespace Assets.Game
 
             JoinResponseObservable.ObserveOnMainThread().Subscribe(ctx =>
             {
-                Debug.Log($"room id: {ctx.room_id}");
+                Debug.Log($"room id: {ctx.room_id} / player id={ctx.player_id}");
 
                 var conn = ConnectionManager.Instance.Conn;
                 conn.PlayerID = ctx.player_id;
@@ -65,7 +65,7 @@ namespace Assets.Game
 
                 // TOOD async scene loading
                 SceneManager.LoadScene("Game", LoadSceneMode.Single);
-            });
+            }).AddTo(gameObject);
         }
 
         private void OnDestroy()

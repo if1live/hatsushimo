@@ -70,7 +70,7 @@ namespace Assets.Game
 
                 var pos = new Vector3(ctx.pos_x, ctx.pos_y, 0);
                 player.transform.position = pos;
-            });
+            }).AddTo(gameObject);
 
             DeadObservable.ObserveOnMainThread().Subscribe(ctx =>
             {
@@ -78,7 +78,7 @@ namespace Assets.Game
                 var player = playerTable[ctx.id];
                 playerTable.Remove(ctx.id);
                 Destroy(player.gameObject);
-            });
+            }).AddTo(gameObject);
 
             LeaveObservable.ObserveOnMainThread().Subscribe(ctx =>
             {
@@ -86,7 +86,7 @@ namespace Assets.Game
                 var player = playerTable[ctx.id];
                 playerTable.Remove(ctx.id);
                 Destroy(player.gameObject);
-            });
+            }).AddTo(gameObject);
 
             ListObservable.ObserveOnMainThread().Subscribe(ctx =>
             {
@@ -95,7 +95,7 @@ namespace Assets.Game
                 var my = ctx.GetMyPlayer(myID);
                 myPlayer.ApplyInfo(my);
 
-                foreach(var p in ctx.GetEnemyPlayers(myID))
+                foreach (var p in ctx.GetEnemyPlayers(myID))
                 {
                     Player player = null;
                     if (!playerTable.TryGetValue(p.id, out player))
@@ -107,7 +107,7 @@ namespace Assets.Game
 
                     player.ApplyInfo(p);
                 }
-            });
+            }).AddTo(gameObject);
 
             StatusObservable.ObserveOnMainThread().Subscribe(ctx =>
             {
@@ -121,7 +121,7 @@ namespace Assets.Game
                     Player player = playerTable[p.id];
                     player.ApplyStatus(p);
                 }
-            });
+            }).AddTo(gameObject);
 
         }
 

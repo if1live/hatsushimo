@@ -25,7 +25,7 @@ namespace Assets.Game
             {
                 var msg = $"ping: {latency}ms";
                 pingText.text = msg;
-            });
+            }).AddTo(gameObject);
         }
 
         private void OnDestroy()

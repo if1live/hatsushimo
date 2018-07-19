@@ -39,17 +39,17 @@ namespace Assets.Game
 
         private void Start()
         {
-            StatusObservable.ObserveOnMainThread().Subscribe(ctx =>
+            StatusObservable.ObserveOnMainThread().Subscribe(packet =>
             {
-                Debug.Assert(ctx.id == id, "id mismatch");
+                Debug.Assert(packet.id == id, $"id mismatch: my={id} packet={packet.id}");
 
-                DirX = ctx.dir_x;
-                DirY = ctx.dir_y;
-                Speed = ctx.speed;
+                DirX = packet.dir_x;
+                DirY = packet.dir_y;
+                Speed = packet.speed;
 
-                var pos = new Vector3(ctx.pos_x, ctx.pos_y, 0);
+                var pos = new Vector3(packet.pos_x, packet.pos_y, 0);
                 transform.position = pos;
-            });
+            }).AddTo(gameObject);
 
             InfoObservable.ObserveOnMainThread().Subscribe(ctx =>
             {
@@ -58,59 +58,7 @@ namespace Assets.Game
 
                 var pos = new Vector3(ctx.pos_x, ctx.pos_y, 0);
                 transform.position = pos;
-            });
-        }
-
-        private void Update()
-        {
-            if(IsOwner == false)
-            {
-                return;
-            }
-
-
-            bool packetExist = false;
-            var packet = new MovePacket()
-            {
-                dir_x = 0,
-                dir_y = 0,
-            };
-
-            // TODO 키 입력에 따라서 움직이기
-            // TODO 움직이는 명령은 얼마나 자주 보내나?
-            // TODO 가상패드같은거로 바꾸는게 좋을거같은데
-            if(Input.GetKey(KeyCode.UpArrow))
-            {
-                packet.dir_y = +1;
-                packetExist = true;
-            }
-            if(Input.GetKey(KeyCode.DownArrow))
-            {
-                packet.dir_y = -1;
-                packetExist = true;
-            }
-            if(Input.GetKey(KeyCode.LeftArrow))
-            {
-                packet.dir_x = -1;
-                packetExist = true;
-            }
-            if(Input.GetKey(KeyCode.RightArrow))
-            {
-                packet.dir_x = +1;
-                packetExist = true;
-            }
-            
-
-            if(packetExist)
-            {
-                var conn = ConnectionManager.Instance.Conn;
-                conn.Emit("move", packet);
-            }
-            else
-            {
-                var conn = ConnectionManager.Instance.Conn;
-                conn.Emit("move", packet);
-            }
+            }).AddTo(gameObject);
         }
     }
 }
