@@ -5,6 +5,9 @@ namespace Assets.Game.NetChan
     public class WelcomePacket
     {
         public int version;
+
+        public int room_width;
+        public int room_height;
     }
 
     public class StatusPingPacket : ISerializePacket

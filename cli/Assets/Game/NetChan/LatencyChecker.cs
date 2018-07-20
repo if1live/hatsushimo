@@ -1,5 +1,7 @@
 using Assets.Game.Packets;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UniRx;
 using UnityEngine;
@@ -12,10 +14,18 @@ namespace Assets.Game.NetChan
 
         public int intervalMillis = 1000;
 
+        public const int INF_LATENCY = 99999;
+
         public IObservable<int> LatencyObservable {
             get { return latency.AsObservable(); }
         }
-        ReactiveProperty<int> latency = new ReactiveProperty<int>(99999);
+        ReactiveProperty<int> latency = new ReactiveProperty<int>(INF_LATENCY);
+
+        // TODO latency 변화 추적이 목적
+        // 버퍼를 다루는 stream으로 바꿀수 있을거같은데
+        const int LATENCY_QUEUE_MAX_SIZE = 30;
+        Queue<int> latencyQueue = new Queue<int>(LATENCY_QUEUE_MAX_SIZE);
+        
 
         private void Awake()
         {
@@ -38,11 +48,23 @@ namespace Assets.Game.NetChan
             }).AddTo(gameObject);
         }
 
+        private void OnDestroy()
+        {
+            Debug.Assert(Instance == this);
+            Instance = null;
+
+            var mgr = ConnectionManager.Instance;
+            if (mgr == null) { return; }
+
+            var conn = mgr.Conn;
+            conn.Off(Events.STATUS_PONG);
+        }
+
         void OnReceivePong(StatusPongPacket packet)
         {
             int now = TimeUtils.NowMillis;
             int diff = now - packet.millis;
-            latency.Value = diff;
+            PushLatency(diff);
         }
 
         void SendPing(Connection conn)
@@ -54,16 +76,15 @@ namespace Assets.Game.NetChan
             conn.EmitPacket(Events.STATUS_PING, packet);
         }
 
-        private void OnDestroy()
+        void PushLatency(int millis)
         {
-            Debug.Assert(Instance == this);
-            Instance = null;
+            latencyQueue.Enqueue(millis);
+            if (latencyQueue.Count > LATENCY_QUEUE_MAX_SIZE)
+            {
+                latencyQueue.Dequeue();
+            }
 
-            var mgr = ConnectionManager.Instance;
-            if(mgr == null) { return; }
-
-            var conn = mgr.Conn;
-            conn.Off(Events.STATUS_PONG);
+            latency.Value = millis;
         }
     }
 }

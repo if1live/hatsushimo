@@ -75,6 +75,11 @@ namespace Assets.Game.NetChan
                 if (cli == svr)
                 {
                     Debug.Log($"api version={svr}");
+
+                    // save config
+                    Room.RoomWidth = packet.room_width;
+                    Room.RoomHeight = packet.room_height;
+
                     isReady.Value = true;
                 }
                 else

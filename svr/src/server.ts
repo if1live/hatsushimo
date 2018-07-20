@@ -44,6 +44,8 @@ io.on('connect', (client) => {
   // welcome
   const welcomePacket: P.WelcomePacket = {
     version: 1234,
+    room_width: C.ROOM_WIDTH,
+    room_height: C.ROOM_HEIGHT,
   };
   conn.emit(E.WELCOME, welcomePacket);
 

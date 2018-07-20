@@ -30,6 +30,9 @@ export class StatusPongPacket implements Serializable {
 // 게임 작동에 필요한 상수 및 검증 코드 알려주기
 export interface WelcomePacket {
   version: number;
+
+  room_width: number;
+  room_height: number;
 }
 
 export interface RoomJoinRequestPacket {
