@@ -4,27 +4,30 @@ using System.Threading.Tasks;
 using UniRx;
 using UnityEngine;
 
-namespace Assets.Game
+namespace Assets.Game.NetChan
 {
-    class PingSender
+    public class LatencyChecker : MonoBehaviour
     {
+        public static LatencyChecker Instance = null;
+
+        public int intervalMillis = 1000;
+
         public IObservable<int> LatencyObservable {
             get { return latency.AsObservable(); }
         }
         ReactiveProperty<int> latency = new ReactiveProperty<int>(99999);
 
-        readonly long intervalMillis;
-
-        public PingSender(long intervalMillis)
+        private void Awake()
         {
-            this.intervalMillis = intervalMillis;
+            Debug.Assert(Instance == null);
+            Instance = this;
         }
 
-        public void Setup()
+        private void Start()
         {
             ConnectionManager.Instance.ReadyObservable.Subscribe(async conn =>
             {
-                RegisterHandler(conn);
+                conn.OnPacket<StatusPongPacket>(Events.STATUS_PONG, OnReceivePong);
 
                 var delay = TimeSpan.FromMilliseconds(intervalMillis);
                 while (true)
@@ -32,17 +35,14 @@ namespace Assets.Game
                     SendPing(conn);
                     await Task.Delay(delay);
                 }
-            });
+            }).AddTo(gameObject);
         }
 
-        public void Cleanup()
+        void OnReceivePong(StatusPongPacket packet)
         {
-            var mgr = ConnectionManager.Instance;
-            if (mgr)
-            {
-                var conn = mgr.Conn;
-                UnRegisterHandler(conn);
-            }
+            int now = TimeUtils.NowMillis;
+            int diff = now - packet.millis;
+            latency.Value = diff;
         }
 
         void SendPing(Connection conn)
@@ -54,18 +54,15 @@ namespace Assets.Game
             conn.EmitPacket(Events.STATUS_PING, packet);
         }
 
-        void RegisterHandler(Connection conn)
+        private void OnDestroy()
         {
-            conn.OnPacket<StatusPongPacket>(Events.STATUS_PONG, (packet) =>
-            {
-                int now = TimeUtils.NowMillis;
-                int diff = now - packet.millis;
-                latency.Value = diff;
-            });
-        }
+            Debug.Assert(Instance == this);
+            Instance = null;
 
-        void UnRegisterHandler(Connection conn)
-        {
+            var mgr = ConnectionManager.Instance;
+            if(mgr == null) { return; }
+
+            var conn = mgr.Conn;
             conn.Off(Events.STATUS_PONG);
         }
     }

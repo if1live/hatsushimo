@@ -4,7 +4,7 @@ using System;
 using UniRx;
 using UnityEngine;
 
-namespace Assets.Game
+namespace Assets.Game.NetChan
 {
     class ConnectionManager : MonoBehaviour
     {

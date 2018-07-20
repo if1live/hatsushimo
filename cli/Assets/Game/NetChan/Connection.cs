@@ -5,7 +5,7 @@ using Quobject.SocketIoClientDotNet.Client;
 using System;
 using UnityEngine;
 
-namespace Assets.Game
+namespace Assets.Game.NetChan
 {
     class Connection
     {

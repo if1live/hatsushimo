@@ -1,3 +1,4 @@
+using Assets.Game.NetChan;
 using Assets.Game.Packets;
 using System;
 using UniRx;

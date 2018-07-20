@@ -1,6 +1,4 @@
-using System.Linq;
-
-namespace Assets.Game.Packets
+namespace Assets.Game.NetChan
 {
     struct RoomJoinRequestPacket
     {

@@ -1,6 +1,6 @@
 using System;
 
-namespace Assets.Game.Packets
+namespace Assets.Game.NetChan
 {
     public class WelcomePacket
     {

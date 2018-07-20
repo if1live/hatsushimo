@@ -1,3 +1,4 @@
+using Assets.Game.NetChan;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,8 +10,6 @@ namespace Assets.Game
         public Text pingText = null;
         public long intervalMillis = 3000;
 
-        PingSender sender = null;
-
         private void Awake()
         {
             Debug.Assert(pingText != null);
@@ -18,19 +17,14 @@ namespace Assets.Game
 
         private void Start()
         {
-            sender = new PingSender(intervalMillis);
-            sender.Setup();
+            var checker = LatencyChecker.Instance;
+            Debug.Assert(checker != null);
 
-            sender.LatencyObservable.ObserveOnMainThread().Subscribe(latency =>
+            checker.LatencyObservable.ObserveOnMainThread().Subscribe(latency =>
             {
                 var msg = $"ping: {latency}ms";
                 pingText.text = msg;
             }).AddTo(gameObject);
-        }
-
-        private void OnDestroy()
-        {
-            sender.Cleanup();
         }
     }
 }

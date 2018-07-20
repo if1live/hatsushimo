@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using UniRx;
 using System;
 using UnityEngine.SceneManagement;
+using Assets.Game.NetChan;
 
 namespace Assets.Game
 {

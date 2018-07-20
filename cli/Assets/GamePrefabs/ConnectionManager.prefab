@@ -20,6 +20,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4842710672270274}
   - component: {fileID: 114338765691229578}
+  - component: {fileID: 114843344439290056}
   m_Layer: 0
   m_Name: ConnectionManager
   m_TagString: Untagged
@@ -53,3 +54,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   address: http://127.0.0.1:3000
   version: 1234
+--- !u!114 &114843344439290056
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1193914362126290}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f5f6843afaac6340a8328e592a3e1d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  intervalMillis: 1000

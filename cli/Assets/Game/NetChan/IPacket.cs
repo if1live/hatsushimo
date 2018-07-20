@@ -1,4 +1,4 @@
-namespace Assets.Game.Packets
+namespace Assets.Game.NetChan
 {
     public interface ISerializePacket
     {

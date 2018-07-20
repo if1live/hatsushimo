@@ -1,6 +1,6 @@
 using System;
 
-namespace Assets.Game
+namespace Assets.Game.NetChan
 {
     class TimeUtils
     {
