@@ -50,7 +50,11 @@ export interface RoomLeavePacket {
   player_id: number;
 }
 
-export interface MoveRequestPacket {
+export interface InputCommandPacket {
+  mode: number;
+}
+
+export interface InputMovePacket {
   dir_x: number;
   dir_y: number;
 }

@@ -12,7 +12,8 @@ namespace Assets.Game.Packets
 
         LEADERBOARD,
 
-        MOVE,
+        INPUT_MOVE,
+        INPUT_COMMAND,
 
         REPLICATION_ALL,
         REPLICATION_ACTION,

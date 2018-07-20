@@ -1,8 +1,13 @@
 namespace Assets.Game.Packets
 {
-    struct MovePacket
+    struct InputMovePacket
     {
         public float dir_x;
         public float dir_y;
+    }
+
+    struct InputCommandPacket
+    {
+        public int mode;    
     }
 }

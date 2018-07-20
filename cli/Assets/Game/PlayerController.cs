@@ -1,13 +1,13 @@
+using Assets.Game.InputSystem;
 using Assets.Game.NetChan;
 using Assets.Game.Packets;
 using System.Collections;
-using UniRx;
 using UnityEngine;
 
 namespace Assets.Game
 {
     [RequireComponent(typeof(Player))]
-    class PlayerController : MonoBehaviour 
+    class PlayerController : MonoBehaviour
     {
         Player player;
 
@@ -44,49 +44,52 @@ namespace Assets.Game
                 return;
             }
 
+            // TODO 가상 스틱같은거로 대신할것이다
+            HandleCommand();
+            HandleMove();
+        }
 
-            bool packetExist = false;
-            var packet = new MovePacket()
-            {
-                dir_x = 0,
-                dir_y = 0,
-            };
+        void HandleCommand()
+        {
+            var inputmgr = InputManager.Instance;
+
+            float dir_x = 0;
+            float dir_y = 0;
 
             // TODO 키 입력에 따라서 움직이기
             // TODO 움직이는 명령은 얼마나 자주 보내나?
             // TODO 가상패드같은거로 바꾸는게 좋을거같은데
             if (Input.GetKey(KeyCode.UpArrow))
             {
-                packet.dir_y = +1;
-                packetExist = true;
+                dir_y = +1;
             }
             if (Input.GetKey(KeyCode.DownArrow))
             {
-                packet.dir_y = -1;
-                packetExist = true;
+                dir_y = -1;
             }
             if (Input.GetKey(KeyCode.LeftArrow))
             {
-                packet.dir_x = -1;
-                packetExist = true;
+                dir_x = -1;
             }
             if (Input.GetKey(KeyCode.RightArrow))
             {
-                packet.dir_x = +1;
-                packetExist = true;
+                dir_x = +1;
             }
 
+            var action = InputAction.CreateMove(dir_x, dir_y);
+            inputmgr.PushMove(action);
+        }
 
-            if (packetExist)
+        void HandleMove()
+        {
+            var inputmgr = InputManager.Instance;
+            if (Input.GetKeyDown(KeyCode.Z))
             {
-                var conn = ConnectionManager.Instance.Conn;
-                conn.Emit(Events.MOVE, packet);
+                inputmgr.PushCommand(InputAction.CreateCommand(1));
             }
-            else
+            if (Input.GetKeyDown(KeyCode.X))
             {
-                var conn = ConnectionManager.Instance.Conn;
-                conn.Emit(Events.MOVE, packet);
-
+                inputmgr.PushCommand(InputAction.CreateCommand(2));
             }
         }
 

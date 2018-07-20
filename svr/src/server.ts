@@ -87,7 +87,7 @@ io.on('connect', (client) => {
     room.spawnPlayer(player);
   });
 
-  conn.on(E.MOVE, (req: P.MoveRequestPacket) => {
+  conn.on(E.INPUT_MOVE, (req: P.InputMovePacket) => {
     const speed = 10;
     const len = H.getLengthVec2(req.dir_x, req.dir_y);
 
@@ -98,6 +98,11 @@ io.on('connect', (client) => {
       const dir = H.normalizeVec2(req.dir_x, req.dir_y);
       player.setVelocity(dir[0], dir[1], speed);
     }
+  });
+
+  conn.on(E.INPUT_COMMAND, (req: P.InputCommandPacket) => {
+    // TODO exec action
+    console.log(`input-command : ${JSON.stringify(req)}`);
   });
 });
 
