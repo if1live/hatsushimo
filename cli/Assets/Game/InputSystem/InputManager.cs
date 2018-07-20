@@ -28,7 +28,7 @@ namespace Assets.Game.InputSystem
 
         public void PushCommand(InputAction action)
         {
-            command.Value = action;
+            command.SetValueAndForceNotify(action);
         }
 
         public void PushMove(InputAction action)
