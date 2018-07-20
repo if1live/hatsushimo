@@ -41,13 +41,11 @@ io.on('connect', (client) => {
     console.log(`user disconnect - id=${player.ID}, current_user=${players.length}`);
   });
 
-  // hello
-  conn.on(E.HELLO, () => {
-    const packet: P.WelcomePacket = {
-      version: 1234,
-    };
-    conn.emit(E.WELCOME, packet);
-  });
+  // welcome
+  const welcomePacket: P.WelcomePacket = {
+    version: 1234,
+  };
+  conn.emit(E.WELCOME, welcomePacket);
 
   // ping
   conn.on(E.STATUS_PING, (data: Buffer) => {

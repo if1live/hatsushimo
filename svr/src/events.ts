@@ -1,6 +1,5 @@
 export enum Events {
-  HELLO = 1,
-  WELCOME,
+  WELCOME = 1,
 
   STATUS_PING,
   STATUS_PONG,

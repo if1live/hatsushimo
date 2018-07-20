@@ -2,11 +2,6 @@ using System;
 
 namespace Assets.Game.Packets
 {
-    public class HelloPacket
-    {
-
-    }
-
     public class WelcomePacket
     {
         public int version;

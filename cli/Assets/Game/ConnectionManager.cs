@@ -65,8 +65,7 @@ namespace Assets.Game
 
             _socket.On(Socket.EVENT_CONNECT, () =>
             {
-                Debug.Log("connect... send hello");
-                Conn.Emit(Events.HELLO);
+                Debug.Log("connect...");
             });
 
             Conn.On<WelcomePacket>(Events.WELCOME, (packet) =>
