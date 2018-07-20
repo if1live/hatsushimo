@@ -37,7 +37,7 @@ export class Room {
     // 방에서만 사용하는 객체는 id를 따로 발급
     this.foodIDGen = makeFoodID();
 
-    this.leaderboard = new Leaderboard(this.players);
+    this.leaderboard = new Leaderboard(this.players, C.LEADERBOARD_SIZE);
 
     this.gameLoopHandler = INVALID_LOOP_HANDLER;
     this.networkLoopHandler = INVALID_LOOP_HANDLER;
@@ -197,7 +197,7 @@ export class Room {
 
   leaderboardLoop() {
     // 리더보드 변경 사항이 있는 경우에만 전송
-    const newLeaderboard = new Leaderboard(this.players);
+    const newLeaderboard = new Leaderboard(this.players, C.LEADERBOARD_SIZE);
     if (!this.leaderboard.isLeaderboardEqual(newLeaderboard)) {
       this.leaderboard = newLeaderboard;
       const packet = newLeaderboard.makeLeaderboardPacket();

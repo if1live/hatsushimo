@@ -1,4 +1,5 @@
 import { ReplicationActions } from "./events";
+import { Rank } from './leaderboard';
 
 export interface Serializable {
   serialize(): Buffer;
@@ -89,13 +90,7 @@ export interface ReplicationBulkActionPacket {
   actions: ReplicationActionPacket[];
 }
 
-
-export interface RankElement {
-  id: number;
-  score: number;
-  rank: number;
-}
 export interface LeaderboardPacket {
-  top: RankElement[];
+  top: Rank[];
   players: number;
 }
