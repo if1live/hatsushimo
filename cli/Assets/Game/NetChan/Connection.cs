@@ -44,18 +44,18 @@ namespace Assets.Game.NetChan
 
         public void Emit(Events ev) { inner.Emit(ev); }
         public void Emit<TContext>(Events ev, TContext ctx) { inner.Emit(ev, ctx); }
-        public void EmitBytes(Events ev, byte[] bytes) { inner.Emit(ev, bytes); }
+        public void EmitBytes(Events ev, byte[] bytes) { inner.EmitBytes(ev, bytes); }
         
         public void EmitPacket(Events ev, ISerializePacket packet) { EmitBytes(ev, packet.Serialize()); }
 
         public void On(Events ev, Action fn) { inner.On(ev, fn); }
         public void On<TContext>(Events ev, Action<TContext> fn) { inner.On(ev, fn); }
-        public void OnBytes(Events ev, Action<byte[]> fn) { inner.On(ev, fn); }
+        public void OnBytes(Events ev, Action<byte[]> fn) { inner.OnBytes(ev, fn); }
 
         public void OnPacket<TPacket>(Events ev, Action<TPacket> fn)
             where TPacket : IDeserializePacket, new()
         {
-            inner.On<TPacket>(ev, (data) =>
+            inner.OnBytes(ev, (data) =>
             {
                 var bytes = data as byte[];
                 Debug.Assert(bytes != null, "cannot casting to byte array");
