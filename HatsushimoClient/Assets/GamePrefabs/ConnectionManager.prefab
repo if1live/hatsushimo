@@ -20,6 +20,8 @@ GameObject:
   m_Component:
   - component: {fileID: 4684402091056328}
   - component: {fileID: 114757155846392730}
+  - component: {fileID: 114162394163118764}
+  - component: {fileID: 114105228072911152}
   m_Layer: 0
   m_Name: ConnectionManager
   m_TagString: Untagged
@@ -40,6 +42,29 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &114105228072911152
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1765751735344320}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474d31628951f3048b0a580b6ccc3a0f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &114162394163118764
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1765751735344320}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6147ee2f7cc5d444581c206a9e68bb25, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  intervalMillis: 1000
 --- !u!114 &114757155846392730
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -51,3 +76,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c37e51ac4a70e3341b0a1546a49d5744, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  host: ws://127.0.0.1

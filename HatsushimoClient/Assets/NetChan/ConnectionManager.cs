@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+using UniRx;
+using UnityEngine;
 using HatsushimoShared;
 using System.Collections;
 using System;
@@ -7,6 +8,8 @@ namespace Assets.NetChan
 {
     public class ConnectionManager : MonoBehaviour
     {
+        public static ConnectionManager Instance;
+
         WebSocket ws;
         public string host = "ws://127.0.0.1";
 
@@ -14,18 +17,30 @@ namespace Assets.NetChan
 
         string ServerURL { get { return $"{host}:{Config.ServerPort}/game"; } }
 
+        public IObservable<bool> ReadyObservable {
+            get { return ready.Where(x => x).AsObservable(); }
+        }
+        BoolReactiveProperty ready = new BoolReactiveProperty(false);
+
+        private void Awake()
+        {
+            Debug.Assert(Instance == null);
+            Instance = this;
+        }
+
         IEnumerator Start()
         {
             ws = new WebSocket(new Uri(ServerURL));
             yield return StartCoroutine(ws.Connect());
 
-            while(true)
-            {
-                SendPing();
+            // TODO error check?
+            ready.SetValueAndForceNotify(true);
 
+            while (true)
+            {
                 // TODO 패킷 올때까지 대기하는 더 좋은 방법?
                 byte[] bytes = null;
-                while(bytes == null)
+                while (bytes == null)
                 {
                     bytes = ws.Recv();
                     yield return null;
@@ -33,44 +48,30 @@ namespace Assets.NetChan
 
                 // TODO TODO handler?
                 var p = factory.Deserialize(bytes);
-                if(p.Type == PacketType.Ping)
-                {
-                    HandlePing((PingPacket)p);
-                }
-
-                yield return new WaitForSeconds(1);
+                var dispatcher = PacketDispatcher.Instance;
+                dispatcher.Dispatch(p);
             }
         }
 
         private void OnDestroy()
         {
-            if(ws != null)
+            Debug.Assert(Instance == this);
+            Instance = null;
+
+            if (ws != null)
             {
                 ws.Close();
                 ws = null;
             }
         }
 
-        void SendPing()
-        {
-            var p = new PingPacket()
-            {
-                millis = TimeUtils.NowMillis,
-            };
-            SendPacket(p);
-        }
 
-        void SendPacket(IPacket p)
+        public void SendPacket(IPacket p)
         {
             var bytes = factory.Serialize(p);
             ws.Send(bytes);
         }
 
-        void HandlePing(PingPacket p)
-        {
-            var now = TimeUtils.NowMillis;
-            var diff = now - p.millis;
-            Debug.Log($"ping: {diff}ms");
-        }
+        
     }
 }

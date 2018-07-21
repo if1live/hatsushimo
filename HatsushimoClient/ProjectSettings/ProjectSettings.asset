@@ -647,7 +647,7 @@ PlayerSettings:
   cloudServicesEnabled:
     UNet: 1
   facebookSdkVersion: 7.9.4
-  apiCompatibilityLevel: 2
+  apiCompatibilityLevel: 3
   cloudProjectId: 9cb60d25-b6e9-478d-8ca1-fc56fde03d88
   projectName: HatsushimoClient
   organizationId: if1live
