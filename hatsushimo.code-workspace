@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "HatsushimoShared"
+		},
+		{
+			"path": "HatsushimoServer"
+		},
+		{
+			"path": "HatsushimoServerTest"
+		},
+		{
+			"path": "HatsushimoServerMain"
+		}
+	],
+	"settings": {}
+}
