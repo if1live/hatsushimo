@@ -13,8 +13,7 @@ namespace HatsushimoServerTest
             {
                 millis = 1234,
             };
-            var b = new PingPacket();
-            b.Deserialize(a.Serialize());
+            var b = a.CreateBlank().Deserialize(a.Serialize());
             Assert.Equal(a, b);
         }
 
@@ -26,8 +25,7 @@ namespace HatsushimoServerTest
                 UserID = 12,
                 Version = 34,
             };
-            var b = new WelcomePacket();
-            b.Deserialize(a.Serialize());
+            var b = a.CreateBlank().Deserialize(a.Serialize());
             Assert.Equal(a, b);
         }
 
@@ -35,8 +33,7 @@ namespace HatsushimoServerTest
         public void TestConnectPacket()
         {
             var a = new ConnectPacket() {};
-            var b = new ConnectPacket();
-            b.Deserialize(a.Serialize());
+            var b = a.CreateBlank().Deserialize(a.Serialize());
             Assert.Equal(a, b);
         }
 
@@ -44,8 +41,43 @@ namespace HatsushimoServerTest
         public void TestDisconnectPacket()
         {
             var a = new DisconnectPacket() {};
-            var b = new DisconnectPacket();
-            b.Deserialize(a.Serialize());
+            var b = a.CreateBlank().Deserialize(a.Serialize());
+            Assert.Equal(a, b);
+        }
+
+        [Fact]
+        public void TestRoomJoinRequestPacket()
+        {
+            var a = new RoomJoinRequestPacket()
+            {
+                RoomID = "foo",
+                Nickname = "test",
+            };
+            var b = a.CreateBlank().Deserialize(a.Serialize());
+            Assert.Equal(a, b);
+        }
+
+        [Fact]
+        public void TestRoomJoinResponsePacket()
+        {
+            var a = new RoomJoinResponsePacket()
+            {
+                PlayerID = 123,
+                RoomID = "foo",
+                Nickname = "test",
+            };
+            var b = a.CreateBlank().Deserialize(a.Serialize());
+            Assert.Equal(a, b);
+        }
+
+        [Fact]
+        public void TestRoomLeavePacket()
+        {
+            var a = new RoomLeavePacket()
+            {
+                PlayerID = 123,
+            };
+            var b = a.CreateBlank().Deserialize(a.Serialize());
             Assert.Equal(a, b);
         }
     }

@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using HatsushimoShared;
 using WebSocketSharp.Server;
@@ -15,8 +17,7 @@ namespace HatsushimoServer
 
         public WebSocketSessionManager Sessions { get; set; }
 
-        // TODO id generator
-        int nextId = 1;
+        readonly IEnumerator<int> playerIDEnumerator = IDGenerator.MakePlayerID().GetEnumerator();
 
         public GameService()
         {
@@ -24,7 +25,6 @@ namespace HatsushimoServer
 
         void Update()
         {
-
         }
 
         public async void StartUpdateLoop()
@@ -46,8 +46,8 @@ namespace HatsushimoServer
 
         public void HandleConnect(GameSession session, ConnectPacket p)
         {
-            var id = nextId;
-            nextId += 1;
+            playerIDEnumerator.MoveNext();
+            var id = playerIDEnumerator.Current;
 
             var welcome = new WelcomePacket()
             {

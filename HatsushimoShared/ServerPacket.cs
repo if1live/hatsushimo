@@ -3,40 +3,6 @@ using System.Linq;
 
 namespace HatsushimoShared
 {
-    // https://stackoverflow.com/questions/415291/best-way-to-combine-two-or-more-byte-arrays-in-c-sharp
-    class PacketBuilder
-    {
-        public static byte[] Combine(byte[] first, byte[] second)
-        {
-            byte[] ret = new byte[first.Length + second.Length];
-            Buffer.BlockCopy(first, 0, ret, 0, first.Length);
-            Buffer.BlockCopy(second, 0, ret, first.Length, second.Length);
-            return ret;
-        }
-
-        public static byte[] Combine(byte[] first, byte[] second, byte[] third)
-        {
-            byte[] ret = new byte[first.Length + second.Length + third.Length];
-            Buffer.BlockCopy(first, 0, ret, 0, first.Length);
-            Buffer.BlockCopy(second, 0, ret, first.Length, second.Length);
-            Buffer.BlockCopy(third, 0, ret, first.Length + second.Length,
-                             third.Length);
-            return ret;
-        }
-
-        public static byte[] Combine(params byte[][] arrays)
-        {
-            byte[] ret = new byte[arrays.Sum(x => x.Length)];
-            int offset = 0;
-            foreach (byte[] data in arrays)
-            {
-                Buffer.BlockCopy(data, 0, ret, offset, data.Length);
-                offset += data.Length;
-            }
-            return ret;
-        }
-    }
-
     public struct ConnectPacket : IPacket
     {
         public PacketType Type => PacketType.Connect;
@@ -46,7 +12,7 @@ namespace HatsushimoShared
             return new ConnectPacket();
         }
 
-        public void Deserialize(byte[] bytes) { }
+        public IPacket Deserialize(byte[] bytes) { return this; }
         public byte[] Serialize() { return new byte[] { }; }
     }
 
@@ -59,7 +25,7 @@ namespace HatsushimoShared
             return new DisconnectPacket();
         }
 
-        public void Deserialize(byte[] bytes) { }
+        public IPacket Deserialize(byte[] bytes) { return this; }
         public byte[] Serialize() { return new byte[] { }; }
     }
 
@@ -75,18 +41,20 @@ namespace HatsushimoShared
             return new WelcomePacket();
         }
 
-        public void Deserialize(byte[] bytes)
+        public IPacket Deserialize(byte[] bytes)
         {
-            UserID = BitConverter.ToInt32(bytes, 0);
-            Version = BitConverter.ToInt32(bytes, 4);
+            var r = new PacketReader(bytes);
+            r.Read(out UserID);
+            r.Read(out Version);
+            return this;
         }
 
         public byte[] Serialize()
         {
-            var idBytes = BitConverter.GetBytes(UserID);
-            var versionBytes = BitConverter.GetBytes(Version);
-            var data = PacketBuilder.Combine(idBytes, versionBytes);
-            return data;
+            var w = new PacketWriter();
+            w.Write(UserID);
+            w.Write(Version);
+            return w.Data;
         }
     }
 
@@ -101,33 +69,18 @@ namespace HatsushimoShared
             return new PingPacket();
         }
 
-        public void Deserialize(byte[] bytes)
+        public IPacket Deserialize(byte[] bytes)
         {
-            millis = BitConverter.ToInt32(bytes, 0);
+            var r = new PacketReader(bytes);
+            r.Read(out millis);
+            return this;
         }
 
         public byte[] Serialize()
         {
-            byte[] bytes = BitConverter.GetBytes(millis);
-            return bytes;
+            var w = new PacketWriter();
+            w.Write(millis);
+            return w.Data;
         }
     }
-
-    /*
-    public struct RoomJoinRequestPacket
-    {
-        public string nickname;
-        public string room_id;
-    }
-
-    public struct RoomJoinResponsePacket{
-        public int player_id;
-        public string room_id;
-        public string nickname;
-    }
-
-    public struct RoomLeavePacket {
-        public int player_id;
-    }
-    */
 }

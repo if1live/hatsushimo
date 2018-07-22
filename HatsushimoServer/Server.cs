@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using WebSocketSharp;
 using WebSocketSharp.Server;
 using HatsushimoShared;
@@ -56,12 +57,39 @@ namespace HatsushimoServer
             Send(factory.Serialize(packet));
         }
 
+        public void Broadcast(IPacket packet)
+        {
+            var data = factory.Serialize(packet);
+            var sessions = Sessions.Sessions.Where(s => s.ID != ID);
+            foreach(var s in sessions) {
+                Sessions.SendTo(data, s.ID);
+            }
+        }
+
+        public void BroadcastAll(IPacket packet)
+        {
+            Sessions.Broadcast(factory.Serialize(packet));
+        }
+
         public void SendPacketAsync(IPacket packet, Action<bool> completed)
         {
             // TODO async 사용시 예외 발생
             // System.PlatformNotSupportedException: Operation is not supported on this platform.
             // .Net core의 문제인가? OS의 문제인가? 라이브러리의 문제인가?
             SendAsync(factory.Serialize(packet), completed);
+        }
+
+        public void BroadcastAsync(IPacket packet, Action<bool> completed) {
+            var data = factory.Serialize(packet);
+            var sessions = Sessions.Sessions.Where(s => s.ID != ID);
+            foreach(var s in sessions) {
+                Sessions.SendToAsync(data, s.ID, completed);
+            }
+        }
+
+        public void BroadcastAllAsync(IPacket packet, Action completed) {
+            var data = factory.Serialize(packet);
+            Sessions.BroadcastAsync(data, completed);
         }
     }
 
