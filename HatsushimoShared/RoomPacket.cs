@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text;
 
 namespace HatsushimoShared
@@ -15,20 +16,16 @@ namespace HatsushimoShared
             return new RoomJoinRequestPacket();
         }
 
-        public IPacket Deserialize(byte[] bytes)
+        public void Deserialize(BinaryReader r)
         {
-            var r = new PacketReader(bytes);
-            r.ReadMediumString(out RoomID);
-            r.ReadMediumString(out Nickname);
-            return this;
+            r.Read(out RoomID);
+            r.Read(out Nickname);
         }
 
-        public byte[] Serialize()
+        public void Serialize(BinaryWriter w)
         {
-            var w = new PacketWriter();
-            w.WriteMediumString(RoomID);
-            w.WriteMediumString(Nickname);
-            return w.Data;
+            w.Write(RoomID);
+            w.Write(Nickname);
         }
     }
 
@@ -45,22 +42,18 @@ namespace HatsushimoShared
             return new RoomJoinResponsePacket();
         }
 
-        public IPacket Deserialize(byte[] bytes)
+        public void Deserialize(BinaryReader r)
         {
-            var r = new PacketReader(bytes);
             r.Read(out PlayerID);
-            r.ReadMediumString(out RoomID);
-            r.ReadMediumString(out Nickname);
-            return this;
+            r.Read(out RoomID);
+            r.Read(out Nickname);
         }
 
-        public byte[] Serialize()
+        public void Serialize(BinaryWriter w)
         {
-            var w = new PacketWriter();
             w.Write(PlayerID);
-            w.WriteMediumString(RoomID);
-            w.WriteMediumString(Nickname);
-            return w.Data;
+            w.Write(RoomID);
+            w.Write(Nickname);
         }
     }
 
@@ -75,18 +68,14 @@ namespace HatsushimoShared
             return new RoomLeavePacket();
         }
 
-        public IPacket Deserialize(byte[] bytes)
+        public void Deserialize(BinaryReader r)
         {
-            var r = new PacketReader(bytes);
             r.Read(out PlayerID);
-            return this;
         }
 
-        public byte[] Serialize()
+        public void Serialize(BinaryWriter w)
         {
-            var w = new PacketWriter();
             w.Write(PlayerID);
-            return w.Data;
         }
     }
 }

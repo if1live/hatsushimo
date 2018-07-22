@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 
 namespace HatsushimoShared
@@ -12,8 +13,8 @@ namespace HatsushimoShared
             return new ConnectPacket();
         }
 
-        public IPacket Deserialize(byte[] bytes) { return this; }
-        public byte[] Serialize() { return new byte[] { }; }
+        public void Deserialize(BinaryReader r) { }
+        public void Serialize(BinaryWriter w) { }
     }
 
     public struct DisconnectPacket : IPacket
@@ -25,8 +26,8 @@ namespace HatsushimoShared
             return new DisconnectPacket();
         }
 
-        public IPacket Deserialize(byte[] bytes) { return this; }
-        public byte[] Serialize() { return new byte[] { }; }
+        public void Deserialize(BinaryReader r) { }
+        public void Serialize(BinaryWriter w) { }
     }
 
     public struct WelcomePacket : IPacket
@@ -41,20 +42,16 @@ namespace HatsushimoShared
             return new WelcomePacket();
         }
 
-        public IPacket Deserialize(byte[] bytes)
+        public void Deserialize(BinaryReader r)
         {
-            var r = new PacketReader(bytes);
             r.Read(out UserID);
             r.Read(out Version);
-            return this;
         }
 
-        public byte[] Serialize()
+        public void Serialize(BinaryWriter w)
         {
-            var w = new PacketWriter();
             w.Write(UserID);
             w.Write(Version);
-            return w.Data;
         }
     }
 
@@ -69,18 +66,14 @@ namespace HatsushimoShared
             return new PingPacket();
         }
 
-        public IPacket Deserialize(byte[] bytes)
+        public void Deserialize(BinaryReader r)
         {
-            var r = new PacketReader(bytes);
             r.Read(out millis);
-            return this;
         }
 
-        public byte[] Serialize()
+        public void Serialize(BinaryWriter w)
         {
-            var w = new PacketWriter();
             w.Write(millis);
-            return w.Data;
         }
     }
 }

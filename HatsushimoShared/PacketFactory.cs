@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 
 namespace HatsushimoShared
 {
@@ -31,7 +32,11 @@ namespace HatsushimoShared
 
         public byte[] Serialize(IPacket packet) {
             var typeBytes = BitConverter.GetBytes((short)packet.Type);
-            var packetBytes = packet.Serialize();
+
+            var stream = new MemoryStream();
+            var writer = new BinaryWriter(stream);
+            packet.Serialize(writer);
+            var packetBytes = stream.ToArray();
 
             // TODO optimize
             var data = new byte[typeBytes.Length + packetBytes.Length];
@@ -47,19 +52,13 @@ namespace HatsushimoShared
         }
 
         public IPacket Deserialize(byte[] bytes) {
-            var packetType = (PacketType)BitConverter.ToInt16(bytes, 0);
+            var stream = new MemoryStream(bytes);
+            var reader = new BinaryReader(stream);
 
-            // packet 식별자 2바이트를 제외한 나머지만 사용하고싶다
-            // TODO 더 빠르게 잘라내는 방법?
-            var packetBytes = new byte[bytes.Length];
-            for(var i = 0 ; i < bytes.Length - 2 ; i++) {
-                var from = i + 2;
-                var to = i;
-                packetBytes[to] = bytes[from];
-            }
-
+            var packetType = (PacketType)reader.ReadInt16();
             var packet = GetSkeleton(packetType);
-            packet.Deserialize(packetBytes);
+
+            packet.Deserialize(reader);
 
             return packet;
         }

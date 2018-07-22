@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Xunit;
 using HatsushimoShared;
 
@@ -13,7 +14,7 @@ namespace HatsushimoServerTest
             {
                 millis = 1234,
             };
-            var b = a.CreateBlank().Deserialize(a.Serialize());
+            var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }
 
@@ -25,7 +26,7 @@ namespace HatsushimoServerTest
                 UserID = 12,
                 Version = 34,
             };
-            var b = a.CreateBlank().Deserialize(a.Serialize());
+            var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }
 
@@ -33,7 +34,7 @@ namespace HatsushimoServerTest
         public void TestConnectPacket()
         {
             var a = new ConnectPacket() {};
-            var b = a.CreateBlank().Deserialize(a.Serialize());
+            var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }
 
@@ -41,7 +42,7 @@ namespace HatsushimoServerTest
         public void TestDisconnectPacket()
         {
             var a = new DisconnectPacket() {};
-            var b = a.CreateBlank().Deserialize(a.Serialize());
+            var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }
 
@@ -53,7 +54,7 @@ namespace HatsushimoServerTest
                 RoomID = "foo",
                 Nickname = "test",
             };
-            var b = a.CreateBlank().Deserialize(a.Serialize());
+            var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }
 
@@ -66,7 +67,7 @@ namespace HatsushimoServerTest
                 RoomID = "foo",
                 Nickname = "test",
             };
-            var b = a.CreateBlank().Deserialize(a.Serialize());
+            var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }
 
@@ -77,8 +78,64 @@ namespace HatsushimoServerTest
             {
                 PlayerID = 123,
             };
-            var b = a.CreateBlank().Deserialize(a.Serialize());
+            var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
+        }
+
+        ReplicationActionPacket CreateFakeReplicationActionPacket()
+        {
+            return new ReplicationActionPacket()
+            {
+                Action = ReplicationAction.Create,
+                ID = 123,
+                ActorType = ActorType.Player,
+                PosX = 1,
+                PosY = 2,
+                DirX = 3,
+                DirY = 4,
+                Speed = 5,
+                Extra = "todo",
+            };
+        }
+
+        [Fact]
+        public void TestReplicationActionPacket()
+        {
+            var a = CreateFakeReplicationActionPacket();
+            var b = SerializeAndDeserialize(a);
+            Assert.Equal(a, b);
+        }
+
+        [Fact]
+        public void TestReplicationBulkActionPacket()
+        {
+            var a = new ReplicationBulkActionPacket()
+            {
+                Actions = new ReplicationActionPacket[]
+                {
+                    CreateFakeReplicationActionPacket(),
+                    CreateFakeReplicationActionPacket(),
+                },
+            };
+            var b = (ReplicationBulkActionPacket)SerializeAndDeserialize(a);
+
+            Assert.Equal(a.Actions.Length, b.Actions.Length);
+            for(var i = 0 ; i < a.Actions.Length ; i++) {
+                Assert.Equal(a.Actions[i], b.Actions[i]);
+            }
+        }
+
+        IPacket SerializeAndDeserialize(IPacket a)
+        {
+            var stream = new MemoryStream();
+            var writer = new BinaryWriter(stream);
+            a.Serialize(writer);
+
+            var reader = new BinaryReader(new MemoryStream(stream.ToArray()));
+            var b = a.CreateBlank();
+            b.Deserialize(reader);
+
+            return b;
         }
     }
 }
