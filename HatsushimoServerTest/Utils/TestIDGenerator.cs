@@ -32,7 +32,8 @@ namespace HatsushimoServerTest.Utils
             AssertEnumeratorValueExist(iter, 10);
         }
 
-        void AssertEnumeratorValueExist(IEnumerator<int> iter, int val) {
+        void AssertEnumeratorValueExist(IEnumerator<int> iter, int val)
+        {
             Assert.True(iter.MoveNext());
             Assert.Equal(val, iter.Current);
         }

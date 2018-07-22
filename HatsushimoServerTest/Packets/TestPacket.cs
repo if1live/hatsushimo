@@ -36,7 +36,7 @@ namespace HatsushimoServerTest.Packets
         [Fact]
         public void TestConnectPacket()
         {
-            var a = new ConnectPacket() {};
+            var a = new ConnectPacket() { };
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }
@@ -44,7 +44,7 @@ namespace HatsushimoServerTest.Packets
         [Fact]
         public void TestDisconnectPacket()
         {
-            var a = new DisconnectPacket() {};
+            var a = new DisconnectPacket() { };
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }
@@ -122,7 +122,8 @@ namespace HatsushimoServerTest.Packets
             var b = (LeaderboardPacket)SerializeAndDeserialize(a);
 
             Assert.Equal(a.Players, b.Players);
-            for(var i = 0 ; i < a.Top.Length ; i++) {
+            for (var i = 0; i < a.Top.Length; i++)
+            {
                 Assert.Equal(a.Top[i], b.Top[i]);
             }
         }
@@ -163,7 +164,8 @@ namespace HatsushimoServerTest.Packets
             var b = (ReplicationBulkActionPacket)SerializeAndDeserialize(a);
 
             Assert.Equal(a.Actions.Length, b.Actions.Length);
-            for(var i = 0 ; i < a.Actions.Length ; i++) {
+            for (var i = 0; i < a.Actions.Length; i++)
+            {
                 Assert.Equal(a.Actions[i], b.Actions[i]);
             }
         }

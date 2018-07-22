@@ -49,8 +49,8 @@ namespace HatsushimoServerTest
         [Fact]
         public void IsLeaderboardEqual_different_player_size()
         {
-            var boardA = new Leaderboard(new Player[]{ p1, p2, p3 }, 2);
-            var boardB = new Leaderboard(new Player[]{ p2, p3 }, 2);
+            var boardA = new Leaderboard(new Player[] { p1, p2, p3 }, 2);
+            var boardB = new Leaderboard(new Player[] { p2, p3 }, 2);
             Assert.False(boardA.IsLeaderboardEqual(boardB));
         }
 
@@ -62,8 +62,8 @@ namespace HatsushimoServerTest
             var remain1 = MakePlayer(3, 1);
             var remain2 = MakePlayer(4, 2);
 
-            var boardA = new Leaderboard(new Player[]{ top1, top2, remain1 }, 2);
-            var boardB = new Leaderboard(new Player[]{ top1, top2, remain2 }, 2);
+            var boardA = new Leaderboard(new Player[] { top1, top2, remain1 }, 2);
+            var boardB = new Leaderboard(new Player[] { top1, top2, remain2 }, 2);
 
             Assert.True(boardA.IsLeaderboardEqual(boardB));
         }
