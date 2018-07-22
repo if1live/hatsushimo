@@ -36,6 +36,8 @@ namespace Assets.NetChan
             // TODO error check?
             ready.SetValueAndForceNotify(true);
 
+            SendPacket(new ConnectPacket());
+
             while (true)
             {
                 // TODO 패킷 올때까지 대기하는 더 좋은 방법?
@@ -60,6 +62,8 @@ namespace Assets.NetChan
 
             if (ws != null)
             {
+                SendPacket(new DisconnectPacket());
+
                 ws.Close();
                 ws = null;
             }
@@ -71,7 +75,6 @@ namespace Assets.NetChan
             var bytes = factory.Serialize(p);
             ws.Send(bytes);
         }
-
         
     }
 }

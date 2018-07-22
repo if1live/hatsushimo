@@ -14,6 +14,11 @@ namespace Assets.NetChan
         }
         ReactiveProperty<PingPacket> ping = new ReactiveProperty<PingPacket>();
 
+        public IObservable<WelcomePacket> WelcomeReceived {
+            get { return welcome.AsObservable(); }
+        }
+        ReactiveProperty<WelcomePacket> welcome = new ReactiveProperty<WelcomePacket>();
+
         private void Awake()
         {
             Debug.Assert(Instance == null);
@@ -33,6 +38,9 @@ namespace Assets.NetChan
             {
                 case PacketType.Ping:
                     ping.SetValueAndForceNotify((PingPacket)p);
+                    break;
+                case PacketType.Welcome:
+                    welcome.SetValueAndForceNotify((WelcomePacket)p);
                     break;
                 default:
                     break;

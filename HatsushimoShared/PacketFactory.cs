@@ -10,8 +10,10 @@ namespace HatsushimoShared
 
         public static PacketFactory Create(){
             var f = new PacketFactory();
-            f.Register<PingPacket>(); 
+            f.Register<PingPacket>();
             f.Register<WelcomePacket>();
+            f.Register<ConnectPacket>();
+            f.Register<DisconnectPacket>();
             return f;
         }
 

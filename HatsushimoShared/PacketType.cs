@@ -2,7 +2,10 @@ namespace HatsushimoShared
 {
     public enum PacketType
     {
-        Welcome = 1,
+        Connect = 1,
+        Disconnect,
+
+        Welcome,
 
         Ping,
 
