@@ -14,6 +14,7 @@ namespace Assets.NetChan
 
         WebSocket ws;
         public string host = "ws://127.0.0.1";
+        public readonly Connection Conn = new Connection();
 
         readonly PacketCodec codec = MyPacketCodec.Create();
 
@@ -26,8 +27,18 @@ namespace Assets.NetChan
 
         private void Awake()
         {
-            Debug.Assert(Instance == null);
-            Instance = this;
+            if (Instance == null)
+            {
+                Debug.Assert(Instance == null);
+                Instance = this;
+
+                DontDestroyOnLoad(this.gameObject);
+            }
+            else
+            {
+                Debug.Log("ConnectionManager is already exist, remove self");
+                GameObject.Destroy(this.gameObject);
+            }
         }
 
         IEnumerator Start()
@@ -35,25 +46,33 @@ namespace Assets.NetChan
             ws = new WebSocket(new Uri(ServerURL));
             yield return StartCoroutine(ws.Connect());
 
-            // TODO error check?
-            ready.SetValueAndForceNotify(true);
+            if (ws.error != null)
+            {
+                Debug.LogError($"Error: " + ws.error);
+                yield break;
+            }
 
+            // connection success
+            ready.SetValueAndForceNotify(true);
             SendPacket(new ConnectPacket());
 
             while (true)
             {
-                // TODO 패킷 올때까지 대기하는 더 좋은 방법?
                 byte[] bytes = null;
                 while (bytes == null)
                 {
+                    if (ws.error != null)
+                    {
+                        Debug.LogError($"Error: " + ws.error);
+                    }
+
                     bytes = ws.Recv();
                     yield return null;
                 }
 
-                // TODO TODO handler?
-                var p = codec.Decode(bytes);
+                var packet = codec.Decode(bytes);
                 var dispatcher = PacketDispatcher.Instance;
-                dispatcher.Dispatch(p);
+                dispatcher.Dispatch(packet);
             }
         }
 

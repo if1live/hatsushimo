@@ -110,6 +110,7 @@ GameObject:
   - component: {fileID: 223390082001396710}
   - component: {fileID: 114099261317205508}
   - component: {fileID: 114354619990346816}
+  - component: {fileID: 114927803590034576}
   m_Layer: 5
   m_Name: LobbyCanvas
   m_TagString: Untagged
@@ -798,6 +799,20 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: default-nickname
+--- !u!114 &114927803590034576
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1310969564461694}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efe7c54bf8109c54d8c44c7cb858024a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  nicknameField: {fileID: 114251399320821296}
+  roomField: {fileID: 114155424268060600}
+  joinButton: {fileID: 114075523018559648}
 --- !u!114 &114937461041663590
 MonoBehaviour:
   m_ObjectHideFlags: 1
