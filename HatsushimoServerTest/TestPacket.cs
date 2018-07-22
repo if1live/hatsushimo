@@ -82,6 +82,29 @@ namespace HatsushimoServerTest
             Assert.Equal(a, b);
         }
 
+        [Fact]
+        public void TestInputMovePacket()
+        {
+            var a = new InputMovePacket()
+            {
+                DirX = 1,
+                DirY = 2,
+            };
+            var b = SerializeAndDeserialize(a);
+            Assert.Equal(a, b);
+        }
+
+        [Fact]
+        public void TestInputCommandPacket()
+        {
+            var a = new InputCommandPacket()
+            {
+                Mode = 123,
+            };
+            var b = SerializeAndDeserialize(a);
+            Assert.Equal(a, b);
+        }
+
         ReplicationActionPacket CreateFakeReplicationActionPacket()
         {
             return new ReplicationActionPacket()

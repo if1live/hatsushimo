@@ -13,8 +13,19 @@ namespace HatsushimoShared
             var f = new PacketFactory();
             f.Register<PingPacket>();
             f.Register<WelcomePacket>();
+
             f.Register<ConnectPacket>();
             f.Register<DisconnectPacket>();
+
+            f.Register<InputCommandPacket>();
+            f.Register<InputMovePacket>();
+
+            f.Register<ReplicationActionPacket>();
+            f.Register<ReplicationBulkActionPacket>();
+
+            f.Register<RoomJoinRequestPacket>();
+            f.Register<RoomJoinResponsePacket>();
+            f.Register<RoomLeavePacket>();
             return f;
         }
 
