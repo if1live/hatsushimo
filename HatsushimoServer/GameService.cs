@@ -39,7 +39,7 @@ namespace HatsushimoServer
 
         public void HandlePing(GameSession session, PingPacket p)
         {
-            Console.WriteLine($"ping packet received : {p.millis}");
+            // Console.WriteLine($"ping packet received : {p.millis}");
             session.SendPacket(p);
         }
 
@@ -51,7 +51,7 @@ namespace HatsushimoServer
             var id = playerIDEnumerator.Current;
 
             sessionIDPlayerIDTable[session.ID] = id;
-            var player = new Player(id);
+            var player = new Player(id, session);
             playerTable[id] = player;
 
             var welcome = new WelcomePacket()
@@ -59,23 +59,33 @@ namespace HatsushimoServer
                 UserID = id,
                 Version = Config.Version,
             };
-            Console.WriteLine($"connected, welcome id={id}");
+            Console.WriteLine($"connected, welcome id={id}, session={session.ID}");
             session.SendPacket(welcome);
         }
 
         public void HandleDisconnect(GameSession session, DisconnectPacket p)
         {
-            var player = GetPlayer(session);
-            if (player.RoomID != null)
-            {
-                var room = rooms.GetRoom(player.RoomID);
-                room.LeavePlayer(player);
+            // 연결 종료는 소켓이 끊어질떄도 있고
+            // 유저가 직접 종료시키는 경우도 있다
+            // disconnect를 여러번 호출해도 꺠지지 않도록 하자
+            if(!sessionIDPlayerIDTable.ContainsKey(session.ID)) {
+                Console.WriteLine($"session={session.ID} is already disconnected");
+                return;
             }
 
-            var playerId = sessionIDPlayerIDTable[session.ID];
+            int playerID = sessionIDPlayerIDTable[session.ID];
+            Player player = null;
+            if (playerTable.TryGetValue(playerID, out player))
+            {
+                if (player.RoomID != null)
+                {
+                    var room = rooms.GetRoom(player.RoomID);
+                    room.LeavePlayer(player);
+                }
+                playerTable.Remove(playerID);
+            }
             sessionIDPlayerIDTable.Remove(session.ID);
-            Console.WriteLine($"disconnected, id={playerId}");
-            playerTable.Remove(playerId);
+            Console.WriteLine($"disconnected, id={playerID}, session={session.ID}");
         }
 
         public void HandleRoomJoinReq(GameSession session, RoomJoinRequestPacket p)
@@ -99,7 +109,7 @@ namespace HatsushimoServer
         public void HandleRoomLeave(GameSession session, RoomLeavePacket p)
         {
             var player = GetPlayer(session);
-            if (player.RoomID != null) { session.Disconnect(); }
+            if (player.RoomID != null) { session.HaltSession(); }
 
             var room = rooms.GetRoom(player.RoomID);
             room.LeavePlayer(player);
@@ -122,7 +132,6 @@ namespace HatsushimoServer
             if (len == 0)
             {
                 player.SetVelocity(Vec2.Zero, speed);
-
             }
             else
             {
@@ -137,7 +146,7 @@ namespace HatsushimoServer
         public void HandlePlayerReady(GameSession session, PlayerReadyPacket p)
         {
             var player = GetPlayer(session);
-            if (player.RoomID == null) { session.Disconnect(); }
+            if (player.RoomID == null) { session.HaltSession(); }
 
             var room = rooms.GetRoom(player.RoomID);
             room.SpawnPlayer(player);

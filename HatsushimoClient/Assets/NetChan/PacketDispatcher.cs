@@ -20,6 +20,11 @@ namespace Assets.NetChan
         }
         ReactiveProperty<WelcomePacket> welcome = new ReactiveProperty<WelcomePacket>();
 
+        public IObservable<ReplicationAllPacket> ReplicationAllReceived {
+            get { return replicationAll.Skip(1).AsObservable(); }
+        }
+        ReactiveProperty<ReplicationAllPacket> replicationAll = new ReactiveProperty<ReplicationAllPacket>();
+
         public IObservable<ReplicationActionPacket> ReplicationReceived {
             get { return replication.Skip(1).AsObservable(); }
         }
@@ -76,6 +81,10 @@ namespace Assets.NetChan
                     welcome.SetValueAndForceNotify((WelcomePacket)p);
                     break;
 
+                case PacketType.ReplicationAll:
+                    replicationAll.SetValueAndForceNotify((ReplicationAllPacket)p);
+                    break;
+
                 case PacketType.ReplicationAction:
                     replication.SetValueAndForceNotify((ReplicationActionPacket)p);
                     break;
@@ -101,7 +110,7 @@ namespace Assets.NetChan
                     break;
                     
                 default:
-                    Debug.LogWarning($"packet handle not exist : {t}");
+                    Debug.LogError($"packet handle not exist : {t}");
                     break;
             }
         }

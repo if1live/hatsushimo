@@ -11,7 +11,7 @@ using Hatsushimo.NetChan;
 
 namespace HatsushimoServer
 {
-    class GameSession : WebSocketBehavior
+    public class GameSession : WebSocketBehavior
     {
         readonly PacketCodec codec = MyPacketCodec.Create();
 
@@ -22,7 +22,6 @@ namespace HatsushimoServer
 
         protected override void OnClose(CloseEventArgs e)
         {
-            // 연결 종료도 서버에서는 패킷처럼 받는다
             var p = new DisconnectPacket();
             HandlePacket(p);
         }
@@ -121,8 +120,9 @@ namespace HatsushimoServer
             Sessions.BroadcastAsync(data, completed);
         }
 
-        public void Disconnect()
+        public void HaltSession()
         {
+            Console.WriteLine($"something is wronig, close session={ID}");
             Sessions.CloseSession(ID);
         }
     }

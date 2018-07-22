@@ -12,15 +12,47 @@ namespace Hatsushimo.Types
 
         public static readonly Vec2 Zero = new Vec2(0, 0);
 
-        public Vec2(float x, float y) {
+        public Vec2(float x, float y)
+        {
             this.X = x;
             this.Y = y;
+        }
+
+        public float this[int i]
+        {
+            get
+            {
+                switch (i)
+                {
+                    case 0:
+                        return X;
+                    case 1:
+                        return Y;
+                    default:
+                        throw new IndexOutOfRangeException();
+                }
+            }
+            set
+            {
+                switch (i)
+                {
+                    case 0:
+                        X = value;
+                        break;
+                    case 1:
+                        Y = value;
+                        break;
+                    default:
+                        throw new IndexOutOfRangeException();
+                }
+            }
         }
 
         public Vec2 Normalize()
         {
             var len = Magnitude;
-            if(len == 0) {
+            if (len == 0)
+            {
                 return new Vec2(0, 0);
             }
             var inv = 1 / len;

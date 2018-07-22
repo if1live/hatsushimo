@@ -33,6 +33,23 @@ namespace Assets.Game
                 Debug.Log("player ready");
             });
 
+            dispatcher.ReplicationAllReceived.Subscribe(packet =>
+            {
+                // 플레이어 생성
+                foreach (var p in packet.Players)
+                {
+                    var pos = new Vector3(p.Pos[0], p.Pos[1], 0);
+                    var player = GetOrCreatePlayer(p.ID, pos);
+                    player.ApplyInitial(p);
+                }
+
+                foreach (var i in packet.Foods)
+                {
+                    var pos = new Vector3(i.Pos[0], i.Pos[1], 0);
+                    CreateFood(i.ID, pos);
+                }
+            }).AddTo(gameObject);
+
             dispatcher.ReplicationBulkReceived.Subscribe(packet =>
             {
                 foreach(var act in packet.Actions)

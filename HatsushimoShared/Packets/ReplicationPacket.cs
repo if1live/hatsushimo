@@ -8,15 +8,85 @@ namespace Hatsushimo.Packets
 {
     public enum ActorType
     {
+        None = 0,
         Player,
         Food,
     }
 
     public enum ReplicationAction
     {
+        None = 0,
         Create,
         Update,
         Remove,
+    }
+
+    public struct PlayerInitial : ISerialize {
+        public int ID;
+        public string Nickname;
+        public Vec2 Pos;
+        public Vec2 Dir;
+        public float Speed;
+
+        public void Deserialize(BinaryReader r)
+        {
+            r.Read(out ID);
+            r.Read(out Nickname);
+            r.Read(ref Pos);
+            r.Read(ref Dir);
+            r.Read(out Speed);
+        }
+
+        public void Serialize(BinaryWriter w)
+        {
+            w.Write(ID);
+            w.Write(Nickname);
+            w.Write(Pos);
+            w.Write(Dir);
+            w.Write(Speed);
+        }
+    }
+
+    public struct FoodInitial : ISerialize {
+        public int ID;
+        public Vec2 Pos;
+
+        public void Deserialize(BinaryReader r)
+        {
+            r.Read(out ID);
+            r.Read(ref Pos);
+        }
+
+        public void Serialize(BinaryWriter w)
+        {
+            w.Write(ID);
+            w.Write(Pos);
+        }
+    }
+
+    public struct ReplicationAllPacket : IPacket
+    {
+        public PlayerInitial[] Players;
+        public FoodInitial[] Foods;
+
+        public short Type => (short)PacketType.ReplicationAll;
+
+        public IPacket CreateBlank()
+        {
+            return new ReplicationAllPacket();
+        }
+
+        public void Deserialize(BinaryReader r)
+        {
+            r.Read(ref Players);
+            r.Read(ref Foods);
+        }
+
+        public void Serialize(BinaryWriter w)
+        {
+            w.Write(Players);
+            w.Write(Foods);
+        }
     }
 
     public struct ReplicationActionPacket : IPacket
@@ -56,6 +126,8 @@ namespace Hatsushimo.Packets
 
         public void Serialize(BinaryWriter w)
         {
+            // TODO string=null인 경우 터진다
+            // 이를 serialize 차원에서 우회하고싶다
             w.Write((short)Action);
             w.Write(ID);
             w.Write((short)ActorType);
@@ -63,20 +135,6 @@ namespace Hatsushimo.Packets
             w.Write(Dir);
             w.Write(Speed);
             w.Write(Extra);
-        }
-
-        public static ReplicationActionPacket MakeRemovePacket(int id)
-        {
-            return new ReplicationActionPacket()
-            {
-                Action = ReplicationAction.Remove,
-                ID = id,
-                ActorType = ActorType.Food,
-                Pos = Vec2.Zero,
-                Dir = Vec2.Zero,
-                Speed = 0,
-                Extra = null,
-            };
         }
     }
 
@@ -94,26 +152,12 @@ namespace Hatsushimo.Packets
 
         public void Deserialize(BinaryReader r)
         {
-            short len = 0;
-            r.Read(out len);
-
-            var actions = new List<ReplicationActionPacket>();
-            for (var i = 0; i < len; i++)
-            {
-                var a = new ReplicationActionPacket();
-                a.Deserialize(r);
-                actions.Add(a);
-            }
-            Actions = actions.ToArray();
+            r.Read(ref Actions);
         }
 
         public void Serialize(BinaryWriter w)
         {
-            w.Write((short)Actions.Length);
-            foreach (var a in Actions)
-            {
-                a.Serialize(w);
-            }
+            w.Write(Actions);
         }
     }
 }

@@ -25,25 +25,40 @@ namespace Assets.Game
         }
 
         IObservable<ReplicationActionPacket> ReplicationReceived {
-            get { return replication.AsObservable(); }
+            get { return replication.Skip(1).AsObservable(); }
         }
         ReactiveProperty<ReplicationActionPacket> replication = new ReactiveProperty<ReplicationActionPacket>();
 
+        IObservable<PlayerInitial> InitialReceived {
+            get { return initial.Skip(1).AsObservable(); }
+        }
+        ReactiveProperty<PlayerInitial> initial = new ReactiveProperty<PlayerInitial>();
+
         public void ApplyReplication(ReplicationActionPacket p) { replication.Value = p; }
+        public void ApplyInitial(PlayerInitial p) { initial.Value = p; }
 
 
         private void Start()
         {
-            ReplicationReceived.ObserveOnMainThread().Subscribe(packet =>
+            ReplicationReceived.Subscribe(packet =>
             {
-                id = packet.ID;
-                nickname = packet.Extra;
+                Debug.Assert(packet.ID == id, $"id mismatch: my={id} packet={packet.ID} action={packet.Action}");
 
+                nickname = packet.Extra;
                 DirX = packet.Dir.X;
                 DirY = packet.Dir.Y;
                 Speed = packet.Speed;
                 
                 var pos = new Vector3(packet.Pos.X, packet.Pos.Y, 0);
+                transform.position = pos;
+            }).AddTo(gameObject);
+
+            InitialReceived.Subscribe(packet =>
+            {
+                id = packet.ID;
+                nickname = packet.Nickname;
+
+                var pos = new Vector3(packet.Pos[0], packet.Pos[1], 0);
                 transform.position = pos;
             }).AddTo(gameObject);
         }

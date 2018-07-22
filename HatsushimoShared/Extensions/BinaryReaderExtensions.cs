@@ -19,5 +19,18 @@ namespace Hatsushimo.Extensions
         {
             v.Deserialize(r);
         }
+
+        public static void Read<T>(this BinaryReader r, ref T[] v)
+        where T : ISerialize
+        {
+            short len = 0;
+            r.Read(out len);
+
+            v = new T[len];
+            for (var i = 0; i < len; i++)
+            {
+                r.Read(ref v[i]);
+            }
+        }
     }
 }

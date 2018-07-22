@@ -17,6 +17,7 @@ namespace Hatsushimo.Packets
             f.Register<InputCommandPacket>();
             f.Register<InputMovePacket>();
 
+            f.Register<ReplicationAllPacket>();
             f.Register<ReplicationActionPacket>();
             f.Register<ReplicationBulkActionPacket>();
 

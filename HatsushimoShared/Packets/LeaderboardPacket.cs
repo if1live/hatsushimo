@@ -30,6 +30,45 @@ namespace Hatsushimo.Packets
             w.Write(Score);
             w.Write(Ranking);
         }
+
+        public static bool operator ==(Rank a, Rank b)
+        {
+            if (ReferenceEquals(a, b)) { return true; }
+            if (ReferenceEquals(a, null)) { return false; }
+            if (ReferenceEquals(b, null)) { return false; }
+
+            return (a.ID == b.ID)
+                && (a.Score == b.Score)
+                && (a.Ranking == b.Ranking);
+        }
+
+        public static bool operator !=(Rank a, Rank b)
+        {
+            return !(a == b);
+        }
+
+        public override bool Equals(object obj) {
+            if (ReferenceEquals(null, obj)) { return false; }
+            if (ReferenceEquals(this, obj)) { return true; }
+            return obj.GetType() == GetType() && Equals((Rank)obj);
+        }
+
+        public bool Equals(Rank other)
+        {
+            if(ReferenceEquals(null, other)) { return false; }
+            if(ReferenceEquals(this, other)) { return true; }
+            return ID.Equals(other.ID)
+                && Score.Equals(other.Score)
+                && Ranking.Equals(other.Ranking);
+        }
+
+        public override int GetHashCode()
+        {
+            int hash = ID.GetHashCode();
+            hash = hash ^ Score.GetHashCode();
+            hash = hash ^ Ranking.GetHashCode();
+            return hash;
+        }
     }
 
     public struct LeaderboardPacket : IPacket
@@ -47,28 +86,13 @@ namespace Hatsushimo.Packets
         public void Deserialize(BinaryReader r)
         {
             r.Read(out Players);
-
-            short len = 0;
-            r.Read(out len);
-
-            List<Rank> tops = new List<Rank>();
-            for (var i = 0; i < len; i++)
-            {
-                var rank = new Rank();
-                rank.Deserialize(r);
-                tops.Add(rank);
-            }
-            Top = tops.ToArray();
+            r.Read(ref Top);
         }
 
         public void Serialize(BinaryWriter w)
         {
             w.Write(Players);
-            w.Write((short)Top.Length);
-            for (var i = 0; i < Top.Length; i++)
-            {
-                Top[i].Serialize(w);
-            }
+            w.Write(Top);
         }
     }
 }
