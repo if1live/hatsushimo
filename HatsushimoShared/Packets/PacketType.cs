@@ -1,4 +1,4 @@
-namespace HatsushimoShared
+namespace Hatsushimo.Packets
 {
     public enum PacketType
     {
@@ -12,6 +12,7 @@ namespace HatsushimoShared
         RoomJoinReq,
         RoomJoinResp,
         RoomLeave,
+        PlayerReady,
 
         Leaderboard,
 
@@ -21,7 +22,5 @@ namespace HatsushimoShared
         ReplicationAll,
         ReplicationAction,
         ReplicationBulkAction,
-
-        PlayerReady,
     }
 }

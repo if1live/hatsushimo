@@ -1,12 +1,14 @@
 using System;
 using System.IO;
 using System.Text;
+using Hatsushimo.Extensions;
+using Hatsushimo.NetChan;
 
-namespace HatsushimoShared
+namespace Hatsushimo.Packets
 {
     public struct RoomJoinRequestPacket : IPacket
     {
-        public PacketType Type => PacketType.RoomJoinReq;
+        public short Type => (short)PacketType.RoomJoinReq;
 
         public string RoomID;
         public string Nickname;
@@ -35,7 +37,7 @@ namespace HatsushimoShared
         public string RoomID;
         public string Nickname;
 
-        public PacketType Type => PacketType.RoomJoinResp;
+        public short Type => (short)PacketType.RoomJoinResp;
 
         public IPacket CreateBlank()
         {
@@ -61,7 +63,7 @@ namespace HatsushimoShared
     {
         public int PlayerID;
 
-        public PacketType Type => PacketType.RoomLeave;
+        public short Type => (short)PacketType.RoomLeave;
 
         public IPacket CreateBlank()
         {
@@ -77,5 +79,18 @@ namespace HatsushimoShared
         {
             w.Write(PlayerID);
         }
+    }
+
+    public struct PlayerReadyPacket : IPacket
+    {
+        public short Type => (short)PacketType.PlayerReady;
+
+        public IPacket CreateBlank()
+        {
+            return new PlayerReadyPacket();
+        }
+
+        public void Deserialize(BinaryReader r) { }
+        public void Serialize(BinaryWriter w) { }
     }
 }

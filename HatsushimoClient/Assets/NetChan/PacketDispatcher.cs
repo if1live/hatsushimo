@@ -1,4 +1,5 @@
-using HatsushimoShared;
+using Hatsushimo.NetChan;
+using Hatsushimo.Packets;
 using System;
 using UniRx;
 using UnityEngine;
@@ -34,7 +35,7 @@ namespace Assets.NetChan
         // TODO
         internal void Dispatch(IPacket p)
         {
-            switch(p.Type)
+            switch((PacketType)p.Type)
             {
                 case PacketType.Ping:
                     ping.SetValueAndForceNotify((PingPacket)p);

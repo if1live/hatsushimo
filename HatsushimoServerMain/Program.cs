@@ -1,7 +1,7 @@
 ﻿using System;
 using WebSocketSharp;
 using WebSocketSharp.Server;
-using HatsushimoShared;
+using Hatsushimo;
 using HatsushimoServer;
 
 namespace HatsushimoServerMain

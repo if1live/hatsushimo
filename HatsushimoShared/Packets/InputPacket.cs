@@ -1,12 +1,15 @@
 using System.IO;
+using Hatsushimo.Extensions;
+using Hatsushimo.NetChan;
+using Hatsushimo.Types;
 
-namespace HatsushimoShared
+namespace Hatsushimo.Packets
 {
     public struct InputCommandPacket : IPacket
     {
         public int Mode;
 
-        public PacketType Type => PacketType.InputCommand;
+        public short Type => (short)PacketType.InputCommand;
 
         public IPacket CreateBlank()
         {
@@ -27,10 +30,9 @@ namespace HatsushimoShared
 
     public struct InputMovePacket : IPacket
     {
-        public float DirX;
-        public float DirY;
+        public Vec2 Dir;
 
-        public PacketType Type => PacketType.InputMove;
+        public short Type => (short)PacketType.InputMove;
 
         public IPacket CreateBlank()
         {
@@ -39,14 +41,12 @@ namespace HatsushimoShared
 
         public void Deserialize(BinaryReader r)
         {
-            r.Read(out DirX);
-            r.Read(out DirY);
+            r.Read(ref Dir);
         }
 
         public void Serialize(BinaryWriter w)
         {
-            w.Write(DirX);
-            w.Write(DirY);
+            w.Write(Dir);
         }
     }
 }

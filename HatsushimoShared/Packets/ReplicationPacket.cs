@@ -1,7 +1,10 @@
 using System.Collections.Generic;
 using System.IO;
+using Hatsushimo.Extensions;
+using Hatsushimo.NetChan;
+using Hatsushimo.Types;
 
-namespace HatsushimoShared
+namespace Hatsushimo.Packets
 {
     public enum ActorType
     {
@@ -13,7 +16,7 @@ namespace HatsushimoShared
     {
         Create,
         Update,
-        Delete,
+        Remove,
     }
 
     public struct ReplicationActionPacket : IPacket
@@ -21,14 +24,12 @@ namespace HatsushimoShared
         public ReplicationAction Action;
         public int ID;
         public ActorType ActorType;
-        public float PosX;
-        public float PosY;
-        public float DirX;
-        public float DirY;
+        public Vec2 Pos;
+        public Vec2 Dir;
         public float Speed;
         public string Extra;
 
-        public PacketType Type => PacketType.ReplicationAction;
+        public short Type => (short)PacketType.ReplicationAction;
 
         public IPacket CreateBlank()
         {
@@ -47,10 +48,8 @@ namespace HatsushimoShared
             r.Read(out actorTypeVal);
             ActorType = (ActorType)actorTypeVal;
 
-            r.Read(out PosX);
-            r.Read(out PosY);
-            r.Read(out DirX);
-            r.Read(out DirY);
+            r.Read(ref Pos);
+            r.Read(ref Dir);
             r.Read(out Speed);
             r.Read(out Extra);
         }
@@ -60,12 +59,24 @@ namespace HatsushimoShared
             w.Write((short)Action);
             w.Write(ID);
             w.Write((short)ActorType);
-            w.Write(PosX);
-            w.Write(PosY);
-            w.Write(DirX);
-            w.Write(DirY);
+            w.Write(Pos);
+            w.Write(Dir);
             w.Write(Speed);
             w.Write(Extra);
+        }
+
+        public static ReplicationActionPacket MakeRemovePacket(int id)
+        {
+            return new ReplicationActionPacket()
+            {
+                Action = ReplicationAction.Remove,
+                ID = id,
+                ActorType = ActorType.Food,
+                Pos = Vec2.Zero,
+                Dir = Vec2.Zero,
+                Speed = 0,
+                Extra = null,
+            };
         }
     }
 
@@ -74,7 +85,7 @@ namespace HatsushimoShared
     {
         public ReplicationActionPacket[] Actions;
 
-        public PacketType Type => PacketType.ReplicationBulkAction;
+        public short Type => (short)PacketType.ReplicationBulkAction;
 
         public IPacket CreateBlank()
         {
@@ -87,7 +98,8 @@ namespace HatsushimoShared
             r.Read(out len);
 
             var actions = new List<ReplicationActionPacket>();
-            for(var i = 0 ; i < len ; i++) {
+            for (var i = 0; i < len; i++)
+            {
                 var a = new ReplicationActionPacket();
                 a.Deserialize(r);
                 actions.Add(a);
@@ -98,7 +110,8 @@ namespace HatsushimoShared
         public void Serialize(BinaryWriter w)
         {
             w.Write((short)Actions.Length);
-            foreach(var a in Actions) {
+            foreach (var a in Actions)
+            {
                 a.Serialize(w);
             }
         }

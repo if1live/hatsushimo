@@ -1,6 +1,7 @@
 using System.IO;
+using Hatsushimo.NetChan;
 
-namespace HatsushimoShared
+namespace Hatsushimo.Extensions
 {
     public static class BinaryReaderExtensions
     {
@@ -12,5 +13,11 @@ namespace HatsushimoShared
         public static void Read(this BinaryReader r, out long v) { v = r.ReadInt64(); }
         public static void Read(this BinaryReader r, out float v) { v = r.ReadSingle(); }
         public static void Read(this BinaryReader r, out double v) { v = r.ReadDouble(); }
+
+        public static void Read<T>(this BinaryReader r, ref T v)
+        where T : ISerialize
+        {
+            v.Deserialize(r);
+        }
     }
 }

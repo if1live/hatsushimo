@@ -1,20 +1,9 @@
-﻿using System;
-using System.Linq;
-using System.Collections;
+using System;
 using System.Collections.Generic;
-using System.Text;
-using System.IO;
+using System.Linq;
 
-namespace HatsushimoShared
+namespace Hatsushimo.Utils
 {
-    public interface IPacket
-    {
-        PacketType Type { get; }
-        void Serialize(BinaryWriter w);
-        void Deserialize(BinaryReader r);
-        IPacket CreateBlank();
-    }
-
     // https://stackoverflow.com/questions/415291/best-way-to-combine-two-or-more-byte-arrays-in-c-sharp
     class ByteJoin
     {

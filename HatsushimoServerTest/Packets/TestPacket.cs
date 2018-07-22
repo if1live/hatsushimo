@@ -1,9 +1,12 @@
 using System;
 using System.IO;
 using Xunit;
-using HatsushimoShared;
+using Hatsushimo;
+using Hatsushimo.Packets;
+using Hatsushimo.Types;
+using Hatsushimo.NetChan;
 
-namespace HatsushimoServerTest
+namespace HatsushimoServerTest.Packets
 {
     public class TestPacket
     {
@@ -87,8 +90,7 @@ namespace HatsushimoServerTest
         {
             var a = new InputMovePacket()
             {
-                DirX = 1,
-                DirY = 2,
+                Dir = new Vec2(1, 2),
             };
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
@@ -105,6 +107,26 @@ namespace HatsushimoServerTest
             Assert.Equal(a, b);
         }
 
+        [Fact]
+        public void TestLeaderboardPacket()
+        {
+            var a = new LeaderboardPacket()
+            {
+                Players = 10,
+                Top = new Rank[]
+                {
+                    new Rank() { ID=1, Score=2, Ranking=3 },
+                    new Rank() { ID=4, Score=5, Ranking=6 },
+                },
+            };
+            var b = (LeaderboardPacket)SerializeAndDeserialize(a);
+
+            Assert.Equal(a.Players, b.Players);
+            for(var i = 0 ; i < a.Top.Length ; i++) {
+                Assert.Equal(a.Top[i], b.Top[i]);
+            }
+        }
+
         ReplicationActionPacket CreateFakeReplicationActionPacket()
         {
             return new ReplicationActionPacket()
@@ -112,10 +134,8 @@ namespace HatsushimoServerTest
                 Action = ReplicationAction.Create,
                 ID = 123,
                 ActorType = ActorType.Player,
-                PosX = 1,
-                PosY = 2,
-                DirX = 3,
-                DirY = 4,
+                Pos = new Vec2(1, 2),
+                Dir = new Vec2(3, 4),
                 Speed = 5,
                 Extra = "todo",
             };

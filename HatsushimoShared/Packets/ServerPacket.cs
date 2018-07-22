@@ -1,12 +1,14 @@
 using System;
 using System.IO;
 using System.Linq;
+using Hatsushimo.Extensions;
+using Hatsushimo.NetChan;
 
-namespace HatsushimoShared
+namespace Hatsushimo.Packets
 {
     public struct ConnectPacket : IPacket
     {
-        public PacketType Type => PacketType.Connect;
+        public short Type => (short)PacketType.Connect;
 
         public IPacket CreateBlank()
         {
@@ -19,7 +21,7 @@ namespace HatsushimoShared
 
     public struct DisconnectPacket : IPacket
     {
-        public PacketType Type => PacketType.Disconnect;
+        public short Type => (short)PacketType.Disconnect;
 
         public IPacket CreateBlank()
         {
@@ -35,7 +37,7 @@ namespace HatsushimoShared
         public int UserID;
         public int Version;
 
-        public PacketType Type => PacketType.Welcome;
+        public short Type => (short)PacketType.Welcome;
 
         public IPacket CreateBlank()
         {
@@ -59,7 +61,7 @@ namespace HatsushimoShared
     {
         public int millis;
 
-        public PacketType Type => PacketType.Ping;
+        public short Type => (short)PacketType.Ping;
 
         public IPacket CreateBlank()
         {

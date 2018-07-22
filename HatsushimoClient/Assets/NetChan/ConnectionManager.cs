@@ -1,8 +1,10 @@
 using UniRx;
 using UnityEngine;
-using HatsushimoShared;
+using Hatsushimo;
 using System.Collections;
 using System;
+using Hatsushimo.NetChan;
+using Hatsushimo.Packets;
 
 namespace Assets.NetChan
 {
@@ -13,7 +15,7 @@ namespace Assets.NetChan
         WebSocket ws;
         public string host = "ws://127.0.0.1";
 
-        readonly PacketFactory factory = PacketFactory.Create();
+        readonly PacketCodec codec = MyPacketCodec.Create();
 
         string ServerURL { get { return $"{host}:{Config.ServerPort}/game"; } }
 
@@ -49,7 +51,7 @@ namespace Assets.NetChan
                 }
 
                 // TODO TODO handler?
-                var p = factory.Deserialize(bytes);
+                var p = codec.Decode(bytes);
                 var dispatcher = PacketDispatcher.Instance;
                 dispatcher.Dispatch(p);
             }
@@ -72,7 +74,7 @@ namespace Assets.NetChan
 
         public void SendPacket(IPacket p)
         {
-            var bytes = factory.Serialize(p);
+            var bytes = codec.Encode(p);
             ws.Send(bytes);
         }
         

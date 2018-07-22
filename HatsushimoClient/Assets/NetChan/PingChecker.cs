@@ -5,8 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
-using HatsushimoShared;
 using System.Collections;
+using Hatsushimo.Packets;
+using Hatsushimo.Utils;
 
 namespace Assets.NetChan
 {

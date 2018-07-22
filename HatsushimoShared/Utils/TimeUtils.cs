@@ -1,6 +1,6 @@
 using System;
 
-namespace HatsushimoShared
+namespace Hatsushimo.Utils
 {
     public class TimeUtils
     {

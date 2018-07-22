@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace HatsushimoShared
+namespace Hatsushimo.Utils
 {
     public class IDGenerator
     {
