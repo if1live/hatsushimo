@@ -1,0 +1,22 @@
+language: csharp
+
+mono: none
+dotnet: 2.1
+
+sudo: false
+
+script:
+  - cd HatsushimoServerTest
+  - dotnet test
+  - cd ..
+  
+  - cd HatsushimoServerMain
+  - dotnet build
+  - cd ..
+
+branches:
+  only:
+    - master
+
+notifications:
+  email: false
