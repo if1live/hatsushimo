@@ -25,8 +25,11 @@ namespace HatsushimoServer
             var worlds = InstanceWorldManager.Instance;
             var defaultWorld = worlds.Get(InstanceWorldManager.DefaultID);
 
-            // 패킷 받는 부분과 패킷 처리하는 부분을 분리해서 돌리고싶다
-            StartRecvLoop();
+            var sessionLayer = SessionLayer.Layer;
+            sessionLayer.Received.Subscribe(received => {
+                EnqueueRecv(received.Session, received.Packet);
+            });
+
             StartGameLoop();
         }
 
@@ -149,20 +152,6 @@ namespace HatsushimoServer
 
                 default:
                     break;
-            }
-        }
-
-        async void StartRecvLoop()
-        {
-            var layer = SessionLayer.Layer;
-            var codec = MyPacketCodec.Create();
-            while (true)
-            {
-                var packets = layer.FlushReceivedPackets();
-                packets.ForEach(p => EnqueueRecv(p.Session, p.Packet));
-
-                var interval = TimeSpan.FromMilliseconds(1000 / 100);
-                await Task.Delay(interval);
             }
         }
 

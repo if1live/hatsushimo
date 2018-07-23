@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reactive.Subjects;
 using Hatsushimo.NetChan;
 using Hatsushimo.Packets;
 using Hatsushimo.Utils;
@@ -52,6 +53,30 @@ namespace HatsushimoServer
 
         readonly IEnumerator<int> sessionIDEnumerator = IDGenerator.MakeSessionID().GetEnumerator();
 
+        Subject<ReceivedPacket> _received = new Subject<ReceivedPacket>();
+        public IObservable<ReceivedPacket> Received { get { return _received; } }
+
+        public SessionLayer()
+        {
+            var transport = WebSocketTransportLayer.Layer;
+            transport.Received.Subscribe(datagram => {
+                int sessionID = 0;
+                var idFound = transportIDSessionIDTable.TryGetValue(datagram.ID, out sessionID);
+                Debug.Assert(idFound == true, "session must be registered");
+
+                Session session = null;
+                var sessionFound = TryGetSession(sessionID, out session);
+                Debug.Assert(sessionFound == true, "session must be registered");
+
+                var packet = codec.Decode(datagram.Data);
+                _received.OnNext(new ReceivedPacket()
+                {
+                    Session = session,
+                    Packet = packet,
+                });
+            });
+        }
+
         public Session CreateSession(ITransport<string> transport)
         {
             // 플레이어에게는 고유번호 붙인다
@@ -99,31 +124,6 @@ namespace HatsushimoServer
         {
             public Session Session;
             public IPacket Packet;
-        }
-
-        public List<ReceivedPacket> FlushReceivedPackets()
-        {
-            var transport = WebSocketTransportLayer.Layer;
-            var datagrams = transport.FlushReceivedDatagrams();
-            var packets = new List<ReceivedPacket>(datagrams.Count);
-            foreach (var d in datagrams)
-            {
-                int sessionID = 0;
-                var idFound = transportIDSessionIDTable.TryGetValue(d.ID, out sessionID);
-                Debug.Assert(idFound == true, "session must be registered");
-
-                Session session = null;
-                var sessionFound = TryGetSession(sessionID, out session);
-                Debug.Assert(sessionFound == true, "session must be registered");
-
-                var packet = codec.Decode(d.Data);
-                packets.Add(new ReceivedPacket()
-                {
-                    Session = session,
-                    Packet = packet,
-                });
-            }
-            return packets;
         }
     }
 

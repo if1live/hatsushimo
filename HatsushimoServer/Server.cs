@@ -16,10 +16,8 @@ namespace HatsushimoServer
     {
         public void Run(string[] args)
         {
-            var transportLayer = WebSocketTransportLayer.Layer;
-            transportLayer.StartSendLoop();
-
-            var _ = GameService.Instance;
+            var _1 = WebSocketTransportLayer.Layer;
+            var _2 = GameService.Instance;
 
 
             var port = Config.ServerPort;
