@@ -130,7 +130,8 @@ namespace HatsushimoServer
 
         ReplicationAllPacket GenerateReplicaitonAllPacket()
         {
-            var players = this.players.Select(p => new PlayerInitial()
+            var clonedPlayers = this.players.ToList();
+            var players = clonedPlayers.Select(p => new PlayerInitial()
             {
                 ID = p.ID,
                 Nickname = p.Session.Nickname,
@@ -167,7 +168,8 @@ namespace HatsushimoServer
             // 모든 유저에게 아이템 생성 패킷 전송
             // TODO broadcast emit
             var packet = food.GenerateCreatePacket();
-            this.players.ForEach(p =>
+            var clonedPlayers = players.ToList();
+            clonedPlayers.ForEach(p =>
             {
                 var session = p.Session;
                 session.Send(packet);
@@ -176,7 +178,8 @@ namespace HatsushimoServer
 
         void SendFoodRemovePacket(Food food)
         {
-            this.players.ForEach(p =>
+            var clonedPlayers = players.ToList();
+            clonedPlayers.ForEach(p =>
             {
                 var packet = food.GenerateRemovePacket();
                 var session = p.Session;
@@ -188,8 +191,9 @@ namespace HatsushimoServer
         public void GameLoop()
         {
             float dt = 1.0f / 60;
+            var clonedPlayers = this.players.ToList();
 
-            players.ForEach(player =>
+            clonedPlayers.ForEach(player =>
             {
                 var s = player.Speed;
                 var dx = player.Direction[0] * s * dt;
@@ -208,7 +212,7 @@ namespace HatsushimoServer
 
             // 음식을 먹으면 점수를 올리고 음식을 목록에서 삭제
             // TODO quad tree 같은거 쓰면 최적화 가능
-            players.ForEach(player =>
+            clonedPlayers.ForEach(player =>
             {
                 var gainedFoods = foods.Select((food, idx) => new Tuple<Food, int>(food, idx))
                     .Where(pair =>
@@ -249,9 +253,10 @@ namespace HatsushimoServer
 
         public void NetworkLoop()
         {
-            players.ForEach(player =>
+            var clonedPlayers = players.ToList();
+            clonedPlayers.ForEach(player =>
             {
-                var actions = players.Select(p => new ReplicationActionPacket()
+                var actions = clonedPlayers.Select(p => new ReplicationActionPacket()
                 {
                     Action = ReplicationAction.Update,
                     ID = p.ID,
@@ -276,13 +281,13 @@ namespace HatsushimoServer
             // 밑바닥 사람들의 점수는 몇점이든 별로 중요하지 않다
             // 상위 랭킹이 바뀐것만 리더보드로 취급하자
 
-            var clonedPlayers = this.players.ToArray();
+            var clonedPlayers = this.players.ToList();
             var newLeaderboard = new Leaderboard(clonedPlayers, Config.LeaderboardSize);
             if (!leaderboard.IsLeaderboardEqual(newLeaderboard))
             {
                 leaderboard = newLeaderboard;
                 var packet = newLeaderboard.GenerateLeaderboardPacket();
-                this.players.ForEach(player =>
+                clonedPlayers.ForEach(player =>
                 {
                     player.Session.Send(packet);
                 });
