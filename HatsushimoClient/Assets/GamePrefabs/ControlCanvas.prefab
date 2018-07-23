@@ -188,7 +188,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 1
-  cooltime: 1
+  cooltime: 0.3
   button: {fileID: 114072025936399474}
 --- !u!114 &114415061951463896
 MonoBehaviour:

@@ -122,7 +122,14 @@ namespace HatsushimoServer
             IWebSocketSession session = null;
             if (Sessions.TryGetSession(p.ID, out session))
             {
-                Sessions.SendTo(p.Data, session.ID);
+                if (session.ConnectionState == WebSocketState.Open)
+                {
+                    Sessions.SendTo(p.Data, session.ID);
+                }
+                else
+                {
+                    Console.WriteLine($"cannot send: id={p.ID} state={session.ConnectionState}");
+                }
             }
         }
     }

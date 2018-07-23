@@ -13,5 +13,8 @@ namespace Hatsushimo
 
         public const int SendRateCoord = 15;
         public const int SendRateLeaderboard = 15;
+
+        public const float CoolTimeCommandPrimary = 0.3f;
+        public const float CoolTimeCommandSecondary = 2;
     }
 }

@@ -1,3 +1,5 @@
+using System;
+using System.Threading.Tasks;
 using Hatsushimo;
 using Hatsushimo.Packets;
 using Hatsushimo.Types;
@@ -15,6 +17,10 @@ namespace HatsushimoServer
         public override ActorType Type => ActorType.Player;
 
         public int Score { get; private set; }
+
+        // skill은 2개면 되겠지?
+        public bool SkillPrimary { get; private set; } = true;
+        public bool SKillSecondary { get; private set; } = true;
 
         public Player(int id, Session session)
         {
@@ -44,6 +50,60 @@ namespace HatsushimoServer
         {
             this.Score += s;
         }
+
+        async void RunSkillPrimaryCoolTimer()
+        {
+            if (SkillPrimary == false) { return; }
+
+            SkillPrimary = false;
+
+            var dueTime = TimeSpan.FromSeconds(Config.CoolTimeCommandPrimary);
+            await Task.Delay(dueTime);
+
+            SkillPrimary = true;
+        }
+
+        async void RunSkillSecondaryCoolTimer()
+        {
+            if (SKillSecondary == false) { return; }
+
+            SKillSecondary = false;
+
+            var dueTime = TimeSpan.FromSeconds(Config.CoolTimeCommandSecondary);
+            await Task.Delay(dueTime);
+
+            SKillSecondary = true;
+        }
+
+        void UseSkillPrimary()
+        {
+            if (!SkillPrimary) { return; }
+            Console.WriteLine($"use skill primary: id={ID}");
+            RunSkillPrimaryCoolTimer();
+        }
+
+        void UseSKillSecondary()
+        {
+            if (!SKillSecondary) { return; }
+            Console.WriteLine($"use skill secondary: id={ID}");
+            RunSkillSecondaryCoolTimer();
+        }
+
+        public void UseSkill(int mode)
+        {
+            switch (mode)
+            {
+                case 1:
+                    UseSkillPrimary();
+                    break;
+                case 2:
+                    UseSKillSecondary();
+                    break;
+                default:
+                    break;
+            }
+        }
+
 
         public override ReplicationActionPacket GenerateCreatePacket()
         {

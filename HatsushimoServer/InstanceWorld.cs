@@ -57,15 +57,18 @@ namespace HatsushimoServer
                 networkRemain -= elapsedMillis;
                 leaderboardRemain -= elapsedMillis;
 
-                if(updateRemain <= 0) {
+                if (updateRemain <= 0)
+                {
                     Update();
                     updateRemain += updateInterval;
                 }
-                if(networkRemain <= 0) {
+                if (networkRemain <= 0)
+                {
                     room.NetworkLoop();
                     networkRemain += networkInterval;
                 }
-                if(leaderboardRemain <= 0) {
+                if (leaderboardRemain <= 0)
+                {
                     room.LeaderboardLoop();
                     leaderboardRemain += leaderboardInterval;
                 }
@@ -141,8 +144,8 @@ namespace HatsushimoServer
 
         void HandleInputCommand(Session session, InputCommandPacket p)
         {
-            // TODO exec action
-            Console.WriteLine($"input - command : {p.Mode}");
+            var player = GetPlayer(session);
+            player.UseSkill(p.Mode);
         }
 
         void HandleInputMove(Session session, InputMovePacket p)
@@ -182,6 +185,12 @@ namespace HatsushimoServer
                 default:
                     break;
             }
+        }
+
+        async void SendDelayedPacket(Session session, IPacket packet, TimeSpan dueTime)
+        {
+            await Task.Delay(dueTime);
+            session.Send(packet);
         }
     }
 }
