@@ -188,14 +188,9 @@ namespace HatsushimoServer
             });
         }
 
-        public void GameLoop()
+        // 음식 생성. 맵에 어느정도의 먹을게 남아있도록 하는게 목적
+        void GenerateFoodLoop()
         {
-            float dt = 1.0f / 60;
-            var clonedPlayers = this.players.ToList();
-
-            clonedPlayers.ForEach(player => player.UpdateMove(dt));
-
-            // 음식 생성
             var requiredFoodCount = Config.FoodCount - foods.Count;
             for (var i = 0; i < requiredFoodCount; i++)
             {
@@ -203,46 +198,54 @@ namespace HatsushimoServer
                 foods.Add(food);
                 SendFoodCreatePacket(food);
             }
+        }
 
+        void PlayerUpdateLoop(float dt)
+        {
+            var clonedPlayers = this.players.ToList();
+            clonedPlayers.ForEach(player => player.UpdateMove(dt));
+        }
+
+        void CheckFoodLoop()
+        {
+            var clonedPlayers = this.players.ToList();
             // 음식을 먹으면 점수를 올리고 음식을 목록에서 삭제
             // TODO quad tree 같은거 쓰면 최적화 가능
             clonedPlayers.ForEach(player =>
             {
-                var gainedFoods = foods.Select((food, idx) => new Tuple<Food, int>(food, idx))
+                var gainedFoods = foods.Select((food, idx) => new { food = food, idx = idx })
                     .Where(pair =>
                     {
-                        var food = pair.Item1;
-                        var p1 = player.Position;
-                        var p2 = food.Position;
-                        var diffx = p1[0] - p2[0];
-                        var diffy = p1[1] - p2[1];
-                        var diff = new Vec2(diffx, diffy);
-                        var lenSquare = diff.SqrMagnitude;
                         var ALLOW_DISTANCE = 1;
-                        return lenSquare < ALLOW_DISTANCE * ALLOW_DISTANCE;
+                        var p1 = pair.food.Position;
+                        var p2 = player.Position;
+                        return VectorHelper.IsInRange(p1, p2, ALLOW_DISTANCE);
                     });
 
                 // 먹은 플레이어는 점수 획득
-                gainedFoods.Select(pair => pair.Item1).ToList().ForEach(food =>
-                {
-                    player.Score += food.Score;
-                });
+                gainedFoods.Select(pair => pair.food).ToList()
+                    .ForEach(food => player.GainScore(food.Score));
 
                 // 모든 플레이어에게 삭제 패킷 보내기
-                gainedFoods.Select(pair => pair.Item1).ToList().ForEach(food =>
+                gainedFoods.Select(pair => pair.food).ToList()
+                    .ForEach(food =>
                 {
                     SendFoodRemovePacket(food);
                 });
 
                 // 배열의 뒤에서부터 제거하면 검색으로 찾은 인덱스를 그대로 쓸수있다
                 gainedFoods.ToList()
-                    .OrderByDescending(pair => pair.Item2).ToList()
-                    .ForEach(pair =>
-                {
-                    var idx = pair.Item2;
-                    foods.RemoveAt(idx);
-                });
+                    .OrderByDescending(pair => pair.idx).ToList()
+                    .ForEach(pair => foods.RemoveAt(pair.idx));
             });
+        }
+
+        public void GameLoop()
+        {
+            float dt = 1.0f / 60;
+            PlayerUpdateLoop(dt);
+            GenerateFoodLoop();
+            CheckFoodLoop();
         }
 
         public void NetworkLoop()
@@ -274,7 +277,6 @@ namespace HatsushimoServer
             // 리더보드 변경 사항이 있는 경우에만 전송
             // 밑바닥 사람들의 점수는 몇점이든 별로 중요하지 않다
             // 상위 랭킹이 바뀐것만 리더보드로 취급하자
-
             var clonedPlayers = this.players.ToList();
             var newLeaderboard = new Leaderboard(clonedPlayers, Config.LeaderboardSize);
             if (!leaderboard.IsLeaderboardEqual(newLeaderboard))

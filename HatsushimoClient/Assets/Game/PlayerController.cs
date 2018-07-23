@@ -42,54 +42,43 @@ namespace Assets.Game
                 return;
             }
 
-            // TODO 가상 스틱같은거로 대신할것이다
-            HandleCommand();
-            HandleMove();
+            // TODO 모바일에 맞는 입력방식도 구현하기
+            HandleMove_UnityBasic();
+            HandleCommand_UnityBasic();
         }
 
-        void HandleCommand()
+        void HandleMove_UnityBasic()
         {
             var inputmgr = InputManager.Instance;
 
-            float dir_x = 0;
-            float dir_y = 0;
+            var vertical = Input.GetAxis("Vertical");
+            var horizontal = Input.GetAxis("Horizontal");
+            var dir = new Vector3(horizontal, vertical);
 
-            // TODO 키 입력에 따라서 움직이기
-            // TODO 움직이는 명령은 얼마나 자주 보내나?
-            // TODO 가상패드같은거로 바꾸는게 좋을거같은데
-            if (Input.GetKey(KeyCode.UpArrow))
+            var currPos = player.transform.position;
+            if (dir == Vector3.zero)
             {
-                dir_y = +1;
+                // 이동방향이 없다 = 현위치를 도착으로 취급
+                var action = InputAction.CreateMove(currPos);
+                inputmgr.PushMove(action);
             }
-            if (Input.GetKey(KeyCode.DownArrow))
+            else
             {
-                dir_y = -1;
+                var delta = dir * 5;
+                var nextPos = currPos + delta;
+                var action = InputAction.CreateMove(nextPos);
+                inputmgr.PushMove(action);
             }
-            if (Input.GetKey(KeyCode.LeftArrow))
-            {
-                dir_x = -1;
-            }
-            if (Input.GetKey(KeyCode.RightArrow))
-            {
-                dir_x = +1;
-            }
-
-            var pos = transform.position;
-            var delta = new Vector3(dir_x * 5, dir_y * 5);
-            var targetPos = pos + delta;
-
-            var action = InputAction.CreateMove(targetPos);
-            inputmgr.PushMove(action);
         }
 
-        void HandleMove()
+        void HandleCommand_UnityBasic()
         {
             var inputmgr = InputManager.Instance;
-            if (Input.GetKeyDown(KeyCode.Z))
+            if (Input.GetButton("Fire1"))
             {
                 inputmgr.PushCommand(InputAction.CreateCommand(1));
             }
-            if (Input.GetKeyDown(KeyCode.X))
+            if (Input.GetButton("Fire2"))
             {
                 inputmgr.PushCommand(InputAction.CreateCommand(2));
             }

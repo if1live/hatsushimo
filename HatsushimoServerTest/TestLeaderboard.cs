@@ -9,7 +9,7 @@ namespace HatsushimoServerTest
         static Player MakePlayer(int id, int score)
         {
             var player = new Player(id, null);
-            player.Score = score;
+            player.GainScore(score);
             return player;
         }
 

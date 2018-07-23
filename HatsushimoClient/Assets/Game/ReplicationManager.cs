@@ -1,3 +1,4 @@
+using Assets.Game.Extensions;
 using Assets.NetChan;
 using Hatsushimo.Packets;
 using System;
@@ -38,14 +39,14 @@ namespace Assets.Game
                 // 플레이어 생성
                 foreach (var p in packet.Players)
                 {
-                    var pos = new Vector3(p.Pos[0], p.Pos[1], 0);
+                    var pos = p.Pos.ToVector3();
                     var player = GetOrCreatePlayer(p.ID, pos);
                     player.ApplyInitial(p);
                 }
 
                 foreach (var i in packet.Foods)
                 {
-                    var pos = new Vector3(i.Pos[0], i.Pos[1], 0);
+                    var pos = i.Pos.ToVector3();
                     CreateFood(i.ID, pos);
                 }
             }).AddTo(gameObject);
@@ -87,9 +88,7 @@ namespace Assets.Game
             var conn = ConnectionManager.Instance.Conn;
             var myid = conn.PlayerID;
             var id = packet.ID;
-            var x = packet.Pos.X;
-            var y = packet.Pos.Y;
-            var pos = new Vector3(x, y, 0);
+            var pos = packet.Pos.ToVector3();
 
             if (packet.ActorType == ActorType.Player)
             {

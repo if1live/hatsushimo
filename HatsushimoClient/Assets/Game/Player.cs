@@ -1,3 +1,4 @@
+using Assets.Game.Extensions;
 using Assets.NetChan;
 using Hatsushimo.Packets;
 using System;
@@ -44,7 +45,7 @@ namespace Assets.Game
                 Debug.Assert(packet.ID == id, $"id mismatch: my={id} packet={packet.ID} action={packet.Action}");
 
                 nickname = packet.Extra;
-                TargetPos = new Vector3(packet.TargetPos.X, packet.TargetPos.Y);
+                TargetPos = packet.TargetPos.ToVector3();
                 Speed = packet.Speed;
 
                 // 생성 요청의 경우는 즉시 소환하지만
@@ -52,7 +53,7 @@ namespace Assets.Game
                 // 갱신 요청은 target pos를 이용해서 처리하기
                 if (packet.Action == ReplicationAction.Create)
                 {
-                    var pos = new Vector3(packet.Pos.X, packet.Pos.Y, 0);
+                    var pos = packet.Pos.ToVector3();
                     transform.position = pos;
                 }
                 
@@ -62,9 +63,9 @@ namespace Assets.Game
             {
                 id = packet.ID;
                 nickname = packet.Nickname;
-                TargetPos = new Vector3(packet.TargetPos[0], packet.TargetPos[1], 0);
+                TargetPos = packet.TargetPos.ToVector3();
 
-                var pos = new Vector3(packet.Pos[0], packet.Pos[1], 0);
+                var pos = packet.Pos.ToVector3();
                 transform.position = pos;
                 
             }).AddTo(gameObject);

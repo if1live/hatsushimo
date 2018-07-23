@@ -87,21 +87,6 @@ namespace Hatsushimo.Types
             r.Read(out Y);
         }
 
-        public static bool operator ==(Vec2 a, Vec2 b)
-        {
-            if (ReferenceEquals(a, b)) { return true; }
-            if (ReferenceEquals(a, null)) { return false; }
-            if (ReferenceEquals(b, null)) { return false; }
-
-            return (a.X == b.X)
-                && (a.Y == b.Y);
-        }
-
-        public static bool operator !=(Vec2 a, Vec2 b)
-        {
-            return !(a == b);
-        }
-
         public static Vec2 operator +(Vec2 a, Vec2 b)
         {
             var x = a.X + b.X;
@@ -117,6 +102,32 @@ namespace Hatsushimo.Types
         {
             return a + (-b);
         }
+
+        public static Vec2 operator *(Vec2 a, float b)
+        {
+            return new Vec2(a.X * b, a.Y * b);
+        }
+
+        public static Vec2 operator /(Vec2 a, float b)
+        {
+            return new Vec2(a.X / b, a.Y / b);
+        }
+
+        public static bool operator ==(Vec2 a, Vec2 b)
+        {
+            if (ReferenceEquals(a, b)) { return true; }
+            if (ReferenceEquals(a, null)) { return false; }
+            if (ReferenceEquals(b, null)) { return false; }
+
+            return (a.X == b.X)
+                && (a.Y == b.Y);
+        }
+
+        public static bool operator !=(Vec2 a, Vec2 b)
+        {
+            return !(a == b);
+        }
+
 
         public override bool Equals(object obj)
         {
