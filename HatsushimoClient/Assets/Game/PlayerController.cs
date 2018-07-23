@@ -74,11 +74,11 @@ namespace Assets.Game
         void HandleCommand_UnityBasic()
         {
             var inputmgr = InputManager.Instance;
-            if (Input.GetButton("Fire1"))
+            if (Input.GetButtonDown("Fire1"))
             {
                 inputmgr.PushCommand(InputAction.CreateCommand(1));
             }
-            if (Input.GetButton("Fire2"))
+            if (Input.GetButtonDown("Fire2"))
             {
                 inputmgr.PushCommand(InputAction.CreateCommand(2));
             }
