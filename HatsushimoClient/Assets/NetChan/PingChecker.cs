@@ -64,7 +64,6 @@ namespace Assets.NetChan
             var now = TimeUtils.NowMillis;
             var diff = now - p.millis;
             latency.SetValueAndForceNotify(diff);
-            Debug.Log($"ping: {diff}ms");
         }
 
         IEnumerator BeginPingLoop()

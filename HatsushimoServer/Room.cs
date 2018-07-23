@@ -102,14 +102,10 @@ namespace HatsushimoServer
             }
 
             // 방을 나갔다는것을 다른 유저도 알아야한다
-            var leavePacket = new RoomLeavePacket()
+            var removePacket = player.GenerateRemovePacket();
+            this.players.Where(p => p != player).ToList().ForEach(p =>
             {
-                PlayerID = player.ID,
-            };
-
-            this.players.ForEach(p =>
-            {
-                p.Session.Send(leavePacket);
+                p.Session.Send(removePacket);
             });
 
             Console.WriteLine($"leave room: room={ID}, player={player.ID}");

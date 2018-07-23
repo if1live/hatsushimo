@@ -111,7 +111,6 @@ namespace HatsushimoServer
 
             var room = rooms.GetRoom(player.RoomID);
             room.LeavePlayer(player);
-            player.Session.Send(p);
         }
 
         public void HandleInputCommand(Session session, InputCommandPacket p)

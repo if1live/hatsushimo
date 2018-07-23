@@ -40,11 +40,6 @@ namespace Assets.NetChan
         }
         ReactiveProperty<RoomJoinResponsePacket> roomJoin = new ReactiveProperty<RoomJoinResponsePacket>();
 
-        public IObservable<RoomLeavePacket> RoomLeaveReceived {
-            get { return roomLeave.Skip(1).AsObservable(); }
-        }
-        ReactiveProperty<RoomLeavePacket> roomLeave = new ReactiveProperty<RoomLeavePacket>();
-
         public IObservable<PlayerReadyPacket> PlayerReadyReceived {
             get { return playerReady.Skip(1).AsObservable(); }
         }
@@ -95,10 +90,6 @@ namespace Assets.NetChan
 
                 case PacketType.RoomJoinResp:
                     roomJoin.SetValueAndForceNotify((RoomJoinResponsePacket)p);
-                    break;
-
-                case PacketType.RoomLeave:
-                    roomLeave.SetValueAndForceNotify((RoomLeavePacket)p);
                     break;
 
                 case PacketType.PlayerReady:
