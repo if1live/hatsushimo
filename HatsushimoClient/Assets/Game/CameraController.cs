@@ -13,22 +13,18 @@ namespace Assets.Game
             cam = Camera.main;
         }
 
-        private void Start()
+        private void LateUpdate()
         {
-            MainThreadDispatcher.StartUpdateMicroCoroutine(BeginMoveCamera());   
+            FollowPlayer();
         }
 
-        IEnumerator BeginMoveCamera()
+        void FollowPlayer()
         {
-            while(true)
-            {
-                var campos = cam.transform.position;
-                var playerpos = transform.position;
-                campos.x = playerpos.x;
-                campos.y = playerpos.y;
-                cam.transform.position = campos;
-                yield return null;
-            }
+            var campos = cam.transform.position;
+            var playerpos = transform.position;
+            campos.x = playerpos.x;
+            campos.y = playerpos.y;
+            cam.transform.position = campos;
         }
     }
 }
