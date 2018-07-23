@@ -35,7 +35,7 @@ namespace Hatsushimo.Utils
             }
         }
 
-        public static IEnumerable<int> MakePlayerID()
+        public static IEnumerable<int> MakeSessionID()
         {
             return Make(ID_PLAYER_FIRST, ID_FOOD_RANGE);
         }

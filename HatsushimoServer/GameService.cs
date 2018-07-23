@@ -19,17 +19,14 @@ namespace HatsushimoServer
             Instance = new GameService();
         }
 
-        readonly Dictionary<string, int> sessionIDPlayerIDTable = new Dictionary<string, int>();
         readonly Dictionary<int, Player> playerTable = new Dictionary<int, Player>();
 
         Player GetPlayer(Session session)
         {
-            var playerID = sessionIDPlayerIDTable[session.ID];
+            var playerID = session.ID;
             return playerTable[playerID];
         }
 
-
-        readonly IEnumerator<int> playerIDEnumerator = IDGenerator.MakePlayerID().GetEnumerator();
         readonly RoomManager rooms = new RoomManager();
 
         public GameService()
@@ -46,12 +43,7 @@ namespace HatsushimoServer
 
         public void HandleConnect(Session session, ConnectPacket p)
         {
-            // 플레이어에게는 고유번호 붙인다
-            // 어떤 방에 들어가든 id는 유지된다
-            playerIDEnumerator.MoveNext();
-            var id = playerIDEnumerator.Current;
-
-            sessionIDPlayerIDTable[session.ID] = id;
+            var id = session.ID;
             var player = new Player(id, session);
             playerTable[id] = player;
 
@@ -60,7 +52,7 @@ namespace HatsushimoServer
                 UserID = id,
                 Version = Config.Version,
             };
-            Console.WriteLine($"connected, welcome id={id}, session={session.ID}");
+            Console.WriteLine($"connected: welcome id={id}, session={session.ID} transport={session.TransportID}");
             session.Send(welcome);
         }
 
@@ -69,13 +61,13 @@ namespace HatsushimoServer
             // 연결 종료는 소켓이 끊어질떄도 있고
             // 유저가 직접 종료시키는 경우도 있다
             // disconnect를 여러번 호출해도 꺠지지 않도록 하자
-            if (!sessionIDPlayerIDTable.ContainsKey(session.ID))
+            if (!playerTable.ContainsKey(session.ID))
             {
                 Console.WriteLine($"session={session.ID} is already disconnected");
                 return;
             }
 
-            int playerID = sessionIDPlayerIDTable[session.ID];
+            int playerID = session.ID;
             Player player = null;
             if (playerTable.TryGetValue(playerID, out player))
             {
@@ -86,8 +78,9 @@ namespace HatsushimoServer
                 }
                 playerTable.Remove(playerID);
             }
-            sessionIDPlayerIDTable.Remove(session.ID);
-            Console.WriteLine($"disconnected, id={playerID}, session={session.ID}");
+
+            Console.WriteLine($"disconnected: id={playerID}, session={session.ID}");
+            SessionLayer.Layer.RemoveSession(player.Session);
         }
 
         public void HandleRoomJoinReq(Session session, RoomJoinRequestPacket p)
@@ -111,7 +104,10 @@ namespace HatsushimoServer
         public void HandleRoomLeave(Session session, RoomLeavePacket p)
         {
             var player = GetPlayer(session);
-            if (player.RoomID != null) { player.Session.Close(); }
+            if (player.RoomID != null)
+            {
+                SessionLayer.Layer.CloseSession(player.Session);
+            }
 
             var room = rooms.GetRoom(player.RoomID);
             room.LeavePlayer(player);
@@ -148,7 +144,10 @@ namespace HatsushimoServer
         public void HandlePlayerReady(Session session, PlayerReadyPacket p)
         {
             var player = GetPlayer(session);
-            if (player.RoomID == null) { player.Session.Close(); }
+            if (player.RoomID == null)
+            {
+                SessionLayer.Layer.CloseSession(player.Session);
+            }
 
             var room = rooms.GetRoom(player.RoomID);
             room.SpawnPlayer(player);
@@ -197,12 +196,15 @@ namespace HatsushimoServer
             }
         }
 
-        async void StartRecvLoop() {
+        async void StartRecvLoop()
+        {
             var layer = SessionLayer.Layer;
             var codec = MyPacketCodec.Create();
-            while(true) {
+            while (true)
+            {
                 var packets = layer.FlushReceivedPackets();
-                foreach(var p in packets) {
+                foreach (var p in packets)
+                {
                     HandlePacket(p.Session, p.Packet);
                 }
 

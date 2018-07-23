@@ -25,8 +25,8 @@ namespace HatsushimoServer
             transport = new WebSocketTransport(transportLayer, this);
 
             // session layer
-            session = new Session(transport);
-            SessionLayer.Layer.Register(session);
+            var sessionLayer = SessionLayer.Layer;
+            session = sessionLayer.CreateSession(transport);
         }
 
         protected override void OnClose(CloseEventArgs e)
@@ -37,7 +37,7 @@ namespace HatsushimoServer
             session.Send(p);
 
             // session layer
-            SessionLayer.Layer.UnRegister(session);
+            SessionLayer.Layer.CloseSession(session);
             session = null;
         }
 
@@ -76,7 +76,6 @@ namespace HatsushimoServer
 
         public void Close()
         {
-            Console.WriteLine($"something is wronig, close session={session.ID}");
             layer.Close(session.ID);
         }
     }
@@ -102,8 +101,13 @@ namespace HatsushimoServer
             sendQueue.Enqueue(pair);
         }
 
-        public void Close(string id) {
-            Sessions.CloseSession(id);
+        public void Close(string id)
+        {
+            IWebSocketSession s = null;
+            if (Sessions.TryGetSession(id, out s))
+            {
+                Sessions.CloseSession(s.ID);
+            }
         }
 
         public List<WebSocketDatagram> FlushReceivedDatagrams()
@@ -120,7 +124,11 @@ namespace HatsushimoServer
         void HandleSend(WebSocketDatagram p)
         {
             Debug.Assert(Sessions != null, "sessions not exist!");
-            Sessions.SendTo(p.Data, p.ID);
+            IWebSocketSession session = null;
+            if (Sessions.TryGetSession(p.ID, out session))
+            {
+                Sessions.SendTo(p.Data, session.ID);
+            }
         }
 
         public async void StartSendLoop()
