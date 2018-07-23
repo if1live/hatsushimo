@@ -51,18 +51,18 @@ namespace HatsushimoServer
 
             // 신규 유저에게 월드 정보 알려주기
             // 월드 정보 이외에도 리더보드 같이 변경될때만 알려주는 정보도 알려주기
-            player.Session.SendPacket(GenerateReplicaitonAllPacket());
-            player.Session.SendPacket(leaderboard.GenerateLeaderboardPacket());
+            player.Session.Send(GenerateReplicaitonAllPacket());
+            player.Session.Send(leaderboard.GenerateLeaderboardPacket());
 
             // 접속한 유저에게 완료 신호 보냄
             // 게임 로직을 돌릴수 있다는 신호임
-            player.Session.SendPacket(new PlayerReadyPacket());
+            player.Session.Send(new PlayerReadyPacket());
 
             // 기존 유저들에게 새로 생성된 플레이어 정보를 알려주기
             var spawnPacket = player.GenerateCreatePacket();
             prevPlayers.ForEach(p =>
             {
-                p.Session.SendPacket(spawnPacket);
+                p.Session.Send(spawnPacket);
             });
 
             Console.WriteLine($"ready room: room={this.ID}, player={player.ID}, room_size={players.Count}");
@@ -109,7 +109,7 @@ namespace HatsushimoServer
 
             this.players.ForEach(p =>
             {
-                p.Session.SendPacket(leavePacket);
+                p.Session.Send(leavePacket);
             });
 
             Console.WriteLine($"leave room: room={ID}, player={player.ID}");
@@ -189,7 +189,7 @@ namespace HatsushimoServer
             this.players.ForEach(p =>
             {
                 var session = p.Session;
-                session.SendPacket(packet);
+                session.Send(packet);
             });
         }
 
@@ -199,7 +199,7 @@ namespace HatsushimoServer
             {
                 var packet = food.GenerateRemovePacket();
                 var session = p.Session;
-                session.SendPacket(packet);
+                session.Send(packet);
                 Console.WriteLine($"sent food remove packet: {packet.ID}");
             });
         }
@@ -285,7 +285,7 @@ namespace HatsushimoServer
                 {
                     Actions = actions.ToArray(),
                 };
-                player.Session.SendPacket(packet);
+                player.Session.Send(packet);
             });
         }
 
@@ -299,7 +299,7 @@ namespace HatsushimoServer
                 var packet = newLeaderboard.GenerateLeaderboardPacket();
                 this.players.ForEach(player =>
                 {
-                    player.Session.SendPacket(packet);
+                    player.Session.Send(packet);
                 });
             }
         }

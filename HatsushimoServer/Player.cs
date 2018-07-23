@@ -6,7 +6,7 @@ namespace HatsushimoServer
 {
     public class Player : Actor
     {
-        public GameSession Session { get; private set; }
+        public Session Session { get; private set; }
         public string RoomID;
         public string Nickname;
 
@@ -17,7 +17,7 @@ namespace HatsushimoServer
 
         public int Score;
 
-        public Player(int id, GameSession session)
+        public Player(int id, Session session)
         {
             this.ID = id;
             this.Session = session;
