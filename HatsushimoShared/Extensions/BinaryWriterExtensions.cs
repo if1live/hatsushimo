@@ -5,6 +5,16 @@ namespace Hatsushimo.Extensions
 {
     public static class BinaryWriterExtensions
     {
+        public static void WriteString(this BinaryWriter w, string v)
+        {
+            // bool (null check) + string
+            var hasValue = (v != null);
+            w.Write(hasValue);
+            if (hasValue)
+            {
+                w.Write(v);
+            }
+        }
         public static void Write<T>(this BinaryWriter w, T v)
         where T : ISerialize
         {
@@ -15,7 +25,8 @@ namespace Hatsushimo.Extensions
         where T : ISerialize
         {
             short len = 0;
-            if(v != null) {
+            if (v != null)
+            {
                 len = (short)v.Length;
             }
             w.Write(len);

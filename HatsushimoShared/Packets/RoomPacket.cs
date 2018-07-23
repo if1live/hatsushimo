@@ -20,14 +20,14 @@ namespace Hatsushimo.Packets
 
         public void Deserialize(BinaryReader r)
         {
-            r.Read(out RoomID);
-            r.Read(out Nickname);
+            r.ReadString(out RoomID);
+            r.ReadString(out Nickname);
         }
 
         public void Serialize(BinaryWriter w)
         {
-            w.Write(RoomID);
-            w.Write(Nickname);
+            w.WriteString(RoomID);
+            w.WriteString(Nickname);
         }
     }
 
@@ -47,15 +47,15 @@ namespace Hatsushimo.Packets
         public void Deserialize(BinaryReader r)
         {
             r.Read(out PlayerID);
-            r.Read(out RoomID);
-            r.Read(out Nickname);
+            r.ReadString(out RoomID);
+            r.ReadString(out Nickname);
         }
 
         public void Serialize(BinaryWriter w)
         {
             w.Write(PlayerID);
-            w.Write(RoomID);
-            w.Write(Nickname);
+            w.WriteString(RoomID);
+            w.WriteString(Nickname);
         }
     }
 

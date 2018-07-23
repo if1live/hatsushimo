@@ -31,7 +31,7 @@ namespace Hatsushimo.Packets
         public void Deserialize(BinaryReader r)
         {
             r.Read(out ID);
-            r.Read(out Nickname);
+            r.ReadString(out Nickname);
             r.Read(ref Pos);
             r.Read(ref Dir);
             r.Read(out Speed);
@@ -40,7 +40,7 @@ namespace Hatsushimo.Packets
         public void Serialize(BinaryWriter w)
         {
             w.Write(ID);
-            w.Write(Nickname);
+            w.WriteString(Nickname);
             w.Write(Pos);
             w.Write(Dir);
             w.Write(Speed);
@@ -121,7 +121,7 @@ namespace Hatsushimo.Packets
             r.Read(ref Pos);
             r.Read(ref Dir);
             r.Read(out Speed);
-            r.Read(out Extra);
+            r.ReadString(out Extra);
         }
 
         public void Serialize(BinaryWriter w)
@@ -134,7 +134,7 @@ namespace Hatsushimo.Packets
             w.Write(Pos);
             w.Write(Dir);
             w.Write(Speed);
-            w.Write(Extra);
+            w.WriteString(Extra);
         }
     }
 
