@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Hatsushimo.NetChan;
@@ -9,16 +10,22 @@ namespace HatsushimoServer
 {
     public class Session
     {
+        public const string DefaultNickname = "[Blank]";
+
         static readonly PacketCodec codec = MyPacketCodec.Create();
         readonly ITransport<string> transport;
 
         public int ID { get; private set; }
         public string TransportID { get { return transport.ID; } }
 
+        public string WorldID { get; set; }
+        public string Nickname { get; set; }
+
         public Session(int id, ITransport<string> transport)
         {
             this.ID = id;
             this.transport = transport;
+            this.Nickname = DefaultNickname;
         }
 
         public void Send(IPacket p)
@@ -118,5 +125,44 @@ namespace HatsushimoServer
             }
             return packets;
         }
+    }
+
+    // session layer에서는 packet을 다룰거다
+    // TODO channel 같은거 도입하면 더 간소화 할수 있을거같은데
+    // 일단은 간단하게 큐로
+    public class PacketQueue : ConcurrentQueue<PacketPair>
+    {
+        public PacketQueue() : base() { }
+        public PacketQueue(IEnumerable<PacketPair> collection) : base(collection) { }
+
+        public void Enqueue(Session s, IPacket p)
+        {
+            var pair = new PacketPair()
+            {
+                Session = s,
+                Packet = p,
+            };
+            this.Enqueue(pair);
+        }
+
+        public bool TryDequeue(out Session s, out IPacket p)
+        {
+            s = null;
+            p = null;
+            PacketPair pair = new PacketPair();
+            var found = TryDequeue(out pair);
+            if (found)
+            {
+                s = pair.Session;
+                p = pair.Packet;
+            }
+            return found;
+        }
+    }
+
+    public struct PacketPair
+    {
+        public Session Session;
+        public IPacket Packet;
     }
 }

@@ -50,11 +50,11 @@ namespace HatsushimoServerTest.Packets
         }
 
         [Fact]
-        public void TestRoomJoinRequestPacket()
+        public void TestWorldJoinRequestPacket()
         {
-            var a = new RoomJoinRequestPacket()
+            var a = new WorldJoinRequestPacket()
             {
-                RoomID = "foo",
+                WorldID = "foo",
                 Nickname = "test",
             };
             var b = SerializeAndDeserialize(a);
@@ -62,12 +62,12 @@ namespace HatsushimoServerTest.Packets
         }
 
         [Fact]
-        public void TestRoomJoinResponsePacket()
+        public void TestWorldJoinResponsePacket()
         {
-            var a = new RoomJoinResponsePacket()
+            var a = new WorldJoinResponsePacket()
             {
                 PlayerID = 123,
-                RoomID = "foo",
+                WorldID = "foo",
                 Nickname = "test",
             };
             var b = SerializeAndDeserialize(a);
@@ -75,12 +75,20 @@ namespace HatsushimoServerTest.Packets
         }
 
         [Fact]
-        public void TestRoomLeavePacket()
+        public void TestWorldLeaveResponsePacket()
         {
-            var a = new RoomLeavePacket()
+            var a = new WorldLeaveResponsePacket()
             {
                 PlayerID = 123,
             };
+            var b = SerializeAndDeserialize(a);
+            Assert.Equal(a, b);
+        }
+
+        [Fact]
+        public void TestWorldLeaveRequestPacket()
+        {
+            var a = new WorldLeaveRequestPacket() { };
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }

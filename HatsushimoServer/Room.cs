@@ -6,6 +6,7 @@ using Hatsushimo;
 using Hatsushimo.Packets;
 using Hatsushimo.Types;
 using Hatsushimo.Utils;
+using System.Diagnostics;
 
 namespace HatsushimoServer
 {
@@ -45,8 +46,10 @@ namespace HatsushimoServer
             if (found < 0) { return false; }
 
             // 유저를 로직에 합류시킴
-            var prevPlayers = new List<Player>(players);
+            var prevPlayers = players.ToList();
             waitingPlayers.RemoveAt(found);
+
+            // TODO lock required?
             players.Add(player);
 
             // 신규 유저에게 월드 정보 알려주기
@@ -69,28 +72,21 @@ namespace HatsushimoServer
             return true;
         }
 
-        public bool JoinPlayer(Player newPlayer)
+        public void Join(Player newPlayer)
         {
-            if (newPlayer.RoomID != null) { return false; }
-
-            newPlayer.RoomID = ID;
             var pos = GenerateRandomPosition();
             newPlayer.SetPosition(pos);
             waitingPlayers.Add(newPlayer);
 
-            Console.WriteLine($"join room: room={ID}, player={newPlayer.ID}");
-            return true;
+            Console.WriteLine($"room join: id={newPlayer.ID} room={ID}");
         }
 
-        public bool LeavePlayer(Player player)
+        public void Leave(Player player)
         {
-            if (player.RoomID != ID) { return false; }
-
             var found = players.FindIndex((x) => x.ID == player.ID);
             if (found > -1)
             {
                 players.RemoveAt(found);
-                player.RoomID = null;
             }
 
             // 로딩 끝나기전에 나가는 경우 처리
@@ -98,7 +94,6 @@ namespace HatsushimoServer
             if (waitingFound > -1)
             {
                 waitingPlayers.RemoveAt(waitingFound);
-                player.RoomID = null;
             }
 
             // 방을 나갔다는것을 다른 유저도 알아야한다
@@ -109,7 +104,6 @@ namespace HatsushimoServer
             });
 
             Console.WriteLine($"leave room: room={ID}, player={player.ID}");
-            return true;
         }
 
         public Vec2 GenerateRandomPosition()
@@ -139,7 +133,7 @@ namespace HatsushimoServer
             var players = this.players.Select(p => new PlayerInitial()
             {
                 ID = p.ID,
-                Nickname = p.Nickname,
+                Nickname = p.Session.Nickname,
                 Pos = p.Position,
                 Dir = p.Direction,
                 Speed = p.Speed,
@@ -158,24 +152,15 @@ namespace HatsushimoServer
             };
         }
 
-        RoomJoinResponsePacket GenerateRoomJoinPacket(Player player)
+        WorldJoinResponsePacket GenerateRoomJoinPacket(Player player)
         {
-            return new RoomJoinResponsePacket()
+            return new WorldJoinResponsePacket()
             {
-                RoomID = this.ID,
+                WorldID = this.ID,
                 PlayerID = player.ID,
-                Nickname = player.Nickname,
+                Nickname = player.Session.Nickname,
             };
         }
-
-        RoomLeavePacket GenerateRoomLeavePacket(int playerID)
-        {
-            return new RoomLeavePacket()
-            {
-                PlayerID = playerID,
-            };
-        }
-
 
         void SendFoodCreatePacket(Food food)
         {
@@ -288,7 +273,11 @@ namespace HatsushimoServer
         public void LeaderboardLoop()
         {
             // 리더보드 변경 사항이 있는 경우에만 전송
-            var newLeaderboard = new Leaderboard(players, Config.LeaderboardSize);
+            // 밑바닥 사람들의 점수는 몇점이든 별로 중요하지 않다
+            // 상위 랭킹이 바뀐것만 리더보드로 취급하자
+
+            var clonedPlayers = this.players.ToArray();
+            var newLeaderboard = new Leaderboard(clonedPlayers, Config.LeaderboardSize);
             if (!leaderboard.IsLeaderboardEqual(newLeaderboard))
             {
                 leaderboard = newLeaderboard;
@@ -299,7 +288,5 @@ namespace HatsushimoServer
                 });
             }
         }
-
-        public bool Running { get; set; } = false;
     }
 }

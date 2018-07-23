@@ -33,14 +33,14 @@ namespace Assets.Game
                 var nickname = nicknameField.text.Trim();
                 if (nickname.Length == 0) { return; }
 
-                var roomID = roomField.text.Trim();
-                if (roomID.Length == 0) { return; }
+                var worldID = roomField.text.Trim();
+                if (worldID.Length == 0) { return; }
 
                 var conn = ConnectionManager.Instance;
-                var p = new RoomJoinRequestPacket
+                var p = new WorldJoinRequestPacket
                 {
                     Nickname = nickname,
-                    RoomID = roomID
+                    WorldID = worldID
                 };
                 conn.SendPacket(p);
 
@@ -49,13 +49,13 @@ namespace Assets.Game
             });
 
             var dispatcher = PacketDispatcher.Instance;
-            dispatcher.RoomJoinReceived.ObserveOnMainThread().Subscribe(p =>
+            dispatcher.worldJoinReceived.ObserveOnMainThread().Subscribe(p =>
             {
-                Debug.Log($"room id: {p.RoomID} / player id={p.PlayerID}");
+                Debug.Log($"world id: {p.WorldID} / player id={p.PlayerID}");
 
                 var conn = ConnectionManager.Instance.Conn;
                 conn.PlayerID = p.PlayerID;
-                conn.RoomID = p.RoomID;
+                conn.WorldID = p.WorldID;
                 conn.Nickname = p.Nickname;
 
                 // TOOD async scene loading

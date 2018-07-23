@@ -7,8 +7,6 @@ namespace HatsushimoServer
     public class Player : Actor
     {
         public Session Session { get; private set; }
-        public string RoomID;
-        public string Nickname;
 
         public Vec2 Position { get; private set; }
         public Vec2 Direction { get; private set; }
@@ -21,14 +19,7 @@ namespace HatsushimoServer
         {
             this.ID = id;
             this.Session = session;
-            this.RoomID = null;
 
-            Reset();
-        }
-
-        public void Reset()
-        {
-            Nickname = "[Blank]";
             Score = 0;
             SetVelocity(Vec2.Zero, 0);
             SetPosition(Vec2.Zero);
@@ -72,7 +63,7 @@ namespace HatsushimoServer
                 Pos = Position,
                 Dir = Direction,
                 Speed = Speed,
-                Extra = Nickname,
+                Extra = Session.Nickname,
             };
         }
     }

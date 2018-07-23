@@ -9,9 +9,11 @@ namespace Hatsushimo.Packets
 
         Ping,
 
-        RoomJoinReq,
-        RoomJoinResp,
-        RoomLeave,
+        WorldJoinReq,
+        WorldJoinResp,
+        WorldLeaveReq,
+        WorldLeaveResp,
+
         PlayerReady,
 
         Leaderboard,

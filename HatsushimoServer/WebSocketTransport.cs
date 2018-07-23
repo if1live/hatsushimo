@@ -31,12 +31,9 @@ namespace HatsushimoServer
 
         protected override void OnClose(CloseEventArgs e)
         {
-            // 연결 끊은것을 연결 종료 패킷처럼 다루면
-            // 상위 레이어에서의 처리가 간단해진다
             var p = new DisconnectPacket();
             session.Send(p);
 
-            // session layer
             SessionLayer.Layer.CloseSession(session);
             session = null;
         }

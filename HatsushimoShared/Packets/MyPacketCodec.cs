@@ -21,9 +21,11 @@ namespace Hatsushimo.Packets
             f.Register<ReplicationActionPacket>();
             f.Register<ReplicationBulkActionPacket>();
 
-            f.Register<RoomJoinRequestPacket>();
-            f.Register<RoomJoinResponsePacket>();
-            f.Register<RoomLeavePacket>();
+            f.Register<WorldJoinRequestPacket>();
+            f.Register<WorldJoinResponsePacket>();
+            f.Register<WorldLeaveRequestPacket>();
+            f.Register<WorldLeaveResponsePacket>();
+
             f.Register<PlayerReadyPacket>();
 
             f.Register<LeaderboardPacket>();

@@ -35,10 +35,15 @@ namespace Assets.NetChan
         }
         ReactiveProperty<ReplicationBulkActionPacket> replicationBulk = new ReactiveProperty<ReplicationBulkActionPacket>();
 
-        public IObservable<RoomJoinResponsePacket> RoomJoinReceived {
-            get { return roomJoin.Skip(1).AsObservable(); }
+        public IObservable<WorldJoinResponsePacket> worldJoinReceived {
+            get { return worldJoin.Skip(1).AsObservable(); }
         }
-        ReactiveProperty<RoomJoinResponsePacket> roomJoin = new ReactiveProperty<RoomJoinResponsePacket>();
+        ReactiveProperty<WorldJoinResponsePacket> worldJoin = new ReactiveProperty<WorldJoinResponsePacket>();
+
+        public IObservable<WorldLeaveResponsePacket> WorldLeaveReceived {
+            get { return worldLeave.Skip(1).AsObservable(); }
+        }
+        ReactiveProperty<WorldLeaveResponsePacket> worldLeave = new ReactiveProperty<WorldLeaveResponsePacket>();
 
         public IObservable<PlayerReadyPacket> PlayerReadyReceived {
             get { return playerReady.Skip(1).AsObservable(); }
@@ -88,8 +93,12 @@ namespace Assets.NetChan
                     replicationBulk.SetValueAndForceNotify((ReplicationBulkActionPacket)p);
                     break;
 
-                case PacketType.RoomJoinResp:
-                    roomJoin.SetValueAndForceNotify((RoomJoinResponsePacket)p);
+                case PacketType.WorldJoinResp:
+                    worldJoin.SetValueAndForceNotify((WorldJoinResponsePacket)p);
+                    break;
+
+                case PacketType.WorldLeaveResp:
+                    worldLeave.SetValueAndForceNotify((WorldLeaveResponsePacket)p);
                     break;
 
                 case PacketType.PlayerReady:
