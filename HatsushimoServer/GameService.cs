@@ -166,7 +166,7 @@ namespace HatsushimoServer
                     HandlePacket(session, packet);
                 }
 
-                var interval = TimeSpan.FromMilliseconds(1000 / 60);
+                var interval = TimeSpan.FromMilliseconds(1000 / 120);
                 await Task.Delay(interval);
             }
         }
