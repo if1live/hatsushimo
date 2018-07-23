@@ -130,25 +130,25 @@ namespace HatsushimoServer
 
         public async void StartSendLoop()
         {
+            // TODO websockt 초기화까지 기다리는건
+            // 다른거로 바꿀수 있을거같은데
+            while (Sessions == null)
+            {
+                var interval = TimeSpan.FromMilliseconds(100);
+                await Task.Delay(interval);
+            }
+
             while (true)
             {
-                if (Sessions == null)
-                {
-                    var interval = TimeSpan.FromMilliseconds(100);
-                    await Task.Delay(interval);
-                    continue;
-                }
-
                 WebSocketDatagram datagram = new WebSocketDatagram();
-                if (sendQueue.TryDequeue(out datagram))
+                while (sendQueue.TryDequeue(out datagram))
                 {
                     HandleSend(datagram);
                 }
-                else
-                {
-                    var interval = TimeSpan.FromMilliseconds(1000 / 100);
-                    await Task.Delay(interval);
-                }
+
+                // TODO 전송 큐에 뭐가 들어있을떄만 돌아가독 할수 있을같은데
+                var interval = TimeSpan.FromMilliseconds(10);
+                await Task.Delay(interval);
             }
         }
     }

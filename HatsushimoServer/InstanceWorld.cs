@@ -31,28 +31,50 @@ namespace HatsushimoServer
             this.room = new Room(id);
 
             StartUpdateLoop();
-            StartNetworkLoop();
-            StartLeaderboardLoop();
         }
-
-        // 비동기 작업을 별도 쓰레드에서 처리하면
-        // player 리스트에 동시에 접근하는 문제가 발생할수 있다
-        // 이를 막고자 update 안에 모든 기능을 집어넣음
-        // TODO update 안에 전부 집어넣는 좋은 방법 없나
-        public bool RequireNetworkLoop { get; set; } = false;
-        public bool RequireLeaderboardLoop { get; set; } = false;
 
         async void StartUpdateLoop()
         {
-            var interval = 1000 / 60;
+            var updateInterval = 1000 / 60;
+            var networkInterval = 1000 / Config.SendRateCoord;
+            var leaderboardInterval = 1000 / Config.SendRateLeaderboard;
+
+            // 120fps로 루프를 돌린다
+            // time slice가 전부 채워진 경우에 호출하기
+            var refreshInterval = 1000 / 120;
+
+            var updateRemain = 0;
+            var networkRemain = 0;
+            var leaderboardRemain = 0;
+
+            int prevMillis = TimeUtils.NowMillis;
+
             while (true)
             {
-                var a = TimeUtils.NowMillis;
-                Update();
-                var b = TimeUtils.NowMillis;
+                var startMillis = TimeUtils.NowMillis;
+                var elapsedMillis = startMillis - prevMillis;
+                updateRemain -= elapsedMillis;
+                networkRemain -= elapsedMillis;
+                leaderboardRemain -= elapsedMillis;
 
-                var diff = b - a;
-                var wait = interval - diff;
+                if(updateRemain <= 0) {
+                    Update();
+                    updateRemain += updateInterval;
+                }
+                if(networkRemain <= 0) {
+                    room.NetworkLoop();
+                    networkRemain += networkInterval;
+                }
+                if(leaderboardRemain <= 0) {
+                    room.LeaderboardLoop();
+                    leaderboardRemain += leaderboardInterval;
+                }
+
+                var endMillis = TimeUtils.NowMillis;
+                var diff = endMillis - startMillis;
+                prevMillis = startMillis;
+
+                var wait = refreshInterval - diff;
                 if (wait < 0) { wait = 0; }
                 var delay = TimeSpan.FromMilliseconds(wait);
                 await Task.Delay(delay);
@@ -67,40 +89,7 @@ namespace HatsushimoServer
             {
                 HandlePacket(session, packet);
             }
-
             room.GameLoop();
-
-            if(RequireNetworkLoop) {
-                room.NetworkLoop();
-                RequireNetworkLoop = false;
-            }
-
-            if(RequireLeaderboardLoop) {
-                room.LeaderboardLoop();
-                RequireLeaderboardLoop = false;
-            }
-        }
-
-        async void StartNetworkLoop()
-        {
-            var interval = 1000 / Config.SendRateCoord;
-            while (true)
-            {
-                RequireNetworkLoop = true;
-                var delay = TimeSpan.FromMilliseconds(interval);
-                await Task.Delay(delay);
-            }
-        }
-
-        async void StartLeaderboardLoop()
-        {
-            var interval = 1000 / Config.SendRateLeaderboard;
-            while (true)
-            {
-                RequireLeaderboardLoop = true;
-                var delay = TimeSpan.FromMilliseconds(interval);
-                await Task.Delay(delay);
-            }
         }
 
         Player GetPlayer(Session session)

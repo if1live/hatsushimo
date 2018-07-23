@@ -19,7 +19,6 @@ namespace HatsushimoServer
         {
             var world = new InstanceWorld(id);
             world.Running = true;
-            // TODO run async
             return world;
         }
 

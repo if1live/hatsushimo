@@ -159,10 +159,7 @@ namespace HatsushimoServer
             while (true)
             {
                 var packets = layer.FlushReceivedPackets();
-                foreach (var p in packets)
-                {
-                    EnqueueRecv(p.Session, p.Packet);
-                }
+                packets.ForEach(p => EnqueueRecv(p.Session, p.Packet));
 
                 var interval = TimeSpan.FromMilliseconds(1000 / 100);
                 await Task.Delay(interval);
@@ -175,15 +172,13 @@ namespace HatsushimoServer
             {
                 Session session = null;
                 IPacket packet = null;
-                if (recvQueue.TryDequeue(out session, out packet))
+                while (recvQueue.TryDequeue(out session, out packet))
                 {
                     HandlePacket(session, packet);
                 }
-                else
-                {
-                    var interval = TimeSpan.FromMilliseconds(1000 / 60);
-                    await Task.Delay(interval);
-                }
+
+                var interval = TimeSpan.FromMilliseconds(1000 / 60);
+                await Task.Delay(interval);
             }
         }
     }
