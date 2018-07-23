@@ -44,7 +44,7 @@ namespace Assets.Game
 
             // TODO 모바일에 맞는 입력방식도 구현하기
             HandleMove_UnityBasic();
-            HandleCommand_UnityBasic();
+            //HandleCommand_UnityBasic();
         }
 
         void HandleMove_UnityBasic()
