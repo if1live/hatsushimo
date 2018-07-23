@@ -21,7 +21,7 @@ namespace Assets.Game
         private void OnEnable()
         {
             Debug.Assert(coroutine_move == null);
-            coroutine_move = StartCoroutine(BeginPredictedMove());
+            coroutine_move = StartCoroutine(BeginPredictedMove(player, transform));
         }
 
 
@@ -74,7 +74,11 @@ namespace Assets.Game
                 dir_x = +1;
             }
 
-            var action = InputAction.CreateMove(dir_x, dir_y);
+            var pos = transform.position;
+            var delta = new Vector3(dir_x * 5, dir_y * 5);
+            var targetPos = pos + delta;
+
+            var action = InputAction.CreateMove(targetPos);
             inputmgr.PushMove(action);
         }
 
@@ -91,18 +95,31 @@ namespace Assets.Game
             }
         }
 
-        IEnumerator BeginPredictedMove()
+        public static IEnumerator BeginPredictedMove(Player player, Transform transform)
         {
             while (true)
             {
                 var dt = Time.deltaTime;
-                var dir = new Vector3(player.DirX, player.DirY, 0);
-                var speed = player.Speed;
-                var delta = dir * speed * dt;
+                var limit = dt * player.Speed;
+                var sqrLimit = limit * limit;
 
-                var pos = transform.position;
-                var nextPos = pos + delta;
-                transform.position = nextPos;
+                var diff = player.TargetPos - transform.position;
+                var dir = diff.normalized;
+                var sqrDistance = diff.sqrMagnitude;
+
+                if(sqrLimit > sqrDistance)
+                {
+                    transform.position = player.TargetPos;
+                }
+                else
+                {
+                    var speed = player.Speed;
+                    var delta = dir * speed * dt;
+
+                    var pos = transform.position;
+                    var nextPos = pos + delta;
+                    transform.position = nextPos;
+                }
 
                 yield return null;
             }

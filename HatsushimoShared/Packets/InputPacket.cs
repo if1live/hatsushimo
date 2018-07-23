@@ -30,7 +30,8 @@ namespace Hatsushimo.Packets
 
     public struct InputMovePacket : IPacket
     {
-        public Vec2 Dir;
+        // 속도보다 목표 지점을 보내는게 보정하기 좋다더라
+        public Vec2 TargetPos;
 
         public short Type => (short)PacketType.InputMove;
 
@@ -41,12 +42,12 @@ namespace Hatsushimo.Packets
 
         public void Deserialize(BinaryReader r)
         {
-            r.Read(ref Dir);
+            r.Read(ref TargetPos);
         }
 
         public void Serialize(BinaryWriter w)
         {
-            w.Write(Dir);
+            w.Write(TargetPos);
         }
     }
 }

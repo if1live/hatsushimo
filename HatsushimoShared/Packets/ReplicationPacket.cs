@@ -25,7 +25,7 @@ namespace Hatsushimo.Packets
         public int ID;
         public string Nickname;
         public Vec2 Pos;
-        public Vec2 Dir;
+        public Vec2 TargetPos;
         public float Speed;
 
         public void Deserialize(BinaryReader r)
@@ -33,7 +33,7 @@ namespace Hatsushimo.Packets
             r.Read(out ID);
             r.ReadString(out Nickname);
             r.Read(ref Pos);
-            r.Read(ref Dir);
+            r.Read(ref TargetPos);
             r.Read(out Speed);
         }
 
@@ -42,7 +42,7 @@ namespace Hatsushimo.Packets
             w.Write(ID);
             w.WriteString(Nickname);
             w.Write(Pos);
-            w.Write(Dir);
+            w.Write(TargetPos);
             w.Write(Speed);
         }
     }
@@ -95,7 +95,7 @@ namespace Hatsushimo.Packets
         public int ID;
         public ActorType ActorType;
         public Vec2 Pos;
-        public Vec2 Dir;
+        public Vec2 TargetPos;
         public float Speed;
         public string Extra;
 
@@ -119,7 +119,7 @@ namespace Hatsushimo.Packets
             ActorType = (ActorType)actorTypeVal;
 
             r.Read(ref Pos);
-            r.Read(ref Dir);
+            r.Read(ref TargetPos);
             r.Read(out Speed);
             r.ReadString(out Extra);
         }
@@ -132,7 +132,7 @@ namespace Hatsushimo.Packets
             w.Write(ID);
             w.Write((short)ActorType);
             w.Write(Pos);
-            w.Write(Dir);
+            w.Write(TargetPos);
             w.Write(Speed);
             w.WriteString(Extra);
         }

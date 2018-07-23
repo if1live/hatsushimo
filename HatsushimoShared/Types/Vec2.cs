@@ -86,5 +86,58 @@ namespace Hatsushimo.Types
             r.Read(out X);
             r.Read(out Y);
         }
+
+        public static bool operator ==(Vec2 a, Vec2 b)
+        {
+            if (ReferenceEquals(a, b)) { return true; }
+            if (ReferenceEquals(a, null)) { return false; }
+            if (ReferenceEquals(b, null)) { return false; }
+
+            return (a.X == b.X)
+                && (a.Y == b.Y);
+        }
+
+        public static bool operator !=(Vec2 a, Vec2 b)
+        {
+            return !(a == b);
+        }
+
+        public static Vec2 operator +(Vec2 a, Vec2 b)
+        {
+            var x = a.X + b.X;
+            var y = a.Y + b.Y;
+            return new Vec2(x, y);
+        }
+        public static Vec2 operator -(Vec2 a)
+        {
+            return new Vec2(-a.X, -a.Y);
+        }
+
+        public static Vec2 operator -(Vec2 a, Vec2 b)
+        {
+            return a + (-b);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) { return false; }
+            if (ReferenceEquals(this, obj)) { return true; }
+            return obj.GetType() == GetType() && Equals((Vec2)obj);
+        }
+
+        public bool Equals(Vec2 other)
+        {
+            if (ReferenceEquals(null, other)) { return false; }
+            if (ReferenceEquals(this, other)) { return true; }
+            return X.Equals(other.X)
+                && Y.Equals(other.Y);
+        }
+
+        public override int GetHashCode()
+        {
+            int hash = X.GetHashCode();
+            hash = hash ^ Y.GetHashCode();
+            return hash;
+        }
     }
 }

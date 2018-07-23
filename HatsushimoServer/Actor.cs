@@ -17,7 +17,7 @@ namespace HatsushimoServer
                 ID = ID,
                 ActorType = Type,
                 Pos = Vec2.Zero,
-                Dir = Vec2.Zero,
+                TargetPos = Vec2.Zero,
                 Speed = 0,
                 Extra = "",
             };

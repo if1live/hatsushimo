@@ -148,19 +148,9 @@ namespace HatsushimoServer
         void HandleInputMove(Session session, InputMovePacket p)
         {
             var player = GetPlayer(session);
-
             var speed = 10;
-            var len = p.Dir.Magnitude;
-
-            if (len == 0)
-            {
-                player.SetVelocity(Vec2.Zero, speed);
-            }
-            else
-            {
-                var dir = p.Dir.Normalize();
-                player.SetVelocity(dir, speed);
-            }
+            player.TargetPosition = p.TargetPos;
+            player.Speed = speed;
         }
 
         // 방에 접속하면 클라이언트에서 게임씬 로딩을 시작한다

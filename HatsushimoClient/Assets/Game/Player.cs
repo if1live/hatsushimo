@@ -11,8 +11,7 @@ namespace Assets.Game
         public int id;
         public string nickname;
 
-        public float DirX;
-        public float DirY;
+        public Vector3 TargetPos;
         public float Speed;
 
         public bool IsOwner {
@@ -45,21 +44,29 @@ namespace Assets.Game
                 Debug.Assert(packet.ID == id, $"id mismatch: my={id} packet={packet.ID} action={packet.Action}");
 
                 nickname = packet.Extra;
-                DirX = packet.Dir.X;
-                DirY = packet.Dir.Y;
+                TargetPos = new Vector3(packet.TargetPos.X, packet.TargetPos.Y);
                 Speed = packet.Speed;
+
+                // 생성 요청의 경우는 즉시 소환하지만
+                // 갱신 요청의 경우 즉수 움직이면 순간이동때문에 어색하다
+                // 갱신 요청은 target pos를 이용해서 처리하기
+                if (packet.Action == ReplicationAction.Create)
+                {
+                    var pos = new Vector3(packet.Pos.X, packet.Pos.Y, 0);
+                    transform.position = pos;
+                }
                 
-                var pos = new Vector3(packet.Pos.X, packet.Pos.Y, 0);
-                transform.position = pos;
             }).AddTo(gameObject);
 
             InitialReceived.Subscribe(packet =>
             {
                 id = packet.ID;
                 nickname = packet.Nickname;
+                TargetPos = new Vector3(packet.TargetPos[0], packet.TargetPos[1], 0);
 
                 var pos = new Vector3(packet.Pos[0], packet.Pos[1], 0);
                 transform.position = pos;
+                
             }).AddTo(gameObject);
         }
     }

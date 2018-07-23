@@ -98,7 +98,7 @@ namespace HatsushimoServerTest.Packets
         {
             var a = new InputMovePacket()
             {
-                Dir = new Vec2(1, 2),
+                TargetPos = new Vec2(1, 2),
             };
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
@@ -144,7 +144,7 @@ namespace HatsushimoServerTest.Packets
                 ID = 123,
                 ActorType = ActorType.Player,
                 Pos = new Vec2(1, 2),
-                Dir = new Vec2(3, 4),
+                TargetPos = new Vec2(3, 4),
                 Speed = 5,
                 Extra = "todo",
             };

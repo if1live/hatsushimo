@@ -136,7 +136,7 @@ namespace HatsushimoServer
                 ID = p.ID,
                 Nickname = p.Session.Nickname,
                 Pos = p.Position,
-                Dir = p.Direction,
+                TargetPos = p.TargetPosition,
                 Speed = p.Speed,
             });
 
@@ -193,13 +193,7 @@ namespace HatsushimoServer
             float dt = 1.0f / 60;
             var clonedPlayers = this.players.ToList();
 
-            clonedPlayers.ForEach(player =>
-            {
-                var s = player.Speed;
-                var dx = player.Direction[0] * s * dt;
-                var dy = player.Direction[1] * s * dt;
-                player.MoveDelta(dx, dy);
-            });
+            clonedPlayers.ForEach(player => player.UpdateMove(dt));
 
             // 음식 생성
             var requiredFoodCount = Config.FoodCount - foods.Count;
@@ -262,7 +256,7 @@ namespace HatsushimoServer
                     ID = p.ID,
                     ActorType = p.Type,
                     Pos = p.Position,
-                    Dir = p.Direction,
+                    TargetPos = p.TargetPosition,
                     Speed = p.Speed,
                     Extra = "",
                 });

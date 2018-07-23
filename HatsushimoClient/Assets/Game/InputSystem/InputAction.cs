@@ -1,6 +1,7 @@
 using Hatsushimo.NetChan;
 using Hatsushimo.Packets;
 using Hatsushimo.Types;
+using UnityEngine;
 
 namespace Assets.Game.InputSystem
 {
@@ -16,8 +17,7 @@ namespace Assets.Game.InputSystem
         public InputActionTypes type;
 
         // move
-        public float dirx;
-        public float diry;
+        public Vector3 target;
 
         // action
         public int mode;
@@ -34,7 +34,7 @@ namespace Assets.Game.InputSystem
                 case InputActionTypes.Move:
                     return new InputMovePacket
                     {
-                        Dir = new Vec2(dirx, diry),
+                        TargetPos = new Vec2(target.x, target.y),
                     };
                 default:
                     return null;
@@ -49,13 +49,12 @@ namespace Assets.Game.InputSystem
             };
         }
 
-        public static InputAction CreateMove(float x, float y)
+        public static InputAction CreateMove(Vector3 target)
         {
             return new InputAction()
             {
                 type = InputActionTypes.Move,
-                dirx = x,
-                diry = y,
+                target = target,
             };
         }
 
@@ -76,8 +75,7 @@ namespace Assets.Game.InputSystem
             if(ReferenceEquals(b, null)) { return false; }
 
             return (a.type == b.type)
-                && (a.dirx == b.dirx)
-                && (a.diry == b.diry)
+                && (a.target == b.target)
                 && (a.mode == b.mode);
         }
 
@@ -98,16 +96,14 @@ namespace Assets.Game.InputSystem
             if(ReferenceEquals(null, other)) { return false; }
             if(ReferenceEquals(this, other)) { return true; }
             return type.Equals(other.type)
-                && dirx.Equals(other.dirx)
-                && diry.Equals(other.diry)
+                && target.Equals(other.target)
                 && mode.Equals(other.mode);
         }
 
         public override int GetHashCode()
         {
             int hash = type.GetHashCode();
-            hash = hash ^ dirx.GetHashCode();
-            hash = hash ^ diry.GetHashCode();
+            hash = hash ^ target.GetHashCode();
             hash = hash ^ mode.GetHashCode();
             return hash;
         }

@@ -26,7 +26,7 @@ namespace HatsushimoServer
                 ActorType = Type,
                 Pos = Position,
                 // TODO remove optional field
-                Dir = Vec2.Zero,
+                TargetPos = Vec2.Zero,
                 Speed = 0,
                 Extra = "",
             };

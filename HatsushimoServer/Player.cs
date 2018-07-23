@@ -9,8 +9,9 @@ namespace HatsushimoServer
         public Session Session { get; private set; }
 
         public Vec2 Position { get; private set; }
-        public Vec2 Direction { get; private set; }
-        public float Speed { get; private set; }
+        public Vec2 TargetPosition { get; set; }
+        public float Speed { get; set; }
+
         public override ActorType Type => ActorType.Player;
 
         public int Score;
@@ -21,14 +22,8 @@ namespace HatsushimoServer
             this.Session = session;
 
             Score = 0;
-            SetVelocity(Vec2.Zero, 0);
             SetPosition(Vec2.Zero);
-        }
-
-        public void SetVelocity(Vec2 dir, float speed)
-        {
-            Direction = dir;
-            Speed = speed;
+            TargetPosition = Vec2.Zero;
         }
 
         public void SetPosition(Vec2 pos)
@@ -46,11 +41,27 @@ namespace HatsushimoServer
             Position = new Vec2(x, y);
         }
 
-        public void MoveDelta(float dx, float dy)
+        public void UpdateMove(float dt)
         {
-            var x = Position[0] + dx;
-            var y = Position[1] + dy;
-            SetPosition(new Vec2(x, y));
+            var diff = TargetPosition - Position;
+
+            // delta로 이동하면 목표지점 근처에서 진동하는 현상이 발생할수 있다
+            // dt동안 이동할수 있는 곳에 목표가 있으면 순간이동하기
+            var limit = dt * Speed;
+            var sqrLimit = limit * limit;
+            var sqrDistance = diff.SqrMagnitude;
+            if(sqrLimit > sqrDistance)
+            {
+                SetPosition(TargetPosition);
+                return;
+            }
+
+            var dir = diff.Normalize();
+            var dx = dir[0] * Speed * dt;
+            var dy = dir[1] * Speed * dt;
+            var delta = new Vec2(dx, dy);
+            var nextPos = Position + delta;
+            SetPosition(nextPos);
         }
 
         public override ReplicationActionPacket GenerateCreatePacket()
@@ -61,7 +72,7 @@ namespace HatsushimoServer
                 ID = ID,
                 ActorType = Type,
                 Pos = Position,
-                Dir = Direction,
+                TargetPos = TargetPosition,
                 Speed = Speed,
                 Extra = Session.Nickname,
             };
