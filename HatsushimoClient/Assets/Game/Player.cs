@@ -18,8 +18,8 @@ namespace Assets.Game
         public bool IsOwner {
             get
             {
-                var conn = ConnectionManager.Instance.Conn;
-                var myid = conn.PlayerID;
+                var info = ConnectionInfo.Info;
+                var myid = info.PlayerID;
                 return (myid == id);
             }
         }

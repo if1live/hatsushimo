@@ -11,7 +11,7 @@ namespace Assets.Game
     class Leaderboard : MonoBehaviour
     {
         // TODO render leaderboard
-        public Text message;
+        public Text message = null;
 
         private void Awake()
         {

@@ -15,7 +15,7 @@ namespace Assets.Game
         private void Start()
         {
             var mgr = ConnectionManager.Instance;
-            var conn = mgr.Conn;
+            var info = ConnectionInfo.Info;
 
             var dispatcher = PacketDispatcher.Instance;
             dispatcher.PlayerReadyReceived.ObserveOnMainThread().Subscribe(_ =>
@@ -25,9 +25,9 @@ namespace Assets.Game
                 // 접속 정보는 접속후에 내용이 바뀔일은 없을것이다
                 var lines = new string[]
                 {
-                    $"room_id: {conn.WorldID}",
-                    $"player_id: {conn.PlayerID}",
-                    $"nickname: {conn.Nickname}",
+                    $"room_id: {info.WorldID}",
+                    $"player_id: {info.PlayerID}",
+                    $"nickname: {info.Nickname}",
                 };
                 var msg = string.Join("\n", lines);
                 statusText.text = msg;

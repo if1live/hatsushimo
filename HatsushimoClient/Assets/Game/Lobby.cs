@@ -53,10 +53,10 @@ namespace Assets.Game
             {
                 Debug.Log($"world id: {p.WorldID} / player id={p.PlayerID}");
 
-                var conn = ConnectionManager.Instance.Conn;
-                conn.PlayerID = p.PlayerID;
-                conn.WorldID = p.WorldID;
-                conn.Nickname = p.Nickname;
+                var info = ConnectionInfo.Info;
+                info.PlayerID = p.PlayerID;
+                info.WorldID = p.WorldID;
+                info.Nickname = p.Nickname;
 
                 // TOOD async scene loading
                 SceneManager.LoadScene("Game", LoadSceneMode.Single);

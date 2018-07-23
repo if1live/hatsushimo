@@ -14,7 +14,6 @@ namespace Assets.NetChan
 
         WebSocket ws;
         public string host = "ws://127.0.0.1";
-        public readonly Connection Conn = new Connection();
 
         readonly PacketCodec codec = MyPacketCodec.Create();
 

@@ -85,8 +85,8 @@ namespace Assets.Game
 
         void HandleReplicationCreate(ReplicationActionPacket packet)
         {
-            var conn = ConnectionManager.Instance.Conn;
-            var myid = conn.PlayerID;
+            var info = ConnectionInfo.Info;
+            var myid = info.PlayerID;
             var id = packet.ID;
             var pos = packet.Pos.ToVector3();
 
@@ -113,8 +113,8 @@ namespace Assets.Game
 
         void HandleReplicationRemove(ReplicationActionPacket packet)
         {
-            var conn = ConnectionManager.Instance.Conn;
-            var myid = conn.PlayerID;
+            var info = ConnectionInfo.Info;
+            var myid = info.PlayerID;
             var id = packet.ID;
 
             if (myid == id)
@@ -154,8 +154,8 @@ namespace Assets.Game
 
         Player GetPlayerPrefab(int id)
         {
-            var conn = ConnectionManager.Instance.Conn;
-            var myid = conn.PlayerID;
+            var info = ConnectionInfo.Info;
+            var myid = info.PlayerID;
             return (myid == id) ? prefab_my : prefab_enemy;
         }
 
