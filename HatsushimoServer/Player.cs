@@ -14,6 +14,10 @@ namespace HatsushimoServer
         public Vec2 TargetPosition { get; set; }
         public float Speed { get; set; }
 
+        // 방향을 sin/cos로 표현할수 있도록 +x를 기준으로 잡는다
+        // 공격을 구현할 경우 방향을 알아야한다
+        public Vec2 Direction { get; private set; } = new Vec2(1, 0);
+
         public override ActorType Type => ActorType.Player;
 
         public int Score { get; private set; }
@@ -36,11 +40,25 @@ namespace HatsushimoServer
         {
             var w = Config.RoomWidth;
             var h = Config.RoomHeight;
-            Position = VectorHelper.FilterPosition(pos, w, h);
+            var next = VectorHelper.FilterPosition(pos, w, h);
+            var prev = Position;
+
+            if (next != prev)
+            {
+                var diff = next - prev;
+                Direction = diff.Normalize();
+            }
+
+            Position = next;
         }
 
         public void UpdateMove(float dt)
         {
+            if (Speed == 0)
+            {
+                return;
+            }
+
             var limit = dt * Speed;
             var nextPos = VectorHelper.MoveToTarget(Position, TargetPosition, limit);
             SetPosition(nextPos);
@@ -80,6 +98,8 @@ namespace HatsushimoServer
             if (!SkillPrimary) { return; }
             Console.WriteLine($"use skill primary: id={ID}");
             RunSkillPrimaryCoolTimer();
+
+            // TODO 적당히 공격
         }
 
         void UseSKillSecondary()
