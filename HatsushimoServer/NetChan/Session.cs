@@ -7,7 +7,7 @@ using Hatsushimo.NetChan;
 using Hatsushimo.Packets;
 using Hatsushimo.Utils;
 
-namespace HatsushimoServer
+namespace HatsushimoServer.NetChan
 {
     public class Session
     {
@@ -15,13 +15,13 @@ namespace HatsushimoServer
 
         static readonly PacketCodec codec = MyPacketCodec.Create();
         readonly ITransport<string> transport;
-        public long lastHeartbeatTimestamp = 0;
+        public long LastHeartbeatTimestamp { get; private set; } = 0;
 
         public int ID { get; private set; }
-        public string TransportID { get { return transport.ID; } }
-
         public string WorldID { get; set; }
         public string Nickname { get; set; }
+
+        internal string TransportID { get { return transport.ID; } }
 
         public Session(int id, ITransport<string> transport)
         {
@@ -33,7 +33,7 @@ namespace HatsushimoServer
 
         public void RefreshHeartbeat()
         {
-            lastHeartbeatTimestamp = TimeUtils.NowTimestamp;
+            LastHeartbeatTimestamp = TimeUtils.NowTimestamp;
         }
 
         public void Send(IPacket p)
@@ -51,22 +51,23 @@ namespace HatsushimoServer
     // 세션 레이어를 통해서 유저를 관리한다
     public class SessionLayer
     {
-        public readonly static SessionLayer Layer = new SessionLayer();
-
         public readonly PacketCodec codec = MyPacketCodec.Create();
 
-        readonly Dictionary<int, Session> sessionIDSessionTable = new Dictionary<int, Session>();
-        readonly Dictionary<string, int> transportIDSessionIDTable = new Dictionary<string, int>();
+        // 연결이 생기거나 끊어지면 연결 목록이 바뀐다
+        // 이것은 멀티 쓰레드에서 문제가 생길 가능성이 있어보이니 락을 걸자
+        Object writeLock = new Object();
+        readonly IDictionary<int, Session> sessionIDSessionTable = new Dictionary<int, Session>();
+        readonly IDictionary<string, int> transportIDSessionIDTable = new Dictionary<string, int>();
 
         readonly IEnumerator<int> sessionIDEnumerator = IDGenerator.MakeSessionID().GetEnumerator();
 
         Subject<ReceivedPacket> _received = new Subject<ReceivedPacket>();
         public IObservable<ReceivedPacket> Received { get { return _received; } }
 
-        public SessionLayer()
+        public SessionLayer(ITransportLayer<string> transport)
         {
-            var transport = WebSocketTransportLayer.Layer;
-            transport.Received.Subscribe(datagram => {
+            transport.Received.Subscribe(datagram =>
+            {
                 int sessionID = 0;
                 var idFound = transportIDSessionIDTable.TryGetValue(datagram.ID, out sessionID);
                 Debug.Assert(idFound == true, "session must be registered");
@@ -84,7 +85,12 @@ namespace HatsushimoServer
             });
         }
 
-        public Session CreateSession(ITransport<string> transport)
+        public Session CreateSessionWithLock(ITransport<string> transport)
+        {
+            lock (writeLock) { return CreateSession(transport); }
+        }
+
+        Session CreateSession(ITransport<string> transport)
         {
             // 플레이어에게는 고유번호 붙인다
             // 어떤 방에 들어가든 id는 유지된다
@@ -110,7 +116,11 @@ namespace HatsushimoServer
             s.CloseTransport();
         }
 
-        public void RemoveSession(Session s)
+        public void RemoveSessionWithLock(Session s)
+        {
+            lock (writeLock) { RemoveSession(s); }
+        }
+        void RemoveSession(Session s)
         {
             Debug.Assert(sessionIDSessionTable.ContainsKey(s.ID) == true);
             Debug.Assert(transportIDSessionIDTable.ContainsKey(s.TransportID) == true);
@@ -132,44 +142,5 @@ namespace HatsushimoServer
             public Session Session;
             public IPacket Packet;
         }
-    }
-
-    // session layer에서는 packet을 다룰거다
-    // TODO channel 같은거 도입하면 더 간소화 할수 있을거같은데
-    // 일단은 간단하게 큐로
-    public class PacketQueue : ConcurrentQueue<PacketPair>
-    {
-        public PacketQueue() : base() { }
-        public PacketQueue(IEnumerable<PacketPair> collection) : base(collection) { }
-
-        public void Enqueue(Session s, IPacket p)
-        {
-            var pair = new PacketPair()
-            {
-                Session = s,
-                Packet = p,
-            };
-            this.Enqueue(pair);
-        }
-
-        public bool TryDequeue(out Session s, out IPacket p)
-        {
-            s = null;
-            p = null;
-            PacketPair pair = new PacketPair();
-            var found = TryDequeue(out pair);
-            if (found)
-            {
-                s = pair.Session;
-                p = pair.Packet;
-            }
-            return found;
-        }
-    }
-
-    public struct PacketPair
-    {
-        public Session Session;
-        public IPacket Packet;
     }
 }

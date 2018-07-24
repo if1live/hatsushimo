@@ -7,6 +7,7 @@ using Hatsushimo.NetChan;
 using Hatsushimo.Packets;
 using Hatsushimo.Types;
 using Hatsushimo.Utils;
+using HatsushimoServer.NetChan;
 
 namespace HatsushimoServer
 {

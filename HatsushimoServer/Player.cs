@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Hatsushimo;
 using Hatsushimo.Packets;
 using Hatsushimo.Types;
+using HatsushimoServer.NetChan;
 
 namespace HatsushimoServer
 {

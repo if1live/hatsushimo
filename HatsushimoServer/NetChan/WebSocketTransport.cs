@@ -10,7 +10,7 @@ using WebSocketSharp.Server;
 using System.Reactive;
 using System.Reactive.Subjects;
 
-namespace HatsushimoServer
+namespace HatsushimoServer.NetChan
 {
     using WebSocketDatagram = Datagram<string>;
 
@@ -22,21 +22,26 @@ namespace HatsushimoServer
         protected override void OnOpen()
         {
             // transport layer
-            var transportLayer = WebSocketTransportLayer.Layer;
+            var transportLayer = NetworkStack.WebSocketTransportLayer;
             transportLayer.Sessions = this.Sessions;
             transport = new WebSocketTransport(transportLayer, this);
+            transport.Received.Subscribe(data => {
+                transportLayer.Recv(transport.ID, data);
+            });
 
             // session layer
-            var sessionLayer = SessionLayer.Layer;
-            session = sessionLayer.CreateSession(transport);
+            var sessionLayer = NetworkStack.Session;
+            session = sessionLayer.CreateSessionWithLock(transport);
         }
 
         protected override void OnClose(CloseEventArgs e)
         {
+            // 소켓이 닫히는건 아래쪽 레이어에서 감지한다
+            // 상위레이어로 소켓이 닫혔다는걸 알려주기
             var p = new DisconnectPacket();
             session.Send(p);
 
-            SessionLayer.Layer.CloseSession(session);
+            NetworkStack.Session.CloseSession(session);
             session = null;
         }
 
@@ -57,15 +62,18 @@ namespace HatsushimoServer
 
         public string ID => session.ID;
 
+        Subject<byte[]> _received = new Subject<byte[]>();
+        public IObservable<byte[]> Received => _received;
+
         public WebSocketTransport(WebSocketTransportLayer layer, WebSocketBehavior session)
         {
             this.session = session;
             this.layer = layer;
         }
 
-        public void Recv(byte[] data)
+        internal void Recv(byte[] data)
         {
-            layer.Recv(session.ID, data);
+            _received.OnNext(data);
         }
 
         public void Send(byte[] data)
@@ -79,23 +87,21 @@ namespace HatsushimoServer
         }
     }
 
-    public class WebSocketTransportLayer
+    public class WebSocketTransportLayer : ITransportLayer<string>
     {
-        public static readonly WebSocketTransportLayer Layer = new WebSocketTransportLayer();
-
-        public WebSocketSessionManager Sessions { get; set; }
+        public WebSocketSessionManager Sessions { private get; set; }
 
         Subject<WebSocketDatagram> _sent = new Subject<WebSocketDatagram>();
 
         Subject<WebSocketDatagram> _received = new Subject<WebSocketDatagram>();
-        public IObservable<WebSocketDatagram> Received { get { return _received; } }
+        public IObservable<WebSocketDatagram> Received => _received;
 
         public WebSocketTransportLayer()
         {
             _sent.Subscribe(datagram => HandleSend(datagram));
         }
 
-        public void Recv(string id, byte[] data)
+        internal void Recv(string id, byte[] data)
         {
             var pair = new WebSocketDatagram(id, data);
             _received.OnNext(pair);

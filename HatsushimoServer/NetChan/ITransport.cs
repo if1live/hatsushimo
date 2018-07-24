@@ -1,4 +1,6 @@
-namespace Hatsushimo.NetChan
+using System;
+
+namespace HatsushimoServer.NetChan
 {
     public struct Datagram<ClientID>
     {
@@ -21,9 +23,16 @@ namespace Hatsushimo.NetChan
         // Send() -> raw socket.send()
         void Send(byte[] data);
 
-        // raw_socket.recv() -> Recv()
-        void Recv(byte[] data);
+        // raw_socket.recv()로 부터 데이터를 받으면 이벤트가 발생
+        IObservable<byte[]> Received { get; }
 
         void Close();
+    }
+
+    public interface ITransportLayer<ClientID>
+    {
+        void Send(ClientID id, byte[] data);
+        IObservable<Datagram<ClientID>> Received { get; }
+        void Close(ClientID id);
     }
 }

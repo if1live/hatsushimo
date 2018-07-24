@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using Hatsushimo.Packets;
 using Hatsushimo.NetChan;
+using HatsushimoServer.NetChan;
 
 namespace HatsushimoServer
 {
@@ -16,9 +17,14 @@ namespace HatsushimoServer
     {
         public void Run(string[] args)
         {
-            var _1 = WebSocketTransportLayer.Layer;
-            var _2 = GameService.Instance;
+            // initialize network stack
+            var transport = new WebSocketTransportLayer();
+            var session = new SessionLayer(transport);
 
+            NetworkStack.Register(transport);
+            NetworkStack.Register(session);
+
+            var _2 = GameService.Instance;
 
             var port = Config.ServerPort;
             //var wssv = new WebSocketServer($"ws://127.0.0.1:{port}");

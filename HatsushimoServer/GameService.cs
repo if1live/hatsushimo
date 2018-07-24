@@ -8,6 +8,7 @@ using Hatsushimo.NetChan;
 using Hatsushimo.Packets;
 using Hatsushimo.Types;
 using Hatsushimo.Utils;
+using HatsushimoServer.NetChan;
 using WebSocketSharp.Server;
 
 namespace HatsushimoServer
@@ -25,7 +26,7 @@ namespace HatsushimoServer
             var worlds = InstanceWorldManager.Instance;
             var defaultWorld = worlds.Get(InstanceWorldManager.DefaultID);
 
-            var sessionLayer = SessionLayer.Layer;
+            var sessionLayer = NetworkStack.Session;
             sessionLayer.Received.Subscribe(received => {
                 EnqueueRecv(received.Session, received.Packet);
             });
@@ -72,7 +73,7 @@ namespace HatsushimoServer
             }
 
             Console.WriteLine($"disconnected: id={session.ID}");
-            SessionLayer.Layer.RemoveSession(session);
+            NetworkStack.Session.RemoveSessionWithLock(session);
         }
 
         void HandleWorldJoinReq(Session session, WorldJoinRequestPacket p)
