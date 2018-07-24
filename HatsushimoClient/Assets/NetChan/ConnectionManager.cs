@@ -14,12 +14,28 @@ namespace Assets.NetChan
 
         WebSocket ws;
         public string host = "ws://127.0.0.1";
+        public int port = Config.ServerPort;
 
         readonly PacketCodec codec = MyPacketCodec.Create();
 
-        string ServerURL { get { return $"{host}:{Config.ServerPort}/game"; } }
+        string ServerURL
+        {
+            get
+            {
+                var info = ConnectionInfo.Info;
+                if (info.UseDefaultServer)
+                {
+                    return $"{host}:{Config.ServerPort}/game";
+                }
+                else
+                {
+                    return info.ServerURL;
+                }
+            }
+        }
 
-        public IObservable<bool> ReadyObservable {
+        public IObservable<bool> ReadyObservable
+        {
             get { return ready.Where(x => x).AsObservable(); }
         }
         BoolReactiveProperty ready = new BoolReactiveProperty(false);
@@ -42,7 +58,9 @@ namespace Assets.NetChan
 
         IEnumerator Start()
         {
-            ws = new WebSocket(new Uri(ServerURL));
+            var url = ServerURL;
+            Debug.Log($"connect to {url}");
+            ws = new WebSocket(new Uri(url));
             yield return StartCoroutine(ws.Connect());
 
             if (ws.error != null)
