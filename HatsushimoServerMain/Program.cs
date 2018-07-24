@@ -3,6 +3,8 @@ using WebSocketSharp;
 using WebSocketSharp.Server;
 using Hatsushimo;
 using HatsushimoServer;
+using SharpRaven;
+using SharpRaven.Data;
 
 namespace HatsushimoServerMain
 {
