@@ -3,6 +3,7 @@ using Hatsushimo;
 using Hatsushimo.NetChan;
 using Hatsushimo.Extensions;
 using Xunit;
+using System.Collections.Generic;
 
 namespace HatsushimoServerTest.Extensions
 {
@@ -31,6 +32,19 @@ namespace HatsushimoServerTest.Extensions
             public int v;
             public void Deserialize(BinaryReader r) { r.Read(out v); }
             public void Serialize(BinaryWriter w) { w.Write(v); }
+
+            public class Comparer : IEqualityComparer<DummyStruct>
+            {
+                public bool Equals(DummyStruct x, DummyStruct y)
+                {
+                    return x.v == y.v;
+                }
+
+                public int GetHashCode(DummyStruct obj)
+                {
+                    return obj.v.GetHashCode();
+                }
+            }
         }
 
         class DummyClass : ISerialize
@@ -38,6 +52,20 @@ namespace HatsushimoServerTest.Extensions
             public int v;
             public void Deserialize(BinaryReader r) { r.Read(out v); }
             public void Serialize(BinaryWriter w) { w.Write(v); }
+
+            public class Comparer : IEqualityComparer<DummyClass>
+            {
+                public bool Equals(DummyClass x, DummyClass y)
+                {
+                    return x.v == y.v;
+                }
+
+                public int GetHashCode(DummyClass obj)
+                {
+                    return obj.v.GetHashCode();
+                }
+            }
+
         }
 
         [Fact]
@@ -55,7 +83,7 @@ namespace HatsushimoServerTest.Extensions
             DummyStruct b = new DummyStruct();
             reader.ReadValue(ref b);
 
-            Assert.Equal(a.v, b.v);
+            Assert.Equal(a, b, new DummyStruct.Comparer());
         }
 
         [Fact]
@@ -73,7 +101,7 @@ namespace HatsushimoServerTest.Extensions
             DummyClass b = null;
             reader.ReadObject(out b);
 
-            Assert.Equal(a.v, b.v);
+            Assert.Equal(a, b, new DummyClass.Comparer());
         }
 
         [Fact]
@@ -91,7 +119,7 @@ namespace HatsushimoServerTest.Extensions
             DummyClass b = null;
             reader.ReadObject(out b);
 
-            Assert.Equal(a, b);
+            Assert.Null(b);
         }
 
         [Fact]
@@ -109,7 +137,7 @@ namespace HatsushimoServerTest.Extensions
             DummyStruct[] b = null;
             reader.ReadValues(out b);
 
-            Assert.Equal(0, b.Length);
+            Assert.Empty(b);
         }
 
         [Fact]
@@ -131,9 +159,7 @@ namespace HatsushimoServerTest.Extensions
             DummyStruct[] b = null;
             reader.ReadValues(out b);
 
-            Assert.Equal(2, b.Length);
-            Assert.Equal(1, b[0].v);
-            Assert.Equal(2, b[1].v);
+            Assert.Equal(a, b, new DummyStruct.Comparer());
         }
 
         [Fact]
@@ -151,7 +177,7 @@ namespace HatsushimoServerTest.Extensions
             DummyStruct[] b = null;
             reader.ReadValues(out b);
 
-            Assert.Equal(a, b);
+            Assert.Null(b);
         }
 
         [Fact]
@@ -169,7 +195,7 @@ namespace HatsushimoServerTest.Extensions
             DummyClass[] b = null;
             reader.ReadObjects(out b);
 
-            Assert.Equal(0, b.Length);
+            Assert.Empty(b);
         }
 
         [Fact]
@@ -192,10 +218,7 @@ namespace HatsushimoServerTest.Extensions
             DummyClass[] b = null;
             reader.ReadObjects(out b);
 
-            Assert.Equal(3, b.Length);
-            Assert.Equal(a[0].v, b[0].v);
-            Assert.Equal(a[1].v, b[1].v);
-            Assert.Equal(null, b[2]);
+            AssertEqualArray(a, b, new DummyClass.Comparer());
         }
 
         [Fact]
@@ -213,7 +236,33 @@ namespace HatsushimoServerTest.Extensions
             DummyClass[] b = null;
             reader.ReadObjects(out b);
 
-            Assert.Equal(a, b);
+            Assert.Null(b);
+        }
+
+        void AssertEqualArray<T>(T[] a, T[] b, IEqualityComparer<T> comp)
+        {
+            Assert.Equal(a.Length, b.Length);
+            for (var i = 0; i < a.Length; i++)
+            {
+                var x = a[i];
+                var y = b[i];
+                if (x == null && y == null)
+                {
+                    continue;
+                }
+                else if (x == null && y != null)
+                {
+                    Assert.True(false);
+                }
+                else if (x != null && y == null)
+                {
+                    Assert.True(false);
+                }
+                else
+                {
+                    Assert.Equal(a[i], b[i], comp);
+                }
+            }
         }
     }
 }
