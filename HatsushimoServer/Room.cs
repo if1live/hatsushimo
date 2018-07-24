@@ -25,12 +25,9 @@ namespace HatsushimoServer
         // 방에서만 사용하는 객체는 id를 따로 발급
         readonly IEnumerator<int> foodIDGen = IDGenerator.MakeFoodID().GetEnumerator();
 
-        Leaderboard leaderboard;
-
         public Room(string id)
         {
             this.ID = id;
-            leaderboard = new Leaderboard(players, Config.LeaderboardSize);
 
             // 방 만들때 음식 미리 만들기
             for (var i = 0; i < Config.FoodCount; i++)
@@ -53,9 +50,7 @@ namespace HatsushimoServer
             players.Add(player);
 
             // 신규 유저에게 월드 정보 알려주기
-            // 월드 정보 이외에도 리더보드 같이 변경될때만 알려주는 정보도 알려주기
             player.Session.Send(GenerateReplicaitonAllPacket());
-            player.Session.Send(leaderboard.GenerateLeaderboardPacket());
 
             // 접속한 유저에게 완료 신호 보냄
             // 게임 로직을 돌릴수 있다는 신호임
@@ -248,46 +243,12 @@ namespace HatsushimoServer
             CheckFoodLoop();
         }
 
-        public void NetworkLoop()
+        // 비동기 작업을 위해 데이터에 접근하는 경우 기존 내용을 복사하기
+        // TODO 리스트 안의 요속까지 통쨰로 복사해야하나?
+        // TODO 락걸고 복사해야하나?
+        public List<Player> GetClonedPlayers()
         {
-            var clonedPlayers = players.ToList();
-            clonedPlayers.ForEach(player =>
-            {
-                var actions = clonedPlayers.Select(p => new ReplicationActionPacket()
-                {
-                    Action = ReplicationAction.Update,
-                    ID = p.ID,
-                    ActorType = p.Type,
-                    Pos = p.Position,
-                    TargetPos = p.TargetPosition,
-                    Speed = p.Speed,
-                    Extra = "",
-                });
-
-                var packet = new ReplicationBulkActionPacket()
-                {
-                    Actions = actions.ToArray(),
-                };
-                player.Session.Send(packet);
-            });
-        }
-
-        public void LeaderboardLoop()
-        {
-            // 리더보드 변경 사항이 있는 경우에만 전송
-            // 밑바닥 사람들의 점수는 몇점이든 별로 중요하지 않다
-            // 상위 랭킹이 바뀐것만 리더보드로 취급하자
-            var clonedPlayers = this.players.ToList();
-            var newLeaderboard = new Leaderboard(clonedPlayers, Config.LeaderboardSize);
-            if (!leaderboard.IsLeaderboardEqual(newLeaderboard))
-            {
-                leaderboard = newLeaderboard;
-                var packet = newLeaderboard.GenerateLeaderboardPacket();
-                clonedPlayers.ForEach(player =>
-                {
-                    player.Session.Send(packet);
-                });
-            }
+            return players.ToList();
         }
     }
 }

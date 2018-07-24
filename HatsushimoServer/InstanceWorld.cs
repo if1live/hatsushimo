@@ -8,6 +8,9 @@ using Hatsushimo.Packets;
 using Hatsushimo.Types;
 using Hatsushimo.Utils;
 using HatsushimoServer.NetChan;
+using System.Reactive;
+using System.Reactive.Linq;
+using System.Linq;
 
 namespace HatsushimoServer
 {
@@ -31,58 +34,14 @@ namespace HatsushimoServer
             this.ID = id;
             this.room = new Room(id);
 
-            StartUpdateLoop();
-        }
+            Observable.Interval(TimeSpan.FromMilliseconds(1000 / 60))
+                .Subscribe(_ => Update());
 
-        async void StartUpdateLoop()
-        {
-            var updateInterval = 1000 / 60;
-            var networkInterval = 1000 / Config.SendRateCoord;
-            var leaderboardInterval = 1000 / Config.SendRateLeaderboard;
+            Observable.Interval(TimeSpan.FromMilliseconds(1000 / Config.SendRateCoord))
+                .Subscribe(_ => NetworkUpdate());
 
-            // 120fps로 루프를 돌린다
-            // time slice가 전부 채워진 경우에 호출하기
-            var refreshInterval = 1000 / 120;
-
-            var updateRemain = 0;
-            var networkRemain = 0;
-            var leaderboardRemain = 0;
-
-            int prevMillis = TimeUtils.NowMillis;
-
-            while (true)
-            {
-                var startMillis = TimeUtils.NowMillis;
-                var elapsedMillis = startMillis - prevMillis;
-                updateRemain -= elapsedMillis;
-                networkRemain -= elapsedMillis;
-                leaderboardRemain -= elapsedMillis;
-
-                if (updateRemain <= 0)
-                {
-                    Update();
-                    updateRemain += updateInterval;
-                }
-                if (networkRemain <= 0)
-                {
-                    room.NetworkLoop();
-                    networkRemain += networkInterval;
-                }
-                if (leaderboardRemain <= 0)
-                {
-                    room.LeaderboardLoop();
-                    leaderboardRemain += leaderboardInterval;
-                }
-
-                var endMillis = TimeUtils.NowMillis;
-                var diff = endMillis - startMillis;
-                prevMillis = startMillis;
-
-                var wait = refreshInterval - diff;
-                if (wait < 0) { wait = 0; }
-                var delay = TimeSpan.FromMilliseconds(wait);
-                await Task.Delay(delay);
-            }
+            Observable.Interval(TimeSpan.FromMilliseconds(1000 / Config.SendRateLeaderboard))
+                .Subscribe(_ => LeaderboardUpdate());
         }
 
         void Update()
@@ -94,6 +53,49 @@ namespace HatsushimoServer
                 HandlePacket(session, packet);
             }
             room.GameLoop();
+        }
+
+        Leaderboard leaderboard = new Leaderboard(new Player[] { }, Config.LeaderboardSize);
+        void LeaderboardUpdate()
+        {
+            // 리더보드 변경 사항이 있는 경우에만 전송
+            // 밑바닥 사람들의 점수는 몇점이든 별로 중요하지 않다
+            // 상위 랭킹이 바뀐것만 리더보드로 취급하자
+            var players = room.GetClonedPlayers();
+            var newLeaderboard = new Leaderboard(players, Config.LeaderboardSize);
+            if (!leaderboard.IsLeaderboardEqual(newLeaderboard))
+            {
+                leaderboard = newLeaderboard;
+                var packet = newLeaderboard.GenerateLeaderboardPacket();
+                players.ForEach(player =>
+                {
+                    player.Session.Send(packet);
+                });
+            }
+        }
+
+        void NetworkUpdate()
+        {
+            var players = room.GetClonedPlayers();
+            players.ForEach(player =>
+            {
+                var actions = players.Select(p => new ReplicationActionPacket()
+                {
+                    Action = ReplicationAction.Update,
+                    ID = p.ID,
+                    ActorType = p.Type,
+                    Pos = p.Position,
+                    TargetPos = p.TargetPosition,
+                    Speed = p.Speed,
+                    Extra = "",
+                });
+
+                var packet = new ReplicationBulkActionPacket()
+                {
+                    Actions = actions.ToArray(),
+                };
+                player.Session.Send(packet);
+            });
         }
 
         Player GetPlayer(Session session)
@@ -164,6 +166,7 @@ namespace HatsushimoServer
         {
             var player = GetPlayer(session);
             room.SpawnPlayer(player);
+            player.Session.Send(leaderboard.GenerateLeaderboardPacket());
         }
 
         void HandlePacket(Session session, IPacket packet)
@@ -186,12 +189,6 @@ namespace HatsushimoServer
                 default:
                     break;
             }
-        }
-
-        async void SendDelayedPacket(Session session, IPacket packet, TimeSpan dueTime)
-        {
-            await Task.Delay(dueTime);
-            session.Send(packet);
         }
     }
 }

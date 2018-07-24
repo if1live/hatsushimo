@@ -30,6 +30,12 @@ namespace HatsushimoServer
             this.topSize = topSize;
         }
 
+        public Leaderboard(Leaderboard o)
+        {
+            all = o.all.ToList();
+            topSize = o.topSize;
+        }
+
         public IEnumerable<Rank> GetTopRanks(int size)
         {
             return this.all.Take(size);
