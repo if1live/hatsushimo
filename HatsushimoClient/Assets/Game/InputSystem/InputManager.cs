@@ -9,6 +9,8 @@ namespace Assets.Game.InputSystem
     {
         public static InputManager Instance = null;
 
+        public VirtualJoystick moveJoystick;
+
         public const int SEND_RATE = 15;
 
         IObservable<InputAction> CommandObservable {
@@ -35,6 +37,9 @@ namespace Assets.Game.InputSystem
         {
             Debug.Assert(Instance == null);
             Instance = this;
+
+            // 게임내에서 사용할 컨트롤러 연결 확인
+            Debug.Assert(moveJoystick != null);
         }
 
         private void Start()

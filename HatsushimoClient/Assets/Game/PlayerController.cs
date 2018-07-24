@@ -50,9 +50,10 @@ namespace Assets.Game
         void HandleMove_UnityBasic()
         {
             var inputmgr = InputManager.Instance;
+            var joystick = inputmgr.moveJoystick;
 
-            var vertical = Input.GetAxis("Vertical");
-            var horizontal = Input.GetAxis("Horizontal");
+            var vertical = joystick.Vertical();
+            var horizontal = joystick.Horizontal();
             var dir = new Vector3(horizontal, vertical);
 
             var currPos = player.transform.position;

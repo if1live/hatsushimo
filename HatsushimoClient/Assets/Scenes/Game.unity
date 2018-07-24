@@ -267,6 +267,12 @@ Prefab:
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 41fa3be5f93cb1f4cbcacf289df39963, type: 2}
   m_IsPrefabAsset: 0
+--- !u!114 &278979478 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 114817021826092006, guid: 41fa3be5f93cb1f4cbcacf289df39963,
+    type: 2}
+  m_PrefabInternal: {fileID: 278979477}
+  m_Script: {fileID: 11500000, guid: 0591e3025b493da42bb436aab4beb4f8, type: 3}
 --- !u!1001 &574229067
 Prefab:
   m_ObjectHideFlags: 0
@@ -411,6 +417,11 @@ Prefab:
       propertyPath: m_RootOrder
       value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: 114713286002390290, guid: 5e18cc9cdf350434297f8280e9de943b,
+        type: 2}
+      propertyPath: moveJoystick
+      value: 
+      objectReference: {fileID: 278979478}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5e18cc9cdf350434297f8280e9de943b, type: 2}
   m_IsPrefabAsset: 0
