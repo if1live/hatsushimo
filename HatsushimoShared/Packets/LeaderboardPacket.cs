@@ -86,13 +86,13 @@ namespace Hatsushimo.Packets
         public void Deserialize(BinaryReader r)
         {
             r.Read(out Players);
-            r.Read(ref Top);
+            r.ReadValues(out Top);
         }
 
         public void Serialize(BinaryWriter w)
         {
             w.Write(Players);
-            w.Write(Top);
+            w.WriteValues(Top);
         }
     }
 }

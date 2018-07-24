@@ -15,25 +15,60 @@ namespace Hatsushimo.Extensions
                 w.Write(v);
             }
         }
-        public static void Write<T>(this BinaryWriter w, T v)
+
+        // value type은 null 검사가 필요없다
+        // object는 null이 될수도 있다
+        // 둘을 구분하면 패킷 크기를 줄일수 있다
+        public static void WriteValue<T>(this BinaryWriter w, T v)
         where T : ISerialize
         {
             v.Serialize(w);
         }
 
-        public static void Write<T>(this BinaryWriter w, T[] v)
+        public static void WriteObject<T>(this BinaryWriter w, T v)
         where T : ISerialize
         {
-            short len = 0;
-            if (v != null)
+            bool notNull = (v != null);
+            w.Write(notNull);
+            if (notNull)
             {
-                len = (short)v.Length;
+                v.Serialize(w);
             }
+        }
+
+        public static void WriteValues<T>(this BinaryWriter w, T[] v)
+        where T : ISerialize
+        {
+            if (v == null)
+            {
+                w.Write((short)-1);
+                return;
+            }
+
+            short len = (short)v.Length;
             w.Write(len);
 
             for (var i = 0; i < len; i++)
             {
-                w.Write(v[i]);
+                w.WriteValue(v[i]);
+            }
+        }
+
+        public static void WriteObjects<T>(this BinaryWriter w, T[] v)
+        where T : ISerialize
+        {
+            if (v == null)
+            {
+                w.Write((short)-1);
+                return;
+            }
+
+            short len = (short)v.Length;
+            w.Write(len);
+
+            for (var i = 0; i < len; i++)
+            {
+                w.WriteObject(v[i]);
             }
         }
     }

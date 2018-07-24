@@ -27,22 +27,66 @@ namespace Hatsushimo.Extensions
             }
         }
 
-        public static void Read<T>(this BinaryReader r, ref T v)
+        public static void ReadValue<T>(this BinaryReader r, ref T v)
         where T : ISerialize
         {
             v.Deserialize(r);
         }
 
-        public static void Read<T>(this BinaryReader r, ref T[] v)
-        where T : ISerialize
+
+        public static void ReadObject<T>(this BinaryReader r, out T v)
+        where T : ISerialize, new()
+        {
+            bool notNull = false;
+            r.Read(out notNull);
+            if (notNull)
+            {
+                v = new T();
+                v.Deserialize(r);
+            }
+            else
+            {
+                v = default(T);
+            }
+        }
+
+        public static void ReadValues<T>(this BinaryReader r, out T[] v)
+        where T : ISerialize, new()
         {
             short len = 0;
             r.Read(out len);
 
+            if (len == -1)
+            {
+                v = null;
+                return;
+            }
+
             v = new T[len];
             for (var i = 0; i < len; i++)
             {
-                r.Read(ref v[i]);
+                v[i] = new T();
+                r.ReadValue(ref v[i]);
+            }
+        }
+
+        public static void ReadObjects<T>(this BinaryReader r, out T[] v)
+        where T : ISerialize, new()
+        {
+            short len = 0;
+            r.Read(out len);
+            if (len == -1)
+            {
+                v = null;
+                return;
+            }
+
+            v = new T[len];
+            for (var i = 0; i < len; i++)
+            {
+                T x;
+                r.ReadObject(out x);
+                v[i] = x;
             }
         }
     }

@@ -32,8 +32,8 @@ namespace Hatsushimo.Packets
         {
             r.Read(out ID);
             r.ReadString(out Nickname);
-            r.Read(ref Pos);
-            r.Read(ref TargetPos);
+            r.ReadValue(ref Pos);
+            r.ReadValue(ref TargetPos);
             r.Read(out Speed);
         }
 
@@ -41,8 +41,8 @@ namespace Hatsushimo.Packets
         {
             w.Write(ID);
             w.WriteString(Nickname);
-            w.Write(Pos);
-            w.Write(TargetPos);
+            w.WriteValue(Pos);
+            w.WriteValue(TargetPos);
             w.Write(Speed);
         }
     }
@@ -54,13 +54,13 @@ namespace Hatsushimo.Packets
         public void Deserialize(BinaryReader r)
         {
             r.Read(out ID);
-            r.Read(ref Pos);
+            r.ReadValue(ref Pos);
         }
 
         public void Serialize(BinaryWriter w)
         {
             w.Write(ID);
-            w.Write(Pos);
+            w.WriteValue(Pos);
         }
     }
 
@@ -78,14 +78,14 @@ namespace Hatsushimo.Packets
 
         public void Deserialize(BinaryReader r)
         {
-            r.Read(ref Players);
-            r.Read(ref Foods);
+            r.ReadValues(out Players);
+            r.ReadValues(out Foods);
         }
 
         public void Serialize(BinaryWriter w)
         {
-            w.Write(Players);
-            w.Write(Foods);
+            w.WriteValues(Players);
+            w.WriteValues(Foods);
         }
     }
 
@@ -118,8 +118,8 @@ namespace Hatsushimo.Packets
             r.Read(out actorTypeVal);
             ActorType = (ActorType)actorTypeVal;
 
-            r.Read(ref Pos);
-            r.Read(ref TargetPos);
+            r.ReadValue(ref Pos);
+            r.ReadValue(ref TargetPos);
             r.Read(out Speed);
             r.ReadString(out Extra);
         }
@@ -131,8 +131,8 @@ namespace Hatsushimo.Packets
             w.Write((short)Action);
             w.Write(ID);
             w.Write((short)ActorType);
-            w.Write(Pos);
-            w.Write(TargetPos);
+            w.WriteValue(Pos);
+            w.WriteValue(TargetPos);
             w.Write(Speed);
             w.WriteString(Extra);
         }
@@ -152,12 +152,12 @@ namespace Hatsushimo.Packets
 
         public void Deserialize(BinaryReader r)
         {
-            r.Read(ref Actions);
+            r.ReadValues(out Actions);
         }
 
         public void Serialize(BinaryWriter w)
         {
-            w.Write(Actions);
+            w.WriteValues(Actions);
         }
     }
 }

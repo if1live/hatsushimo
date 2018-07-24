@@ -42,12 +42,12 @@ namespace Hatsushimo.Packets
 
         public void Deserialize(BinaryReader r)
         {
-            r.Read(ref TargetPos);
+            r.ReadValue(ref TargetPos);
         }
 
         public void Serialize(BinaryWriter w)
         {
-            w.Write(TargetPos);
+            w.WriteValue(TargetPos);
         }
     }
 }
