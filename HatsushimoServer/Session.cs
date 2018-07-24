@@ -15,6 +15,7 @@ namespace HatsushimoServer
 
         static readonly PacketCodec codec = MyPacketCodec.Create();
         readonly ITransport<string> transport;
+        public long lastHeartbeatTimestamp = 0;
 
         public int ID { get; private set; }
         public string TransportID { get { return transport.ID; } }
@@ -27,6 +28,12 @@ namespace HatsushimoServer
             this.ID = id;
             this.transport = transport;
             this.Nickname = DefaultNickname;
+            RefreshHeartbeat();
+        }
+
+        public void RefreshHeartbeat()
+        {
+            lastHeartbeatTimestamp = TimeUtils.NowTimestamp;
         }
 
         public void Send(IPacket p)

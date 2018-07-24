@@ -78,4 +78,19 @@ namespace Hatsushimo.Packets
             w.Write(millis);
         }
     }
+
+    public struct HeartbeatPacket : IPacket
+    {
+        public short Type => (short)PacketType.Heartbeat;
+
+        public IPacket CreateBlank()
+        {
+            return new HeartbeatPacket();
+        }
+
+        public void Deserialize(BinaryReader r) { }
+
+        public void Serialize(BinaryWriter w) { }
+    }
 }
+

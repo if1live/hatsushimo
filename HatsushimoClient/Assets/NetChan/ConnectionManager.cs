@@ -55,6 +55,14 @@ namespace Assets.NetChan
             ready.SetValueAndForceNotify(true);
             SendPacket(new ConnectPacket());
 
+            // heartbeat
+            var heartbeatInterval = TimeSpan.FromSeconds(Config.HeartbeatInterval);
+            Observable.Interval(heartbeatInterval).Subscribe(_ =>
+            {
+                var p = new HeartbeatPacket();
+                SendPacket(p);
+            }).AddTo(gameObject);
+
             while (true)
             {
                 byte[] bytes = null;
@@ -95,6 +103,6 @@ namespace Assets.NetChan
             var bytes = codec.Encode(p);
             ws.Send(bytes);
         }
-        
+
     }
 }

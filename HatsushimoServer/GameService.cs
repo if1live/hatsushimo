@@ -41,6 +41,12 @@ namespace HatsushimoServer
             session.Send(p);
         }
 
+        void HandleHeartbeat(Session session, HeartbeatPacket p)
+        {
+            session.RefreshHeartbeat();
+            Console.WriteLine($"heartbeat: id={session.ID}");
+        }
+
         void HandleConnect(Session session, ConnectPacket p)
         {
             var welcome = new WelcomePacket()
@@ -105,6 +111,7 @@ namespace HatsushimoServer
         readonly HashSet<PacketType> allowedPackets = new HashSet<PacketType>()
         {
             PacketType.Ping,
+            PacketType.Heartbeat,
             PacketType.Connect,
             PacketType.Disconnect,
             PacketType.WorldJoinReq,
@@ -132,6 +139,10 @@ namespace HatsushimoServer
             {
                 case PacketType.Ping:
                     HandlePing(session, (PingPacket)packet);
+                    break;
+
+                case PacketType.Heartbeat:
+                    HandleHeartbeat(session, (HeartbeatPacket)packet);
                     break;
 
                 case PacketType.Connect:

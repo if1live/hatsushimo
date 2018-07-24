@@ -7,6 +7,7 @@ namespace Hatsushimo.Packets
 
         Welcome,
 
+        Heartbeat,
         Ping,
 
         WorldJoinReq,

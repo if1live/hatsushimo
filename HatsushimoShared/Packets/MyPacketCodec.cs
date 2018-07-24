@@ -10,6 +10,7 @@ namespace Hatsushimo.Packets
             var f = new PacketCodec();
             f.Register<PingPacket>();
             f.Register<WelcomePacket>();
+            f.Register<HeartbeatPacket>();
 
             f.Register<ConnectPacket>();
             f.Register<DisconnectPacket>();
