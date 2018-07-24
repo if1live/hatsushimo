@@ -21,7 +21,8 @@ namespace HatsushimoServer
 
 
             var port = Config.ServerPort;
-            var wssv = new WebSocketServer($"ws://127.0.0.1:{port}");
+            //var wssv = new WebSocketServer($"ws://127.0.0.1:{port}");
+            var wssv = new WebSocketServer($"ws://0.0.0.0:{port}");
             wssv.AddWebSocketService<WebSocketSession>("/game");
             wssv.Start();
             Console.ReadKey(true);
