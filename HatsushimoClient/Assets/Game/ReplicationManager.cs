@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Assets.Game
 {
-    public class ReplicationManager : MonoBehaviour 
+    public class ReplicationManager : MonoBehaviour
     {
         public static ReplicationManager Instance;
 
@@ -29,13 +29,15 @@ namespace Assets.Game
         {
             var dispatcher = PacketDispatcher.Instance;
 
-            dispatcher.PlayerReadyReceived.Subscribe(_ => 
+            dispatcher.PlayerReadyReceived.Subscribe(_ =>
             {
                 Debug.Log("player ready");
             });
 
             dispatcher.ReplicationAllReceived.Subscribe(packet =>
             {
+                Debug.Log("replicaiton all received");
+
                 // 플레이어 생성
                 foreach (var p in packet.Players)
                 {
@@ -85,6 +87,8 @@ namespace Assets.Game
 
         void HandleReplicationCreate(ReplicationActionPacket packet)
         {
+            Debug.Log($"replicaiton create id={packet.ID}");
+
             var info = ConnectionInfo.Info;
             var myid = info.PlayerID;
             var id = packet.ID;
@@ -103,6 +107,8 @@ namespace Assets.Game
 
         void HandleReplicationUpdate(ReplicationActionPacket packet)
         {
+            Debug.Log($"replicaiton update id={packet.ID}");
+
             var id = packet.ID;
             if(packet.ActorType == ActorType.Player)
             {
@@ -113,6 +119,8 @@ namespace Assets.Game
 
         void HandleReplicationRemove(ReplicationActionPacket packet)
         {
+            Debug.Log($"replicaiton remove id={packet.ID}");
+
             var info = ConnectionInfo.Info;
             var myid = info.PlayerID;
             var id = packet.ID;
@@ -131,7 +139,7 @@ namespace Assets.Game
                 RemoveFood(id);
             }
         }
-        
+
 
         Food CreateFood(int id, Vector3 pos)
         {

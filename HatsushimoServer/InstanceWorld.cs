@@ -61,7 +61,9 @@ namespace HatsushimoServer
             // 리더보드 변경 사항이 있는 경우에만 전송
             // 밑바닥 사람들의 점수는 몇점이든 별로 중요하지 않다
             // 상위 랭킹이 바뀐것만 리더보드로 취급하자
-            var players = room.GetClonedPlayers();
+            var players = new List<Player>();
+            room.GetPlayers(ref players);
+
             var newLeaderboard = new Leaderboard(players, Config.LeaderboardSize);
             if (!leaderboard.IsLeaderboardEqual(newLeaderboard))
             {
@@ -76,7 +78,9 @@ namespace HatsushimoServer
 
         void NetworkUpdate()
         {
-            var players = room.GetClonedPlayers();
+            var players = new List<Player>();
+            room.GetPlayers(ref players);
+
             players.ForEach(player =>
             {
                 var actions = players.Select(p => new ReplicationActionPacket()
@@ -133,16 +137,37 @@ namespace HatsushimoServer
             recvQueue.Enqueue(s, p);
         }
 
-        public void HandleJoinReq(Session session)
+        void HandleJoinReq(Session session, WorldJoinRequestPacket p)
         {
+            var ok = Join(session, p.Nickname);
+            Console.WriteLine($"world join: id={session.ID} world={ID} ok={ok}");
+
             var player = GetPlayer(session);
             room.Join(player);
+
+            var resp = new WorldJoinResponsePacket()
+            {
+                PlayerID = session.ID,
+                WorldID = ID,
+                Nickname = session.Nickname,
+            };
+            session.Send(resp);
         }
 
-        public void HandleLeaveReq(Session session)
+        void HandleLeaveReq(Session session, WorldLeaveRequestPacket p)
         {
             var player = GetPlayer(session);
             room.Leave(player);
+
+            var ok = Leave(session);
+            Console.WriteLine($"world leave: id={session.ID} world={ID} ok={ok}");
+
+            var resp = new WorldLeaveResponsePacket()
+            {
+                PlayerID = session.ID,
+            };
+            // TODO world에 있는 사람들만 나갔다는걸 알면 된다
+            // TOOD replication remove에서 처리하니까 필요 없을지도
         }
 
         void HandleInputCommand(Session session, InputCommandPacket p)
@@ -184,6 +209,14 @@ namespace HatsushimoServer
 
                 case PacketType.InputMove:
                     HandleInputMove(session, (InputMovePacket)packet);
+                    break;
+
+                case PacketType.WorldJoinReq:
+                    HandleJoinReq(session, (WorldJoinRequestPacket)packet);
+                    break;
+
+                case PacketType.WorldLeaveReq:
+                    HandleLeaveReq(session, (WorldLeaveRequestPacket)packet);
                     break;
 
                 default:

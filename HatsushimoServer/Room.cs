@@ -16,6 +16,11 @@ namespace HatsushimoServer
         readonly Random rand = new Random();
         public string ID { get; private set; }
 
+        // 기본적으로 게임 로직은 싱글 쓰레드로 돌아간다
+        // 주기적으로 게임 정보를 클라에 보내주는데 이것은 비동기로 돌아간다
+        // 외부에서 정보를 직접 갖다쓰는 곳(주로 플레이어 리스트)은 락을 건다
+        Object lockobj = new Object();
+
         readonly List<Player> players = new List<Player>();
         // 로직에 직접 참가하지 않는 유저목록
         // 방에는 참가했지만 로딩이 끝나지 않는 경우를 처리하는게 목적
@@ -42,12 +47,18 @@ namespace HatsushimoServer
             var found = waitingPlayers.FindIndex(p => p == player);
             if (found < 0) { return false; }
 
-            // 유저를 로직에 합류시킴
-            var prevPlayers = players.ToList();
+            // 대기자 목록에서 유저를 삭제
             waitingPlayers.RemoveAt(found);
 
-            // TODO lock required?
-            players.Add(player);
+            // 유저를 로직에 합류시킴
+            // 다른 비동기 작업에서 유저 목록을 사용할수도 있다
+            // 락을 걸어서 문제가 생기지 않도록 하자
+            List<Player> prevPlayers = null;
+            lock (lockobj)
+            {
+                prevPlayers = players.ToList();
+                players.Add(player);
+            }
 
             // 신규 유저에게 월드 정보 알려주기
             player.Session.Send(GenerateReplicaitonAllPacket());
@@ -71,6 +82,7 @@ namespace HatsushimoServer
         {
             var pos = GenerateRandomPosition();
             newPlayer.SetPosition(pos);
+
             waitingPlayers.Add(newPlayer);
 
             Console.WriteLine($"room join: id={newPlayer.ID} room={ID}");
@@ -81,7 +93,10 @@ namespace HatsushimoServer
             var found = players.FindIndex((x) => x.ID == player.ID);
             if (found > -1)
             {
-                players.RemoveAt(found);
+                lock (lockobj)
+                {
+                    players.RemoveAt(found);
+                }
             }
 
             // 로딩 끝나기전에 나가는 경우 처리
@@ -125,8 +140,7 @@ namespace HatsushimoServer
 
         ReplicationAllPacket GenerateReplicaitonAllPacket()
         {
-            var clonedPlayers = this.players.ToList();
-            var players = clonedPlayers.Select(p => new PlayerInitial()
+            var players = this.players.Select(p => new PlayerInitial()
             {
                 ID = p.ID,
                 Nickname = p.Session.Nickname,
@@ -163,8 +177,7 @@ namespace HatsushimoServer
             // 모든 유저에게 아이템 생성 패킷 전송
             // TODO broadcast emit
             var packet = food.GenerateCreatePacket();
-            var clonedPlayers = players.ToList();
-            clonedPlayers.ForEach(p =>
+            players.ForEach(p =>
             {
                 var session = p.Session;
                 session.Send(packet);
@@ -173,8 +186,7 @@ namespace HatsushimoServer
 
         void SendFoodRemovePacket(Food food)
         {
-            var clonedPlayers = players.ToList();
-            clonedPlayers.ForEach(p =>
+            this.players.ForEach(p =>
             {
                 var packet = food.GenerateRemovePacket();
                 var session = p.Session;
@@ -197,16 +209,14 @@ namespace HatsushimoServer
 
         void PlayerUpdateLoop(float dt)
         {
-            var clonedPlayers = this.players.ToList();
-            clonedPlayers.ForEach(player => player.UpdateMove(dt));
+            players.ForEach(player => player.UpdateMove(dt));
         }
 
         void CheckFoodLoop()
         {
-            var clonedPlayers = this.players.ToList();
             // 음식을 먹으면 점수를 올리고 음식을 목록에서 삭제
             // TODO quad tree 같은거 쓰면 최적화 가능
-            clonedPlayers.ForEach(player =>
+            players.ForEach(player =>
             {
                 var gainedFoods = foods.Select((food, idx) => new { food = food, idx = idx })
                     .Where(pair =>
@@ -245,10 +255,14 @@ namespace HatsushimoServer
 
         // 비동기 작업을 위해 데이터에 접근하는 경우 기존 내용을 복사하기
         // TODO 리스트 안의 요속까지 통쨰로 복사해야하나?
-        // TODO 락걸고 복사해야하나?
-        public List<Player> GetClonedPlayers()
+        public int GetPlayers(ref List<Player> dst)
         {
-            return players.ToList();
+            lock (lockobj)
+            {
+                dst.Clear();
+                dst.AddRange(players);
+                return players.Count;
+            }
         }
     }
 }

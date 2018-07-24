@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Reactive.Linq;
 using Hatsushimo;
 using Hatsushimo.NetChan;
 using Hatsushimo.Packets;
@@ -27,11 +28,13 @@ namespace HatsushimoServer
             var defaultWorld = worlds.Get(InstanceWorldManager.DefaultID);
 
             var sessionLayer = NetworkStack.Session;
-            sessionLayer.Received.Subscribe(received => {
+            sessionLayer.Received.Subscribe(received =>
+            {
                 EnqueueRecv(received.Session, received.Packet);
             });
 
-            StartGameLoop();
+            Observable.Interval(TimeSpan.FromMilliseconds(1000 / 120))
+                .Subscribe(_ => Update());
         }
 
         readonly PacketQueue recvQueue = new PacketQueue();
@@ -80,33 +83,14 @@ namespace HatsushimoServer
         {
             var worlds = InstanceWorldManager.Instance;
             var world = worlds.Get(p.WorldID);
-            var ok = world.Join(session, p.Nickname);
-            Console.WriteLine($"world join: id={session.ID} world={world.ID} ok={ok}");
-            world.HandleJoinReq(session);
-
-            var resp = new WorldJoinResponsePacket()
-            {
-                PlayerID = session.ID,
-                WorldID = world.ID,
-                Nickname = session.Nickname,
-            };
-            session.Send(resp);
+            world.EnqueueRecv(session, p);
         }
 
         void HandleWorldLeave(Session session, WorldLeaveRequestPacket p)
         {
             var worlds = InstanceWorldManager.Instance;
             var world = worlds.Get(session.WorldID);
-            world.HandleLeaveReq(session);
-            var ok = world.Leave(session);
-            Console.WriteLine($"world leave: id={session.ID} world={world.ID} ok={ok}");
-
-            var resp = new WorldLeaveResponsePacket()
-            {
-                PlayerID = session.ID,
-            };
-            // TODO world에 있는 사람들만 나갔다는걸 알면 된다
-            // TOOD replication remove에서 처리하니까 필요 없을지도
+            world.EnqueueRecv(session, p);
         }
 
         readonly HashSet<PacketType> allowedPackets = new HashSet<PacketType>()
@@ -167,19 +151,13 @@ namespace HatsushimoServer
             }
         }
 
-        async void StartGameLoop()
+        void Update()
         {
-            while (true)
+            Session session = null;
+            IPacket packet = null;
+            while (recvQueue.TryDequeue(out session, out packet))
             {
-                Session session = null;
-                IPacket packet = null;
-                while (recvQueue.TryDequeue(out session, out packet))
-                {
-                    HandlePacket(session, packet);
-                }
-
-                var interval = TimeSpan.FromMilliseconds(1000 / 120);
-                await Task.Delay(interval);
+                HandlePacket(session, packet);
             }
         }
     }
