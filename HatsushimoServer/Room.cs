@@ -74,7 +74,7 @@ namespace HatsushimoServer
                 p.Session.Send(spawnPacket);
             });
 
-            Console.WriteLine($"ready room: room={this.ID}, player={player.ID}, room_size={players.Count}");
+            Console.WriteLine($"ready room: id={player.ID} room={ID} size={players.Count}");
             return true;
         }
 
@@ -85,7 +85,7 @@ namespace HatsushimoServer
 
             waitingPlayers.Add(newPlayer);
 
-            Console.WriteLine($"room join: id={newPlayer.ID} room={ID}");
+            Console.WriteLine($"room join: id={newPlayer.ID} room={ID} size={players.Count}");
         }
 
         public void Leave(Player player)
@@ -113,7 +113,7 @@ namespace HatsushimoServer
                 p.Session.Send(removePacket);
             });
 
-            Console.WriteLine($"leave room: room={ID}, player={player.ID}");
+            Console.WriteLine($"leave room: id={player.ID} room={ID} size={players.Count}");
         }
 
         public Vec2 GenerateRandomPosition()

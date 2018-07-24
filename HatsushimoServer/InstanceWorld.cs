@@ -140,7 +140,7 @@ namespace HatsushimoServer
         void HandleJoinReq(Session session, WorldJoinRequestPacket p)
         {
             var ok = Join(session, p.Nickname);
-            Console.WriteLine($"world join: id={session.ID} world={ID} ok={ok}");
+            Console.WriteLine($"world join: id={session.ID} world={ID} ok={ok} size={sessions.Count}");
 
             var player = GetPlayer(session);
             room.Join(player);
@@ -160,7 +160,7 @@ namespace HatsushimoServer
             room.Leave(player);
 
             var ok = Leave(session);
-            Console.WriteLine($"world leave: id={session.ID} world={ID} ok={ok}");
+            Console.WriteLine($"world leave: id={session.ID} world={ID} ok={ok} size={sessions.Count}");
 
             var resp = new WorldLeaveResponsePacket()
             {
