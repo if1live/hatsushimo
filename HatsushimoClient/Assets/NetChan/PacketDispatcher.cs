@@ -27,7 +27,7 @@ namespace Assets.NetChan
         public readonly PacketObservable<PingPacket> Ping = new PacketObservable<PingPacket>();
         public readonly PacketObservable<WelcomePacket> Welcome = new PacketObservable<WelcomePacket>();
 
-        public readonly PacketObservable<SignUpPacket> SignUp = new PacketObservable<SignUpPacket>();
+        public readonly PacketObservable<SignUpResultPacket> SignUp = new PacketObservable<SignUpResultPacket>();
         public readonly PacketObservable<AuthenticationResultPacket> Authentication = new PacketObservable<AuthenticationResultPacket>();
 
         public readonly PacketObservable<ReplicationAllPacket> ReplicationAll = new PacketObservable<ReplicationAllPacket>();

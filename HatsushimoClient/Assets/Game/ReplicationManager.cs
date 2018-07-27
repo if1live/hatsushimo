@@ -87,7 +87,7 @@ namespace Assets.Game
 
         void HandleReplicationCreate(ReplicationActionPacket packet)
         {
-            Debug.Log($"replicaiton create id={packet.ID}");
+            //Debug.Log($"replicaiton create id={packet.ID}");
 
             var info = ConnectionInfo.Info;
             var myid = info.PlayerID;
@@ -107,7 +107,7 @@ namespace Assets.Game
 
         void HandleReplicationUpdate(ReplicationActionPacket packet)
         {
-            Debug.Log($"replicaiton update id={packet.ID}");
+            //Debug.Log($"replicaiton update id={packet.ID}");
 
             var id = packet.ID;
             if(packet.ActorType == ActorType.Player)
@@ -119,7 +119,7 @@ namespace Assets.Game
 
         void HandleReplicationRemove(ReplicationActionPacket packet)
         {
-            Debug.Log($"replicaiton remove id={packet.ID}");
+            //Debug.Log($"replicaiton remove id={packet.ID}");
 
             var info = ConnectionInfo.Info;
             var myid = info.PlayerID;

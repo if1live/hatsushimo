@@ -92,6 +92,7 @@ namespace HatsushimoServer
         {
             // TODO sign up
             // db에 유저를 기록하기
+            Console.WriteLine($"sign up: uuid={packet.Uuid}");
             var result = new SignUpResultPacket() { Success = true };
             session.Send(result);
         }
@@ -99,6 +100,7 @@ namespace HatsushimoServer
         void HandleAuthentication(Session session, AuthenticationPacket packet)
         {
             // TODO db에 유저가 있을때만 로그인 처리
+            Console.WriteLine($"authentication: uuid={packet.Uuid}");
             var result = new AuthenticationResultPacket() { Success = true };
             session.Send(result);
         }
