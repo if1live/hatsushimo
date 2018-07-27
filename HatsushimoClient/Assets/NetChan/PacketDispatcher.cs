@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Assets.NetChan
 {
-    public class PacketObserver<TPacket>
+    public class PacketObservable<TPacket>
     {
         public IObservable<TPacket> Received
         {
@@ -24,15 +24,15 @@ namespace Assets.NetChan
     {
         public static PacketDispatcher Instance;
 
-        public readonly PacketObserver<PingPacket> Ping = new PacketObserver<PingPacket>();
-        readonly public PacketObserver<WelcomePacket> Welcome = new PacketObserver<WelcomePacket>();
-        readonly public PacketObserver<ReplicationAllPacket> ReplicationAll = new PacketObserver<ReplicationAllPacket>();
-        readonly public PacketObserver<ReplicationActionPacket> Replication = new PacketObserver<ReplicationActionPacket>();
-        readonly public PacketObserver<ReplicationBulkActionPacket> ReplicationBulk = new PacketObserver<ReplicationBulkActionPacket>();
-        readonly public PacketObserver<WorldJoinResponsePacket> WorldJoin = new PacketObserver<WorldJoinResponsePacket>();
-        readonly public PacketObserver<WorldLeaveResponsePacket> WorldLeave = new PacketObserver<WorldLeaveResponsePacket>();
-        readonly public PacketObserver<PlayerReadyPacket> PlayerReady = new PacketObserver<PlayerReadyPacket>();
-        readonly public PacketObserver<LeaderboardPacket> Leaderboard = new PacketObserver<LeaderboardPacket>();
+        public readonly PacketObservable<PingPacket> Ping = new PacketObservable<PingPacket>();
+        readonly public PacketObservable<WelcomePacket> Welcome = new PacketObservable<WelcomePacket>();
+        readonly public PacketObservable<ReplicationAllPacket> ReplicationAll = new PacketObservable<ReplicationAllPacket>();
+        readonly public PacketObservable<ReplicationActionPacket> Replication = new PacketObservable<ReplicationActionPacket>();
+        readonly public PacketObservable<ReplicationBulkActionPacket> ReplicationBulk = new PacketObservable<ReplicationBulkActionPacket>();
+        readonly public PacketObservable<WorldJoinResponsePacket> WorldJoin = new PacketObservable<WorldJoinResponsePacket>();
+        readonly public PacketObservable<WorldLeaveResponsePacket> WorldLeave = new PacketObservable<WorldLeaveResponsePacket>();
+        readonly public PacketObservable<PlayerReadyPacket> PlayerReady = new PacketObservable<PlayerReadyPacket>();
+        readonly public PacketObservable<LeaderboardPacket> Leaderboard = new PacketObservable<LeaderboardPacket>();
 
         private void Awake()
         {

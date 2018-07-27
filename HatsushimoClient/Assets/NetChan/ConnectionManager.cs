@@ -101,24 +101,26 @@ namespace Assets.NetChan
                 var type = (PacketType)codec.ReadPacketType(reader);
 
                 var dispatcher = PacketDispatcher.Instance;
-                if(DispatchPacket(type, reader, dispatcher.Ping)) {continue;}
-                if(DispatchPacket(type, reader, dispatcher.Welcome)) {continue;}
-                if(DispatchPacket(type, reader, dispatcher.ReplicationAll)) {continue;}
-                if(DispatchPacket(type, reader, dispatcher.Replication)) {continue;}
-                if(DispatchPacket(type, reader, dispatcher.ReplicationBulk)) {continue;}
-                if(DispatchPacket(type, reader, dispatcher.WorldJoin)) {continue;}
-                if(DispatchPacket(type, reader, dispatcher.WorldLeave)) {continue;}
-                if(DispatchPacket(type, reader, dispatcher.PlayerReady)) {continue;}
-                if(DispatchPacket(type, reader, dispatcher.Leaderboard)) {continue;}
+                if (DispatchPacket(type, reader, dispatcher.Ping)) { continue; }
+                if (DispatchPacket(type, reader, dispatcher.Welcome)) { continue; }
+                if (DispatchPacket(type, reader, dispatcher.ReplicationAll)) { continue; }
+                if (DispatchPacket(type, reader, dispatcher.Replication)) { continue; }
+                if (DispatchPacket(type, reader, dispatcher.ReplicationBulk)) { continue; }
+                if (DispatchPacket(type, reader, dispatcher.WorldJoin)) { continue; }
+                if (DispatchPacket(type, reader, dispatcher.WorldLeave)) { continue; }
+                if (DispatchPacket(type, reader, dispatcher.PlayerReady)) { continue; }
+                if (DispatchPacket(type, reader, dispatcher.Leaderboard)) { continue; }
 
                 Debug.Log($"handler not found: packet_type={type}");
             }
         }
 
-        bool DispatchPacket<TPacket>(PacketType type, BinaryReader reader, PacketObserver<TPacket> subject)
-        where TPacket: IPacket, new() {
+        bool DispatchPacket<TPacket>(PacketType type, BinaryReader reader, PacketObservable<TPacket> subject)
+        where TPacket : IPacket, new()
+        {
             TPacket packet;
-            if(codec.TryDecode<TPacket>((short)type, reader, out packet)) {
+            if (codec.TryDecode<TPacket>((short)type, reader, out packet))
+            {
                 subject.SetValueAndForceNotify(packet);
                 return true;
             }

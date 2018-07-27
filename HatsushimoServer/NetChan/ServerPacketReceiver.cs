@@ -46,7 +46,7 @@ namespace HatsushimoServer.NetChan
         }
     }
 
-    public class PacketObserver<TPacket> where TPacket : IPacket, new()
+    public class PacketObservable<TPacket> where TPacket : IPacket, new()
     {
         Subject<ReceivedPacket<TPacket>> _received = new Subject<ReceivedPacket<TPacket>>();
         public IObservable<ReceivedPacket<TPacket>> Received { get { return _received; } }
@@ -60,15 +60,15 @@ namespace HatsushimoServer.NetChan
         // 서버가 받을 패킷만 명시하기
         // 코딩이 귀찮아서
         // TODO 어떻게하면 타자수를 줄일수 있을까
-        public readonly PacketObserver<ConnectPacket> Connect = new PacketObserver<ConnectPacket>();
-        public readonly PacketObserver<DisconnectPacket> Disconnect = new PacketObserver<DisconnectPacket>();
-        public readonly PacketObserver<PingPacket> Ping = new PacketObserver<PingPacket>();
-        public readonly PacketObserver<HeartbeatPacket> Heartbeat = new PacketObserver<HeartbeatPacket>();
-        public readonly PacketObserver<InputCommandPacket> InputCommand = new PacketObserver<InputCommandPacket>();
-        public readonly PacketObserver<InputMovePacket> InputMove = new PacketObserver<InputMovePacket>();
-        public readonly PacketObserver<WorldJoinRequestPacket> WorldJoin = new PacketObserver<WorldJoinRequestPacket>();
-        public readonly PacketObserver<WorldLeaveRequestPacket> WorldLeave = new PacketObserver<WorldLeaveRequestPacket>();
-        public readonly PacketObserver<PlayerReadyPacket> PlayerReady = new PacketObserver<PlayerReadyPacket>();
+        public readonly PacketObservable<ConnectPacket> Connect = new PacketObservable<ConnectPacket>();
+        public readonly PacketObservable<DisconnectPacket> Disconnect = new PacketObservable<DisconnectPacket>();
+        public readonly PacketObservable<PingPacket> Ping = new PacketObservable<PingPacket>();
+        public readonly PacketObservable<HeartbeatPacket> Heartbeat = new PacketObservable<HeartbeatPacket>();
+        public readonly PacketObservable<InputCommandPacket> InputCommand = new PacketObservable<InputCommandPacket>();
+        public readonly PacketObservable<InputMovePacket> InputMove = new PacketObservable<InputMovePacket>();
+        public readonly PacketObservable<WorldJoinRequestPacket> WorldJoin = new PacketObservable<WorldJoinRequestPacket>();
+        public readonly PacketObservable<WorldLeaveRequestPacket> WorldLeave = new PacketObservable<WorldLeaveRequestPacket>();
+        public readonly PacketObservable<PlayerReadyPacket> PlayerReady = new PacketObservable<PlayerReadyPacket>();
 
         readonly PacketCodec codec = new PacketCodec();
 
@@ -156,7 +156,7 @@ namespace HatsushimoServer.NetChan
         */
 
 
-        bool HandlePacket<TPacket>(PacketType type, byte[] data, PacketObserver<TPacket> subject, Session session)
+        bool HandlePacket<TPacket>(PacketType type, byte[] data, PacketObservable<TPacket> subject, Session session)
         where TPacket : IPacket, new()
         {
             TPacket p = new TPacket();
