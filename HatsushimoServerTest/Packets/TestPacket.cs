@@ -180,7 +180,7 @@ namespace HatsushimoServerTest.Packets
         [Fact]
         public void TestSignUpResultPacket()
         {
-            var a = new SignUpResultPacket() { Success = true };
+            var a = new SignUpResultPacket() { ResultCode = 12 };
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }
@@ -196,7 +196,7 @@ namespace HatsushimoServerTest.Packets
         [Fact]
         public void TestAuthenticationResultPacket()
         {
-            var a = new AuthenticationResultPacket() { Success = true };
+            var a = new AuthenticationResultPacket() { ResultCode = 12 };
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }

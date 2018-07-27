@@ -66,7 +66,7 @@ namespace Assets.Game
             var dispatcher = PacketDispatcher.Instance;
             dispatcher.SignUp.Received.ObserveOnMainThread().Subscribe(p =>
             {
-                Debug.Log($"sign up result: {p.Success}");
+                Debug.Log($"sign up result: {p.ResultCode}");
 
                 var auth = new AuthenticationPacket()
                 {
@@ -79,9 +79,9 @@ namespace Assets.Game
 
             dispatcher.Authentication.Received.ObserveOnMainThread().Subscribe(p =>
             {
-                Debug.Log($"authentication result: {p.Success}");
+                Debug.Log($"authentication result: {p.ResultCode}");
 
-                if(p.Success)
+                if(p.ResultCode == 0)
                 {
                     var join = new WorldJoinPacket
                     {

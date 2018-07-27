@@ -87,18 +87,18 @@ namespace Hatsushimo.Packets
 
     public struct SignUpResultPacket : IPacket
     {
-        public bool Success;
+        public int ResultCode;
 
         public short Type => (short)PacketType.SignUp;
 
         public void Deserialize(BinaryReader r)
         {
-            r.Read(out Success);
+            r.Read(out ResultCode);
         }
 
         public void Serialize(BinaryWriter w)
         {
-            w.Write(Success);
+            w.Write(ResultCode);
         }
     }
 
@@ -123,16 +123,16 @@ namespace Hatsushimo.Packets
     {
         public short Type => (short)PacketType.AuthenticationResult;
 
-        public bool Success;
+        public int ResultCode;
 
         public void Deserialize(BinaryReader r)
         {
-            r.Read(out Success);
+            r.Read(out ResultCode);
         }
 
         public void Serialize(BinaryWriter w)
         {
-            w.Write(Success);
+            w.Write(ResultCode);
         }
     }
 }

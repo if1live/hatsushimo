@@ -120,7 +120,7 @@ namespace HatsushimoServer
             }
 
             Console.WriteLine($"sign up: uuid={packet.Uuid}");
-            var result = new SignUpResultPacket() { Success = true };
+            var result = new SignUpResultPacket() { ResultCode = 0 };
             session.Send(result);
         }
 
@@ -131,14 +131,14 @@ namespace HatsushimoServer
             if (user == null)
             {
                 Console.WriteLine($"authentication: uuid={packet.Uuid} not found");
-                var notFound = new AuthenticationResultPacket() { Success = false };
+                var notFound = new AuthenticationResultPacket() { ResultCode = -1 };
                 session.Send(notFound);
                 return;
             }
 
             session.UserID = user.ID;
             Console.WriteLine($"authentication: uuid={packet.Uuid} user_id={session.UserID}");
-            var result = new AuthenticationResultPacket() { Success = true };
+            var result = new AuthenticationResultPacket() { ResultCode = 0 };
             session.Send(result);
         }
 
