@@ -6,6 +6,7 @@ using System;
 using Hatsushimo.NetChan;
 using Hatsushimo.Packets;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace Assets.NetChan
 {
@@ -34,6 +35,11 @@ namespace Assets.NetChan
                 }
             }
         }
+
+        public int SentPerSecond { get { return _sentByteLength; } }
+        public int ReceivedPerSecond { get { return _receivedByteLength; } }
+        int _sentByteLength = 0;
+        int _receivedByteLength = 0;
 
         public IObservable<bool> ReadyObservable
         {
@@ -96,6 +102,8 @@ namespace Assets.NetChan
                     yield return null;
                 }
 
+                ModifyReceivedSize(bytes.Length);
+
                 var stream = new MemoryStream(bytes);
                 var reader = new BinaryReader(stream);
                 var type = (PacketType)codec.ReadPacketType(reader);
@@ -149,7 +157,19 @@ namespace Assets.NetChan
         {
             var bytes = codec.Encode(p);
             ws.Send(bytes);
+            ModifySentSize(bytes.Length);
         }
 
+        async void ModifySentSize(int s) {
+            _sentByteLength += s;
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            _sentByteLength -= s;
+        }
+
+        async void ModifyReceivedSize(int s) {
+            _receivedByteLength += s;
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            _receivedByteLength -= s;
+        }
     }
 }
