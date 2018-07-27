@@ -21,6 +21,7 @@ namespace HatsushimoServer.NetChan
         public int ID { get; private set; }
         public string WorldID { get; set; }
         public string Nickname { get; set; }
+        public int UserID { get; set; }
 
         internal string TransportID { get { return transport.ID; } }
 
@@ -45,6 +46,7 @@ namespace HatsushimoServer.NetChan
 
         internal void CloseTransport()
         {
+            UserID = -1;
             transport.Close();
         }
     }

@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Reactive.Linq;
+using System.Linq;
 using Hatsushimo;
 using Hatsushimo.NetChan;
 using Hatsushimo.Packets;
@@ -11,12 +12,18 @@ using Hatsushimo.Types;
 using Hatsushimo.Utils;
 using HatsushimoServer.NetChan;
 using WebSocketSharp.Server;
+using SQLite;
+using System.IO;
+using HatsushimoServer.Models;
 
 namespace HatsushimoServer
 {
     class GameService
     {
         public static readonly GameService Instance;
+
+        readonly SQLiteAsyncConnection conn;
+
         static GameService()
         {
             Instance = new GameService();
@@ -24,6 +31,10 @@ namespace HatsushimoServer
 
         public GameService()
         {
+            var dbpath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "hatsushimo.db");
+            conn = new SQLiteAsyncConnection(dbpath);
+            PrepareDatabase(conn);
+
             var worlds = InstanceWorldManager.Instance;
             var defaultWorld = worlds.Get(InstanceWorldManager.DefaultID);
 
@@ -43,6 +54,12 @@ namespace HatsushimoServer
             sessionLayer.InputCommand.Received.Subscribe(d => EnqueueWorldPacket(d));
             sessionLayer.InputMove.Received.Subscribe(d => EnqueueWorldPacket(d));
             sessionLayer.PlayerReady.Received.Subscribe(d => EnqueueWorldPacket(d));
+        }
+
+        async void PrepareDatabase(SQLiteAsyncConnection conn)
+        {
+            await conn.CreateTableAsync<User>();
+            Console.WriteLine("create user table");
         }
 
         void HandlePing(Session session, PingPacket p)
@@ -88,25 +105,47 @@ namespace HatsushimoServer
             NetworkStack.Session.RemoveSessionWithLock(session);
         }
 
-        void HandleSignUp(Session session, SignUpPacket packet)
+        async void HandleSignUp(Session session, SignUpPacket packet)
         {
-            // TODO sign up
-            // db에 유저를 기록하기
+            var query = conn.Table<User>().Where(u => u.Uuid == packet.Uuid);
+            var prevUser = await query.FirstOrDefaultAsync();
+            if (prevUser == null)
+            {
+                var user = new User()
+                {
+                    Uuid = packet.Uuid,
+                };
+                await conn.InsertAsync(user);
+                Console.WriteLine($"create user: uuid={packet.Uuid}");
+            }
+
             Console.WriteLine($"sign up: uuid={packet.Uuid}");
             var result = new SignUpResultPacket() { Success = true };
             session.Send(result);
         }
 
-        void HandleAuthentication(Session session, AuthenticationPacket packet)
+        async void HandleAuthentication(Session session, AuthenticationPacket packet)
         {
-            // TODO db에 유저가 있을때만 로그인 처리
-            Console.WriteLine($"authentication: uuid={packet.Uuid}");
+            var query = conn.Table<User>().Where(u => u.Uuid == packet.Uuid);
+            var user = await query.FirstOrDefaultAsync();
+            if (user == null)
+            {
+                Console.WriteLine($"authentication: uuid={packet.Uuid} not found");
+                var notFound = new AuthenticationResultPacket() { Success = false };
+                session.Send(notFound);
+                return;
+            }
+
+            session.UserID = user.ID;
+            Console.WriteLine($"authentication: uuid={packet.Uuid} user_id={session.UserID}");
             var result = new AuthenticationResultPacket() { Success = true };
             session.Send(result);
         }
 
         void HandleWorldJoin(Session session, ReceivedPacket<WorldJoinPacket> received)
         {
+            if(session.UserID < 0) { return; }
+
             var p = received.Packet;
             var worlds = InstanceWorldManager.Instance;
             var world = worlds.Get(p.WorldID);
@@ -115,6 +154,8 @@ namespace HatsushimoServer
 
         void HandleWorldLeave(Session session, ReceivedPacket<WorldLeavePacket> received)
         {
+            if(session.UserID < 0) { return; }
+
             var p = received.Packet;
             var worlds = InstanceWorldManager.Instance;
             var world = worlds.Get(session.WorldID);
@@ -124,6 +165,8 @@ namespace HatsushimoServer
         void EnqueueWorldPacket<TPacket>(ReceivedPacket<TPacket> packet)
         where TPacket : IPacket, new()
         {
+            if(packet.Session.UserID < 0) { return; }
+
             var worlds = InstanceWorldManager.Instance;
             var world = worlds.Get(packet.Session.WorldID);
             world.EnqueueRecv(packet.Session, packet.Data);

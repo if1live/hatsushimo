@@ -81,14 +81,17 @@ namespace Assets.Game
             {
                 Debug.Log($"authentication result: {p.Success}");
 
-                var join = new WorldJoinPacket
+                if(p.Success)
                 {
-                    Nickname = Nickname,
-                    WorldID = WorldID
-                };
+                    var join = new WorldJoinPacket
+                    {
+                        Nickname = Nickname,
+                        WorldID = WorldID
+                    };
 
-                var conn = ConnectionManager.Instance;
-                conn.SendPacket(join);
+                    var conn = ConnectionManager.Instance;
+                    conn.SendPacket(join);
+                }
             }).AddTo(gameObject);
 
             dispatcher.WorldJoin.Received.ObserveOnMainThread().Subscribe(p =>
