@@ -13,21 +13,7 @@ namespace Hatsushimo.NetChan
 {
     public class PacketCodec
     {
-        readonly Dictionary<short, IPacket> table = new Dictionary<short, IPacket>();
-
-        public void Register<T>()
-            where T : IPacket, new()
-        {
-            var skeleton = new T();
-            table[skeleton.Type] = skeleton;
-        }
-
-        IPacket GetSkeleton(short t)
-        {
-            return table[t].CreateBlank();
-        }
-
-        public byte[] Encode(IPacket packet)
+        public byte[] Encode<T>(T packet) where T : IPacket
         {
             var stream = new MemoryStream();
             var writer = new BinaryWriter(stream);
@@ -39,17 +25,21 @@ namespace Hatsushimo.NetChan
             return stream.ToArray();
         }
 
-        public IPacket Decode(byte[] bytes)
+        public short ReadPacketType(BinaryReader reader)
         {
-            var stream = new MemoryStream(bytes);
-            var reader = new BinaryReader(stream);
+            return reader.ReadInt16();
+        }
 
-            var packetType = reader.ReadInt16();
-            var packet = GetSkeleton(packetType);
-
-            packet.Deserialize(reader);
-
-            return packet;
+        public bool TryDecode<T>(short type, BinaryReader reader, out T packet) where T : IPacket, new()
+        {
+            packet = new T();
+            var expectedPacketType = packet.Type;
+            if (type == expectedPacketType)
+            {
+                packet.Deserialize(reader);
+                return true;
+            }
+            return false;
         }
     }
 }

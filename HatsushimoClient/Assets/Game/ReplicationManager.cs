@@ -29,12 +29,12 @@ namespace Assets.Game
         {
             var dispatcher = PacketDispatcher.Instance;
 
-            dispatcher.PlayerReadyReceived.Subscribe(_ =>
+            dispatcher.PlayerReady.Received.Subscribe(_ =>
             {
                 Debug.Log("player ready");
             });
 
-            dispatcher.ReplicationAllReceived.Subscribe(packet =>
+            dispatcher.ReplicationAll.Received.Subscribe(packet =>
             {
                 Debug.Log("replicaiton all received");
 
@@ -53,7 +53,7 @@ namespace Assets.Game
                 }
             }).AddTo(gameObject);
 
-            dispatcher.ReplicationBulkReceived.Subscribe(packet =>
+            dispatcher.ReplicationBulk.Received.Subscribe(packet =>
             {
                 foreach(var act in packet.Actions)
                 {
@@ -61,7 +61,7 @@ namespace Assets.Game
                 }
             }).AddTo(gameObject);
 
-            dispatcher.ReplicationReceived.ObserveOnMainThread().Subscribe(packet =>
+            dispatcher.Replication.Received.ObserveOnMainThread().Subscribe(packet =>
             {
                 HandleReplicationAction(packet);
             });

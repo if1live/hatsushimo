@@ -9,13 +9,13 @@ namespace HatsushimoServer.NetChan
     // 일단은 간단하게 큐로
     public class PacketQueue
     {
-        readonly ConcurrentQueue<PacketPair> queue = new ConcurrentQueue<PacketPair>();
+        readonly ConcurrentQueue<DataPair> queue = new ConcurrentQueue<DataPair>();
 
         public PacketQueue() { }
 
         public void Enqueue(Session s, IPacket p)
         {
-            var pair = new PacketPair()
+            var pair = new DataPair()
             {
                 Session = s,
                 Packet = p,
@@ -27,7 +27,7 @@ namespace HatsushimoServer.NetChan
         {
             s = null;
             p = null;
-            PacketPair pair = new PacketPair();
+            DataPair pair = new DataPair();
             var found = queue.TryDequeue(out pair);
             if (found)
             {
@@ -38,7 +38,7 @@ namespace HatsushimoServer.NetChan
         }
     }
 
-    struct PacketPair
+    struct DataPair
     {
         internal Session Session;
         internal IPacket Packet;

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Reactive.Subjects;
 using Hatsushimo.NetChan;
 using Hatsushimo.Packets;
@@ -13,7 +14,7 @@ namespace HatsushimoServer.NetChan
     {
         public const string DefaultNickname = "[Blank]";
 
-        static readonly PacketCodec codec = MyPacketCodec.Create();
+        static readonly PacketCodec codec = new PacketCodec();
         readonly ITransport<string> transport;
         public long LastHeartbeatTimestamp { get; private set; } = 0;
 
@@ -36,7 +37,7 @@ namespace HatsushimoServer.NetChan
             LastHeartbeatTimestamp = TimeUtils.NowTimestamp;
         }
 
-        public void Send(IPacket p)
+        public void Send<T>(T p) where T : IPacket
         {
             var bytes = codec.Encode(p);
             transport.Send(bytes);
@@ -49,10 +50,8 @@ namespace HatsushimoServer.NetChan
     }
 
     // 세션 레이어를 통해서 유저를 관리한다
-    public class SessionLayer
+    public class SessionLayer : ServerPacketReceiver
     {
-        public readonly PacketCodec codec = MyPacketCodec.Create();
-
         // 연결이 생기거나 끊어지면 연결 목록이 바뀐다
         // 이것은 멀티 쓰레드에서 문제가 생길 가능성이 있어보이니 락을 걸자
         Object writeLock = new Object();
@@ -60,9 +59,6 @@ namespace HatsushimoServer.NetChan
         readonly IDictionary<string, int> transportIDSessionIDTable = new Dictionary<string, int>();
 
         readonly IEnumerator<int> sessionIDEnumerator = IDGenerator.MakeSessionID().GetEnumerator();
-
-        Subject<ReceivedPacket> _received = new Subject<ReceivedPacket>();
-        public IObservable<ReceivedPacket> Received { get { return _received; } }
 
         public SessionLayer(ITransportLayer<string> transport)
         {
@@ -76,12 +72,7 @@ namespace HatsushimoServer.NetChan
                 var sessionFound = TryGetSession(sessionID, out session);
                 Debug.Assert(sessionFound == true, "session must be registered");
 
-                var packet = codec.Decode(datagram.Data);
-                _received.OnNext(new ReceivedPacket()
-                {
-                    Session = session,
-                    Packet = packet,
-                });
+                OnNext(session, datagram.Data);
             });
         }
 
@@ -135,12 +126,6 @@ namespace HatsushimoServer.NetChan
         public Session Get(int sessionID)
         {
             return sessionIDSessionTable[sessionID];
-        }
-
-        public struct ReceivedPacket
-        {
-            public Session Session;
-            public IPacket Packet;
         }
     }
 }

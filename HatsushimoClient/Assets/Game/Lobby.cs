@@ -49,7 +49,7 @@ namespace Assets.Game
             });
 
             var dispatcher = PacketDispatcher.Instance;
-            dispatcher.worldJoinReceived.ObserveOnMainThread().Subscribe(p =>
+            dispatcher.WorldJoin.Received.ObserveOnMainThread().Subscribe(p =>
             {
                 Debug.Log($"world id: {p.WorldID} / player id={p.PlayerID}");
 

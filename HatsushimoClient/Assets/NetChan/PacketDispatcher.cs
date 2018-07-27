@@ -6,55 +6,33 @@ using UnityEngine;
 
 namespace Assets.NetChan
 {
-    public class PacketDispatcher : MonoBehaviour 
+    public class PacketObserver<TPacket>
+    {
+        public IObservable<TPacket> Received
+        {
+            get { return received.Skip(1).AsObservable(); }
+        }
+        ReactiveProperty<TPacket> received = new ReactiveProperty<TPacket>();
+        public void SetValueAndForceNotify(TPacket v)
+        {
+            received.SetValueAndForceNotify(v);
+        }
+    }
+
+
+    public class PacketDispatcher : MonoBehaviour
     {
         public static PacketDispatcher Instance;
 
-        public IObservable<PingPacket> PingReceived {
-            get { return ping.Skip(1).AsObservable(); }
-        }
-        ReactiveProperty<PingPacket> ping = new ReactiveProperty<PingPacket>();
-
-        public IObservable<WelcomePacket> WelcomeReceived {
-            get { return welcome.Skip(1).AsObservable(); }
-        }
-        ReactiveProperty<WelcomePacket> welcome = new ReactiveProperty<WelcomePacket>();
-
-        public IObservable<ReplicationAllPacket> ReplicationAllReceived {
-            get { return replicationAll.Skip(1).AsObservable(); }
-        }
-        ReactiveProperty<ReplicationAllPacket> replicationAll = new ReactiveProperty<ReplicationAllPacket>();
-
-        public IObservable<ReplicationActionPacket> ReplicationReceived {
-            get { return replication.Skip(1).AsObservable(); }
-        }
-        ReactiveProperty<ReplicationActionPacket> replication = new ReactiveProperty<ReplicationActionPacket>();
-
-        public IObservable<ReplicationBulkActionPacket> ReplicationBulkReceived {
-            get { return replicationBulk.Skip(1).AsObservable(); }
-        }
-        ReactiveProperty<ReplicationBulkActionPacket> replicationBulk = new ReactiveProperty<ReplicationBulkActionPacket>();
-
-        public IObservable<WorldJoinResponsePacket> worldJoinReceived {
-            get { return worldJoin.Skip(1).AsObservable(); }
-        }
-        ReactiveProperty<WorldJoinResponsePacket> worldJoin = new ReactiveProperty<WorldJoinResponsePacket>();
-
-        public IObservable<WorldLeaveResponsePacket> WorldLeaveReceived {
-            get { return worldLeave.Skip(1).AsObservable(); }
-        }
-        ReactiveProperty<WorldLeaveResponsePacket> worldLeave = new ReactiveProperty<WorldLeaveResponsePacket>();
-
-        public IObservable<PlayerReadyPacket> PlayerReadyReceived {
-            get { return playerReady.Skip(1).AsObservable(); }
-        }
-        ReactiveProperty<PlayerReadyPacket> playerReady = new ReactiveProperty<PlayerReadyPacket>();
-
-        public IObservable<LeaderboardPacket> LeaderboardReceived {
-            get { return leaderboard.Skip(1).AsObservable(); }
-        }
-        ReactiveProperty<LeaderboardPacket> leaderboard = new ReactiveProperty<LeaderboardPacket>();
-
+        public readonly PacketObserver<PingPacket> Ping = new PacketObserver<PingPacket>();
+        readonly public PacketObserver<WelcomePacket> Welcome = new PacketObserver<WelcomePacket>();
+        readonly public PacketObserver<ReplicationAllPacket> ReplicationAll = new PacketObserver<ReplicationAllPacket>();
+        readonly public PacketObserver<ReplicationActionPacket> Replication = new PacketObserver<ReplicationActionPacket>();
+        readonly public PacketObserver<ReplicationBulkActionPacket> ReplicationBulk = new PacketObserver<ReplicationBulkActionPacket>();
+        readonly public PacketObserver<WorldJoinResponsePacket> WorldJoin = new PacketObserver<WorldJoinResponsePacket>();
+        readonly public PacketObserver<WorldLeaveResponsePacket> WorldLeave = new PacketObserver<WorldLeaveResponsePacket>();
+        readonly public PacketObserver<PlayerReadyPacket> PlayerReady = new PacketObserver<PlayerReadyPacket>();
+        readonly public PacketObserver<LeaderboardPacket> Leaderboard = new PacketObserver<LeaderboardPacket>();
 
         private void Awake()
         {
@@ -66,53 +44,6 @@ namespace Assets.NetChan
         {
             Debug.Assert(Instance == this);
             Instance = null;
-        }
-
-        internal void Dispatch(IPacket p)
-        {
-            var t = (PacketType)p.Type;
-            switch (t)
-            {
-                case PacketType.Ping:
-                    ping.SetValueAndForceNotify((PingPacket)p);
-                    break;
-
-                case PacketType.Welcome:
-                    welcome.SetValueAndForceNotify((WelcomePacket)p);
-                    break;
-
-                case PacketType.ReplicationAll:
-                    replicationAll.SetValueAndForceNotify((ReplicationAllPacket)p);
-                    break;
-
-                case PacketType.ReplicationAction:
-                    replication.SetValueAndForceNotify((ReplicationActionPacket)p);
-                    break;
-
-                case PacketType.ReplicationBulkAction:
-                    replicationBulk.SetValueAndForceNotify((ReplicationBulkActionPacket)p);
-                    break;
-
-                case PacketType.WorldJoinResp:
-                    worldJoin.SetValueAndForceNotify((WorldJoinResponsePacket)p);
-                    break;
-
-                case PacketType.WorldLeaveResp:
-                    worldLeave.SetValueAndForceNotify((WorldLeaveResponsePacket)p);
-                    break;
-
-                case PacketType.PlayerReady:
-                    playerReady.SetValueAndForceNotify((PlayerReadyPacket)p);
-                    break;
-
-                case PacketType.Leaderboard:
-                    leaderboard.SetValueAndForceNotify((LeaderboardPacket)p);
-                    break;
-                    
-                default:
-                    Debug.LogError($"packet handle not exist : {t}");
-                    break;
-            }
         }
     }
 }

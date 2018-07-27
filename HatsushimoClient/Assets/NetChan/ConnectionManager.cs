@@ -5,6 +5,7 @@ using System.Collections;
 using System;
 using Hatsushimo.NetChan;
 using Hatsushimo.Packets;
+using System.IO;
 
 namespace Assets.NetChan
 {
@@ -16,7 +17,7 @@ namespace Assets.NetChan
         public string host = "ws://127.0.0.1";
         public int port = Config.ServerPort;
 
-        readonly PacketCodec codec = MyPacketCodec.Create();
+        static readonly PacketCodec codec = new PacketCodec();
 
         string ServerURL
         {
@@ -95,11 +96,35 @@ namespace Assets.NetChan
                     yield return null;
                 }
 
-                var packet = codec.Decode(bytes);
+                var stream = new MemoryStream(bytes);
+                var reader = new BinaryReader(stream);
+                var type = (PacketType)codec.ReadPacketType(reader);
+
                 var dispatcher = PacketDispatcher.Instance;
-                dispatcher.Dispatch(packet);
+                if(DispatchPacket(type, reader, dispatcher.Ping)) {continue;}
+                if(DispatchPacket(type, reader, dispatcher.Welcome)) {continue;}
+                if(DispatchPacket(type, reader, dispatcher.ReplicationAll)) {continue;}
+                if(DispatchPacket(type, reader, dispatcher.Replication)) {continue;}
+                if(DispatchPacket(type, reader, dispatcher.ReplicationBulk)) {continue;}
+                if(DispatchPacket(type, reader, dispatcher.WorldJoin)) {continue;}
+                if(DispatchPacket(type, reader, dispatcher.WorldLeave)) {continue;}
+                if(DispatchPacket(type, reader, dispatcher.PlayerReady)) {continue;}
+                if(DispatchPacket(type, reader, dispatcher.Leaderboard)) {continue;}
+
+                Debug.Log($"handler not found: packet_type={type}");
             }
         }
+
+        bool DispatchPacket<TPacket>(PacketType type, BinaryReader reader, PacketObserver<TPacket> subject)
+        where TPacket: IPacket, new() {
+            TPacket packet;
+            if(codec.TryDecode<TPacket>((short)type, reader, out packet)) {
+                subject.SetValueAndForceNotify(packet);
+                return true;
+            }
+            return false;
+        }
+
 
         private void OnDestroy()
         {
@@ -116,7 +141,7 @@ namespace Assets.NetChan
         }
 
 
-        public void SendPacket(IPacket p)
+        public void SendPacket<T>(T p) where T : IPacket
         {
             var bytes = codec.Encode(p);
             ws.Send(bytes);

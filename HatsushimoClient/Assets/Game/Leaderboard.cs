@@ -21,7 +21,7 @@ namespace Assets.Game
         private void Start()
         {
             var dispatcher = PacketDispatcher.Instance;
-            dispatcher.LeaderboardReceived.ObserveOnMainThread().Subscribe(p =>
+            dispatcher.Leaderboard.Received.ObserveOnMainThread().Subscribe(p =>
             {
                 var replication = ReplicationManager.Instance;
                 Debug.Assert(replication != null);

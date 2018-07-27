@@ -33,7 +33,7 @@ namespace Assets.NetChan
         private void Start()
         {
             var dispatcher = PacketDispatcher.Instance;
-            dispatcher.PingReceived.Subscribe(HandlePing).AddTo(gameObject);
+            dispatcher.Ping.Received.Subscribe(HandlePing).AddTo(gameObject);
 
             var mgr = ConnectionManager.Instance;
             ConnectionManager.Instance.ReadyObservable.Subscribe(_ =>

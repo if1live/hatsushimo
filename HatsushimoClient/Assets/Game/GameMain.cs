@@ -18,7 +18,7 @@ namespace Assets.Game
             var info = ConnectionInfo.Info;
 
             var dispatcher = PacketDispatcher.Instance;
-            dispatcher.PlayerReadyReceived.ObserveOnMainThread().Subscribe(_ =>
+            dispatcher.PlayerReady.Received.ObserveOnMainThread().Subscribe(_ =>
             {
                 waitingText.gameObject.SetActive(false);
 

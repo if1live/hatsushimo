@@ -28,10 +28,16 @@ namespace HatsushimoServer
             var defaultWorld = worlds.Get(InstanceWorldManager.DefaultID);
 
             var sessionLayer = NetworkStack.Session;
-            sessionLayer.Received.Subscribe(received =>
-            {
-                EnqueueRecv(received.Session, received.Packet);
-            });
+
+            sessionLayer.Connect.Received.Subscribe(d => EnqueueRecv(d.Session, d.Packet));
+            sessionLayer.Disconnect.Received.Subscribe(d => EnqueueRecv(d.Session, d.Packet));
+            sessionLayer.Ping.Received.Subscribe(d => EnqueueRecv(d.Session, d.Packet));
+            sessionLayer.Heartbeat.Received.Subscribe(d => EnqueueRecv(d.Session, d.Packet));
+            sessionLayer.InputCommand.Received.Subscribe(d => EnqueueRecv(d.Session, d.Packet));
+            sessionLayer.InputMove.Received.Subscribe(d => EnqueueRecv(d.Session, d.Packet));
+            sessionLayer.WorldJoin.Received.Subscribe(d => EnqueueRecv(d.Session, d.Packet));
+            sessionLayer.WorldLeave.Received.Subscribe(d => EnqueueRecv(d.Session, d.Packet));
+            sessionLayer.PlayerReady.Received.Subscribe(d => EnqueueRecv(d.Session, d.Packet));
 
             Observable.Interval(TimeSpan.FromMilliseconds(1000 / 120))
                 .Subscribe(_ => Update());
@@ -104,6 +110,21 @@ namespace HatsushimoServer
         };
 
         void EnqueueRecv(Session session, IPacket packet)
+        {
+            if (allowedPackets.Contains((PacketType)packet.Type))
+            {
+                recvQueue.Enqueue(session, packet);
+            }
+            else
+            {
+                var worlds = InstanceWorldManager.Instance;
+                var world = worlds.Get(session.WorldID);
+                world.EnqueueRecv(session, packet);
+            }
+        }
+
+        void EnqueueRecv<TPacket>(Session session, TPacket packet)
+        where TPacket : IPacket
         {
             if (allowedPackets.Contains((PacketType)packet.Type))
             {
