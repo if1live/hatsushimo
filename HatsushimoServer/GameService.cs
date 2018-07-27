@@ -29,21 +29,18 @@ namespace HatsushimoServer
 
             var sessionLayer = NetworkStack.Session;
 
-            sessionLayer.Connect.Received.Subscribe(d => EnqueueRecv(d.Session, d.Packet));
-            sessionLayer.Disconnect.Received.Subscribe(d => EnqueueRecv(d.Session, d.Packet));
-            sessionLayer.Ping.Received.Subscribe(d => EnqueueRecv(d.Session, d.Packet));
-            sessionLayer.Heartbeat.Received.Subscribe(d => EnqueueRecv(d.Session, d.Packet));
-            sessionLayer.InputCommand.Received.Subscribe(d => EnqueueRecv(d.Session, d.Packet));
-            sessionLayer.InputMove.Received.Subscribe(d => EnqueueRecv(d.Session, d.Packet));
-            sessionLayer.WorldJoin.Received.Subscribe(d => EnqueueRecv(d.Session, d.Packet));
-            sessionLayer.WorldLeave.Received.Subscribe(d => EnqueueRecv(d.Session, d.Packet));
-            sessionLayer.PlayerReady.Received.Subscribe(d => EnqueueRecv(d.Session, d.Packet));
+            sessionLayer.Connect.Received.Subscribe(d => HandleConnect(d.Session, d.Packet));
+            sessionLayer.Disconnect.Received.Subscribe(d => HandleDisconnect(d.Session, d.Packet));
+            sessionLayer.Ping.Received.Subscribe(d => HandlePing(d.Session, d.Packet));
+            sessionLayer.Heartbeat.Received.Subscribe(d => HandleHeartbeat(d.Session, d.Packet));
 
-            Observable.Interval(TimeSpan.FromMilliseconds(1000 / 120))
-                .Subscribe(_ => Update());
+            sessionLayer.WorldJoin.Received.Subscribe(d => HandleWorldJoinReq(d.Session, d));
+            sessionLayer.WorldLeave.Received.Subscribe(d => HandleWorldLeave(d.Session, d));
+
+            sessionLayer.InputCommand.Received.Subscribe(d => EnqueueWorldPacket(d));
+            sessionLayer.InputMove.Received.Subscribe(d => EnqueueWorldPacket(d));
+            sessionLayer.PlayerReady.Received.Subscribe(d => EnqueueWorldPacket(d));
         }
-
-        readonly PacketQueue recvQueue = new PacketQueue();
 
         void HandlePing(Session session, PingPacket p)
         {
@@ -78,108 +75,38 @@ namespace HatsushimoServer
             if (session.WorldID != null)
             {
                 var leave = new WorldLeaveRequestPacket();
-                HandleWorldLeave(session, leave);
+                var codec = new PacketCodec();
+                var bytes = codec.Encode(leave);
+                var pair = new ReceivedPacket<WorldLeaveRequestPacket>(session, bytes);
+                HandleWorldLeave(session, pair);
             }
 
             Console.WriteLine($"disconnected: id={session.ID}");
             NetworkStack.Session.RemoveSessionWithLock(session);
         }
 
-        void HandleWorldJoinReq(Session session, WorldJoinRequestPacket p)
+        void HandleWorldJoinReq(Session session, ReceivedPacket<WorldJoinRequestPacket> received)
         {
+            var p = received.Packet;
             var worlds = InstanceWorldManager.Instance;
             var world = worlds.Get(p.WorldID);
-            world.EnqueueRecv(session, p);
+            world.EnqueueRecv(session, received.Data);
         }
 
-        void HandleWorldLeave(Session session, WorldLeaveRequestPacket p)
+        void HandleWorldLeave(Session session, ReceivedPacket<WorldLeaveRequestPacket> received)
         {
+            var p = received.Packet;
             var worlds = InstanceWorldManager.Instance;
             var world = worlds.Get(session.WorldID);
-            world.EnqueueRecv(session, p);
+            world.EnqueueRecv(session, received.Data);
         }
 
-        readonly HashSet<PacketType> allowedPackets = new HashSet<PacketType>()
+        void EnqueueWorldPacket<TPacket>(ReceivedPacket<TPacket> packet)
+        where TPacket : IPacket, new()
         {
-            PacketType.Ping,
-            PacketType.Heartbeat,
-            PacketType.Connect,
-            PacketType.Disconnect,
-            PacketType.WorldJoinReq,
-            PacketType.WorldLeaveReq,
-        };
-
-        void EnqueueRecv(Session session, IPacket packet)
-        {
-            if (allowedPackets.Contains((PacketType)packet.Type))
-            {
-                recvQueue.Enqueue(session, packet);
-            }
-            else
-            {
-                var worlds = InstanceWorldManager.Instance;
-                var world = worlds.Get(session.WorldID);
-                world.EnqueueRecv(session, packet);
-            }
-        }
-
-        void EnqueueRecv<TPacket>(Session session, TPacket packet)
-        where TPacket : IPacket
-        {
-            if (allowedPackets.Contains((PacketType)packet.Type))
-            {
-                recvQueue.Enqueue(session, packet);
-            }
-            else
-            {
-                var worlds = InstanceWorldManager.Instance;
-                var world = worlds.Get(session.WorldID);
-                world.EnqueueRecv(session, packet);
-            }
-        }
-
-        void HandlePacket(Session session, IPacket packet)
-        {
-            var service = GameService.Instance;
-            switch ((PacketType)packet.Type)
-            {
-                case PacketType.Ping:
-                    HandlePing(session, (PingPacket)packet);
-                    break;
-
-                case PacketType.Heartbeat:
-                    HandleHeartbeat(session, (HeartbeatPacket)packet);
-                    break;
-
-                case PacketType.Connect:
-                    HandleConnect(session, (ConnectPacket)packet);
-                    break;
-
-                case PacketType.Disconnect:
-                    HandleDisconnect(session, (DisconnectPacket)packet);
-                    break;
-
-                case PacketType.WorldJoinReq:
-                    HandleWorldJoinReq(session, (WorldJoinRequestPacket)packet);
-                    break;
-
-                case PacketType.WorldLeaveReq:
-                    HandleWorldLeave(session, (WorldLeaveRequestPacket)packet);
-                    break;
-
-                default:
-                    break;
-            }
-        }
-
-        void Update()
-        {
-            Session session = null;
-            IPacket packet = null;
-            while (recvQueue.TryDequeue(out session, out packet))
-            {
-                HandlePacket(session, packet);
-            }
+            var worlds = InstanceWorldManager.Instance;
+            var world = worlds.Get(packet.Session.WorldID);
+            world.EnqueueRecv(packet.Session, packet.Data);
         }
     }
 }

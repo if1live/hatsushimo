@@ -13,26 +13,26 @@ namespace HatsushimoServer.NetChan
 
         public PacketQueue() { }
 
-        public void Enqueue(Session s, IPacket p)
+        public void Enqueue(Session s, byte[] d)
         {
             var pair = new DataPair()
             {
                 Session = s,
-                Packet = p,
+                Data = d,
             };
             queue.Enqueue(pair);
         }
 
-        public bool TryDequeue(out Session s, out IPacket p)
+        public bool TryDequeue(out Session s, out byte[] d)
         {
             s = null;
-            p = null;
+            d = null;
             DataPair pair = new DataPair();
             var found = queue.TryDequeue(out pair);
             if (found)
             {
                 s = pair.Session;
-                p = pair.Packet;
+                d = pair.Data;
             }
             return found;
         }
@@ -41,6 +41,6 @@ namespace HatsushimoServer.NetChan
     struct DataPair
     {
         internal Session Session;
-        internal IPacket Packet;
+        internal byte[] Data;
     }
 }

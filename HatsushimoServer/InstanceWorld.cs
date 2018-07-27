@@ -29,6 +29,8 @@ namespace HatsushimoServer
 
         readonly Dictionary<int, Player> playerTable = new Dictionary<int, Player>();
 
+        readonly ServerPacketReceiver receiver = new ServerPacketReceiver();
+
         public InstanceWorld(string id)
         {
             this.ID = id;
@@ -42,15 +44,24 @@ namespace HatsushimoServer
 
             Observable.Interval(TimeSpan.FromMilliseconds(1000 / Config.SendRateLeaderboard))
                 .Subscribe(_ => LeaderboardUpdate());
+
+            // handle packet
+            var r = receiver;
+            r.WorldJoin.Received.Subscribe(pair => HandleJoinReq(pair.Session, pair.Packet));
+            r.WorldLeave.Received.Subscribe(pair => HandleLeaveReq(pair.Session, pair.Packet));
+
+            r.PlayerReady.Received.Subscribe(pair => HandlePlayerReady(pair.Session, pair.Packet));
+            r.InputCommand.Received.Subscribe(pair => HandleInputCommand(pair.Session, pair.Packet));
+            r.InputMove.Received.Subscribe(pair => HandleInputMove(pair.Session, pair.Packet));
         }
 
         void Update()
         {
             Session session = null;
-            IPacket packet = null;
-            while (recvQueue.TryDequeue(out session, out packet))
+            byte[] data = null;
+            while (recvQueue.TryDequeue(out session, out data))
             {
-                HandlePacket(session, packet);
+                receiver.OnNext(session, data);
             }
             room.GameLoop();
         }
@@ -132,9 +143,9 @@ namespace HatsushimoServer
             return true;
         }
 
-        public void EnqueueRecv(Session s, IPacket p)
+        public void EnqueueRecv(Session s, byte[] d)
         {
-            recvQueue.Enqueue(s, p);
+            recvQueue.Enqueue(s, d);
         }
 
         void HandleJoinReq(Session session, WorldJoinRequestPacket p)
@@ -192,36 +203,6 @@ namespace HatsushimoServer
             var player = GetPlayer(session);
             room.SpawnPlayer(player);
             player.Session.Send(leaderboard.GenerateLeaderboardPacket());
-        }
-
-        void HandlePacket(Session session, IPacket packet)
-        {
-            var service = GameService.Instance;
-            switch ((PacketType)packet.Type)
-            {
-                case PacketType.PlayerReady:
-                    HandlePlayerReady(session, (PlayerReadyPacket)packet);
-                    break;
-
-                case PacketType.InputCommand:
-                    HandleInputCommand(session, (InputCommandPacket)packet);
-                    break;
-
-                case PacketType.InputMove:
-                    HandleInputMove(session, (InputMovePacket)packet);
-                    break;
-
-                case PacketType.WorldJoinReq:
-                    HandleJoinReq(session, (WorldJoinRequestPacket)packet);
-                    break;
-
-                case PacketType.WorldLeaveReq:
-                    HandleLeaveReq(session, (WorldLeaveRequestPacket)packet);
-                    break;
-
-                default:
-                    break;
-            }
         }
     }
 }

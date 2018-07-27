@@ -7,23 +7,46 @@ using HatsushimoServer.NetChan;
 
 namespace HatsushimoServer.NetChan
 {
+    // 패킷을 해석해서 들고있으면 레이어를 건너다닐떄 IPacket가 박싱될수있다
+    // 패밋을 해석하는데 필요한 데이터를 갖고 다니자
     public struct ReceivedPacket<TPacket>
-        where TPacket : IPacket
+        where TPacket : IPacket, new()
     {
-        public Session Session;
-        public TPacket Packet;
+        public readonly Session Session;
+        public readonly byte[] Data;
 
-        public static ReceivedPacket<TPacket> Create(Session s, TPacket p)
+        public PacketType Type
         {
-            return new ReceivedPacket<TPacket>()
+            get
             {
-                Session = s,
-                Packet = p,
-            };
+                var stream = new MemoryStream(Data);
+                var reader = new BinaryReader(stream);
+                var codec = new PacketCodec();
+                return (PacketType)codec.ReadPacketType(reader);
+            }
+        }
+        public TPacket Packet
+        {
+            get
+            {
+                var stream = new MemoryStream(Data);
+                var reader = new BinaryReader(stream);
+                var codec = new PacketCodec();
+                var type = codec.ReadPacketType(reader);
+                TPacket packet;
+                codec.TryDecode<TPacket>(type, reader, out packet);
+                return packet;
+            }
+        }
+
+        public ReceivedPacket(Session s, byte[] data)
+        {
+            this.Session = s;
+            this.Data = data;
         }
     }
 
-    public class PacketObserver<TPacket> where TPacket : IPacket
+    public class PacketObserver<TPacket> where TPacket : IPacket, new()
     {
         Subject<ReceivedPacket<TPacket>> _received = new Subject<ReceivedPacket<TPacket>>();
         public IObservable<ReceivedPacket<TPacket>> Received { get { return _received; } }
@@ -49,25 +72,27 @@ namespace HatsushimoServer.NetChan
 
         readonly PacketCodec codec = new PacketCodec();
 
-        protected void OnNext(Session session, byte[] data)
+        public void OnNext(Session session, byte[] data)
         {
             var stream = new MemoryStream(data);
             var reader = new BinaryReader(stream);
             var type = (PacketType)codec.ReadPacketType(reader);
 
-            if (HandlePacket<ConnectPacket>(type, reader, Connect, session)) { return; }
-            if (HandlePacket<DisconnectPacket>(type, reader, Disconnect, session)) { return; }
-            if (HandlePacket<PingPacket>(type, reader, Ping, session)) { return; }
-            if (HandlePacket<HeartbeatPacket>(type, reader, Heartbeat, session)) { return; }
-            if (HandlePacket<InputCommandPacket>(type, reader, InputCommand, session)) { return; }
-            if (HandlePacket<InputMovePacket>(type, reader, InputMove, session)) { return; }
-            if (HandlePacket<WorldJoinRequestPacket>(type, reader, WorldJoin, session)) { return; }
-            if (HandlePacket<WorldLeaveRequestPacket>(type, reader, WorldLeave, session)) { return; }
-            if (HandlePacket<PlayerReadyPacket>(type, reader, PlayerReady, session)) { return; }
+            // 패킷 추가되면 핸들러 추가
+            if (HandlePacket<ConnectPacket>(type, data, Connect, session)) { return; }
+            if (HandlePacket<DisconnectPacket>(type, data, Disconnect, session)) { return; }
+            if (HandlePacket<PingPacket>(type, data, Ping, session)) { return; }
+            if (HandlePacket<HeartbeatPacket>(type, data, Heartbeat, session)) { return; }
+            if (HandlePacket<InputCommandPacket>(type, data, InputCommand, session)) { return; }
+            if (HandlePacket<InputMovePacket>(type, data, InputMove, session)) { return; }
+            if (HandlePacket<WorldJoinRequestPacket>(type, data, WorldJoin, session)) { return; }
+            if (HandlePacket<WorldLeaveRequestPacket>(type, data, WorldLeave, session)) { return; }
+            if (HandlePacket<PlayerReadyPacket>(type, data, PlayerReady, session)) { return; }
 
             Console.Write($"handle not exist: packet={type}");
         }
 
+        /*
         protected void OnNext(Session session, ConnectPacket packet)
         {
             var subject = Connect;
@@ -128,21 +153,22 @@ namespace HatsushimoServer.NetChan
             var subject = PlayerReady;
             subject.OnNext(ReceivedPacket<PlayerReadyPacket>.Create(session, packet));
         }
+        */
 
 
-
-        bool HandlePacket<TPacket>(PacketType type, BinaryReader reader, PacketObserver<TPacket> subject, Session session)
+        bool HandlePacket<TPacket>(PacketType type, byte[] data, PacketObserver<TPacket> subject, Session session)
         where TPacket : IPacket, new()
         {
             TPacket p = new TPacket();
-            if (codec.TryDecode((short)type, reader, out p))
+            if(type == (PacketType)p.Type)
             {
-                subject.OnNext(ReceivedPacket<TPacket>.Create(session, p));
+                subject.OnNext(new ReceivedPacket<TPacket>(session, data));
                 return true;
             }
             return false;
         }
 
+        /*
         bool HandlePacket<TPacket>(PacketType type, TPacket p, PacketObserver<TPacket> subject, Session session)
         where TPacket : IPacket, new()
         {
@@ -153,5 +179,6 @@ namespace HatsushimoServer.NetChan
             subject.OnNext(ReceivedPacket<TPacket>.Create(session, p));
             return true;
         }
+        */
     }
 }
