@@ -34,7 +34,10 @@ namespace HatsushimoServer
             sessionLayer.Ping.Received.Subscribe(d => HandlePing(d.Session, d.Packet));
             sessionLayer.Heartbeat.Received.Subscribe(d => HandleHeartbeat(d.Session, d.Packet));
 
-            sessionLayer.WorldJoin.Received.Subscribe(d => HandleWorldJoinReq(d.Session, d));
+            sessionLayer.SignUp.Received.Subscribe(d => HandleSignUp(d.Session, d.Packet));
+            sessionLayer.Authentication.Received.Subscribe(d => HandleAuthentication(d.Session, d.Packet));
+
+            sessionLayer.WorldJoin.Received.Subscribe(d => HandleWorldJoin(d.Session, d));
             sessionLayer.WorldLeave.Received.Subscribe(d => HandleWorldLeave(d.Session, d));
 
             sessionLayer.InputCommand.Received.Subscribe(d => EnqueueWorldPacket(d));
@@ -74,10 +77,10 @@ namespace HatsushimoServer
             // 상위 레이어에서의 처리가 간단해진다
             if (session.WorldID != null)
             {
-                var leave = new WorldLeaveRequestPacket();
+                var leave = new WorldLeavePacket();
                 var codec = new PacketCodec();
                 var bytes = codec.Encode(leave);
-                var pair = new ReceivedPacket<WorldLeaveRequestPacket>(session, bytes);
+                var pair = new ReceivedPacket<WorldLeavePacket>(session, bytes);
                 HandleWorldLeave(session, pair);
             }
 
@@ -85,7 +88,22 @@ namespace HatsushimoServer
             NetworkStack.Session.RemoveSessionWithLock(session);
         }
 
-        void HandleWorldJoinReq(Session session, ReceivedPacket<WorldJoinRequestPacket> received)
+        void HandleSignUp(Session session, SignUpPacket packet)
+        {
+            // TODO sign up
+            // db에 유저를 기록하기
+            var result = new SignUpResultPacket() { Success = true };
+            session.Send(result);
+        }
+
+        void HandleAuthentication(Session session, AuthenticationPacket packet)
+        {
+            // TODO db에 유저가 있을때만 로그인 처리
+            var result = new AuthenticationResultPacket() { Success = true };
+            session.Send(result);
+        }
+
+        void HandleWorldJoin(Session session, ReceivedPacket<WorldJoinPacket> received)
         {
             var p = received.Packet;
             var worlds = InstanceWorldManager.Instance;
@@ -93,7 +111,7 @@ namespace HatsushimoServer
             world.EnqueueRecv(session, received.Data);
         }
 
-        void HandleWorldLeave(Session session, ReceivedPacket<WorldLeaveRequestPacket> received)
+        void HandleWorldLeave(Session session, ReceivedPacket<WorldLeavePacket> received)
         {
             var p = received.Packet;
             var worlds = InstanceWorldManager.Instance;

@@ -50,9 +50,9 @@ namespace HatsushimoServerTest.Packets
         }
 
         [Fact]
-        public void TestWorldJoinRequestPacket()
+        public void TestWorldJoinPacket()
         {
-            var a = new WorldJoinRequestPacket()
+            var a = new WorldJoinPacket()
             {
                 WorldID = "foo",
                 Nickname = "test",
@@ -62,9 +62,9 @@ namespace HatsushimoServerTest.Packets
         }
 
         [Fact]
-        public void TestWorldJoinResponsePacket()
+        public void TestWorldJoinResultPacket()
         {
-            var a = new WorldJoinResponsePacket()
+            var a = new WorldJoinResultPacket()
             {
                 PlayerID = 123,
                 WorldID = "foo",
@@ -75,9 +75,9 @@ namespace HatsushimoServerTest.Packets
         }
 
         [Fact]
-        public void TestWorldLeaveResponsePacket()
+        public void TestWorldLeaveResultPacket()
         {
-            var a = new WorldLeaveResponsePacket()
+            var a = new WorldLeaveResultPacket()
             {
                 PlayerID = 123,
             };
@@ -86,9 +86,9 @@ namespace HatsushimoServerTest.Packets
         }
 
         [Fact]
-        public void TestWorldLeaveRequestPacket()
+        public void TestWorldLeavePacket()
         {
-            var a = new WorldLeaveRequestPacket() { };
+            var a = new WorldLeavePacket() { };
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }
@@ -127,13 +127,9 @@ namespace HatsushimoServerTest.Packets
                     new Rank() { ID=4, Score=5, Ranking=6 },
                 },
             };
-            var b = (LeaderboardPacket)SerializeAndDeserialize(a);
+            var b = SerializeAndDeserialize(a);
 
-            Assert.Equal(a.Players, b.Players);
-            for (var i = 0; i < a.Top.Length; i++)
-            {
-                Assert.Equal(a.Top[i], b.Top[i]);
-            }
+            Assert.Equal(a, b);
         }
 
         ReplicationActionPacket CreateFakeReplicationActionPacket()
@@ -169,23 +165,50 @@ namespace HatsushimoServerTest.Packets
                     CreateFakeReplicationActionPacket(),
                 },
             };
-            var b = (ReplicationBulkActionPacket)SerializeAndDeserialize(a);
-
-            Assert.Equal(a.Actions.Length, b.Actions.Length);
-            for (var i = 0; i < a.Actions.Length; i++)
-            {
-                Assert.Equal(a.Actions[i], b.Actions[i]);
-            }
+            var b = SerializeAndDeserialize(a);
+            Assert.Equal(a, b);
         }
 
-        IPacket SerializeAndDeserialize(IPacket a)
+        [Fact]
+        public void TestSignUpPacket()
+        {
+            var a = new SignUpPacket() { Uuid = "hello", };
+            var b = SerializeAndDeserialize(a);
+            Assert.Equal(a, b);
+        }
+
+        [Fact]
+        public void TestSignUpResultPacket()
+        {
+            var a = new SignUpResultPacket() { Success = true };
+            var b = SerializeAndDeserialize(a);
+            Assert.Equal(a, b);
+        }
+
+        [Fact]
+        public void TestAuthenticationPacket()
+        {
+            var a = new AuthenticationPacket() { Uuid = "hello" };
+            var b = SerializeAndDeserialize(a);
+            Assert.Equal(a, b);
+        }
+
+        [Fact]
+        public void TestAuthenticationResultPacket()
+        {
+            var a = new AuthenticationResultPacket() { Success = true };
+            var b = SerializeAndDeserialize(a);
+            Assert.Equal(a, b);
+        }
+
+        T SerializeAndDeserialize<T>(T a) where T : IPacket, new()
         {
             var stream = new MemoryStream();
             var writer = new BinaryWriter(stream);
             a.Serialize(writer);
 
             var reader = new BinaryReader(new MemoryStream(stream.ToArray()));
-            var b = a.CreateBlank();
+            var b = new T();
             b.Deserialize(reader);
 
             return b;

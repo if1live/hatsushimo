@@ -148,7 +148,7 @@ namespace HatsushimoServer
             recvQueue.Enqueue(s, d);
         }
 
-        void HandleJoinReq(Session session, WorldJoinRequestPacket p)
+        void HandleJoinReq(Session session, WorldJoinPacket p)
         {
             var ok = Join(session, p.Nickname);
             Console.WriteLine($"world join: id={session.ID} world={ID} ok={ok} size={sessions.Count}");
@@ -156,7 +156,7 @@ namespace HatsushimoServer
             var player = GetPlayer(session);
             room.Join(player);
 
-            var resp = new WorldJoinResponsePacket()
+            var resp = new WorldJoinResultPacket()
             {
                 PlayerID = session.ID,
                 WorldID = ID,
@@ -165,7 +165,7 @@ namespace HatsushimoServer
             session.Send(resp);
         }
 
-        void HandleLeaveReq(Session session, WorldLeaveRequestPacket p)
+        void HandleLeaveReq(Session session, WorldLeavePacket p)
         {
             var player = GetPlayer(session);
             room.Leave(player);
@@ -173,7 +173,7 @@ namespace HatsushimoServer
             var ok = Leave(session);
             Console.WriteLine($"world leave: id={session.ID} world={ID} ok={ok} size={sessions.Count}");
 
-            var resp = new WorldLeaveResponsePacket()
+            var resp = new WorldLeaveResultPacket()
             {
                 PlayerID = session.ID,
             };

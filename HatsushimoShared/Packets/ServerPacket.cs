@@ -10,11 +10,6 @@ namespace Hatsushimo.Packets
     {
         public short Type => (short)PacketType.Connect;
 
-        public IPacket CreateBlank()
-        {
-            return new ConnectPacket();
-        }
-
         public void Deserialize(BinaryReader r) { }
         public void Serialize(BinaryWriter w) { }
     }
@@ -22,11 +17,6 @@ namespace Hatsushimo.Packets
     public struct DisconnectPacket : IPacket
     {
         public short Type => (short)PacketType.Disconnect;
-
-        public IPacket CreateBlank()
-        {
-            return new DisconnectPacket();
-        }
 
         public void Deserialize(BinaryReader r) { }
         public void Serialize(BinaryWriter w) { }
@@ -38,11 +28,6 @@ namespace Hatsushimo.Packets
         public int Version;
 
         public short Type => (short)PacketType.Welcome;
-
-        public IPacket CreateBlank()
-        {
-            return new WelcomePacket();
-        }
 
         public void Deserialize(BinaryReader r)
         {
@@ -63,11 +48,6 @@ namespace Hatsushimo.Packets
 
         public short Type => (short)PacketType.Ping;
 
-        public IPacket CreateBlank()
-        {
-            return new PingPacket();
-        }
-
         public void Deserialize(BinaryReader r)
         {
             r.Read(out millis);
@@ -83,14 +63,77 @@ namespace Hatsushimo.Packets
     {
         public short Type => (short)PacketType.Heartbeat;
 
-        public IPacket CreateBlank()
-        {
-            return new HeartbeatPacket();
-        }
-
         public void Deserialize(BinaryReader r) { }
 
         public void Serialize(BinaryWriter w) { }
+    }
+
+    public struct SignUpPacket : IPacket
+    {
+        public short Type => (short)PacketType.SignUpResult;
+
+        public string Uuid;
+
+        public void Deserialize(BinaryReader r)
+        {
+            r.ReadString(out Uuid);
+        }
+
+        public void Serialize(BinaryWriter w)
+        {
+            w.WriteString(Uuid);
+        }
+    }
+
+    public struct SignUpResultPacket : IPacket
+    {
+        public bool Success;
+
+        public short Type => (short)PacketType.SignUp;
+
+        public void Deserialize(BinaryReader r)
+        {
+            r.Read(out Success);
+        }
+
+        public void Serialize(BinaryWriter w)
+        {
+            w.Write(Success);
+        }
+    }
+
+    public struct AuthenticationPacket : IPacket
+    {
+        public short Type => (short)PacketType.Authentication;
+
+        public string Uuid;
+
+        public void Deserialize(BinaryReader r)
+        {
+            r.ReadString(out Uuid);
+        }
+
+        public void Serialize(BinaryWriter w)
+        {
+            w.WriteString(Uuid);
+        }
+    }
+
+    public struct AuthenticationResultPacket : IPacket
+    {
+        public short Type => (short)PacketType.AuthenticationResult;
+
+        public bool Success;
+
+        public void Deserialize(BinaryReader r)
+        {
+            r.Read(out Success);
+        }
+
+        public void Serialize(BinaryWriter w)
+        {
+            w.Write(Success);
+        }
     }
 }
 

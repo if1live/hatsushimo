@@ -5,15 +5,21 @@ namespace Hatsushimo.Packets
         Connect = 1,
         Disconnect,
 
+        SignUp,
+        SignUpResult,
+
+        Authentication,
+        AuthenticationResult,
+
         Welcome,
 
         Heartbeat,
         Ping,
 
-        WorldJoinReq,
-        WorldJoinResp,
-        WorldLeaveReq,
-        WorldLeaveResp,
+        WorldJoin,
+        WorldJoinResult,
+        WorldLeave,
+        WorldLeaveResult,
 
         PlayerReady,
 

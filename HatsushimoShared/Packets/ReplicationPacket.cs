@@ -21,7 +21,8 @@ namespace Hatsushimo.Packets
         Remove,
     }
 
-    public struct PlayerInitial : ISerialize {
+    public struct PlayerInitial : ISerialize
+    {
         public int ID;
         public string Nickname;
         public Vec2 Pos;
@@ -47,7 +48,8 @@ namespace Hatsushimo.Packets
         }
     }
 
-    public struct FoodInitial : ISerialize {
+    public struct FoodInitial : ISerialize
+    {
         public int ID;
         public Vec2 Pos;
 
@@ -70,11 +72,6 @@ namespace Hatsushimo.Packets
         public FoodInitial[] Foods;
 
         public short Type => (short)PacketType.ReplicationAll;
-
-        public IPacket CreateBlank()
-        {
-            return new ReplicationAllPacket();
-        }
 
         public void Deserialize(BinaryReader r)
         {
@@ -100,11 +97,6 @@ namespace Hatsushimo.Packets
         public string Extra;
 
         public short Type => (short)PacketType.ReplicationAction;
-
-        public IPacket CreateBlank()
-        {
-            return new ReplicationActionPacket();
-        }
 
         public void Deserialize(BinaryReader r)
         {
@@ -136,6 +128,59 @@ namespace Hatsushimo.Packets
             w.Write(Speed);
             w.WriteString(Extra);
         }
+
+        public static bool operator ==(ReplicationActionPacket a, ReplicationActionPacket b)
+        {
+            if (ReferenceEquals(a, b)) { return true; }
+            if (ReferenceEquals(a, null)) { return false; }
+            if (ReferenceEquals(b, null)) { return false; }
+
+            return (a.Action == b.Action)
+                && (a.ID == b.ID)
+                && (a.ActorType == b.ActorType)
+                && (a.Pos == b.Pos)
+                && (a.TargetPos == b.TargetPos)
+                && (a.Speed == b.Speed)
+                && (a.Extra == b.Extra);
+        }
+
+        public static bool operator !=(ReplicationActionPacket a, ReplicationActionPacket b)
+        {
+            return !(a == b);
+        }
+
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) { return false; }
+            if (ReferenceEquals(this, obj)) { return true; }
+            return obj.GetType() == GetType() && Equals((ReplicationActionPacket)obj);
+        }
+
+        public bool Equals(ReplicationActionPacket other)
+        {
+            if (ReferenceEquals(null, other)) { return false; }
+            if (ReferenceEquals(this, other)) { return true; }
+            return Action.Equals(other.Action)
+                && ID.Equals(other.ID)
+                && ActorType.Equals(other.ActorType)
+                && Pos.Equals(other.Pos)
+                && TargetPos.Equals(other.TargetPos)
+                && Speed.Equals(other.Speed)
+                && Extra.Equals(other.Extra);
+        }
+
+        public override int GetHashCode()
+        {
+            int hash = Action.GetHashCode();
+            hash = hash ^ ID.GetHashCode();
+            hash = hash ^ ActorType.GetHashCode();
+            hash = hash ^ Pos.GetHashCode();
+            hash = hash ^ TargetPos.GetHashCode();
+            hash = hash ^ Speed.GetHashCode();
+            hash = hash ^ Extra.GetHashCode();
+            return hash;
+        }
     }
 
 
@@ -145,11 +190,6 @@ namespace Hatsushimo.Packets
 
         public short Type => (short)PacketType.ReplicationBulkAction;
 
-        public IPacket CreateBlank()
-        {
-            return new ReplicationBulkActionPacket();
-        }
-
         public void Deserialize(BinaryReader r)
         {
             r.ReadValues(out Actions);
@@ -158,6 +198,74 @@ namespace Hatsushimo.Packets
         public void Serialize(BinaryWriter w)
         {
             w.WriteValues(Actions);
+        }
+
+        public static bool operator ==(ReplicationBulkActionPacket a, ReplicationBulkActionPacket b)
+        {
+            if (ReferenceEquals(a, b)) { return true; }
+            if (ReferenceEquals(a, null)) { return false; }
+            if (ReferenceEquals(b, null)) { return false; }
+
+            if (a.Actions == null && b.Actions == null) { return true; }
+            if (a.Actions != null && b.Actions == null) { return false; }
+            if (a.Actions == null && b.Actions != null) { return false; }
+
+            if (a.Actions.Length != b.Actions.Length) { return false; }
+
+            for (var i = 0; i < a.Actions.Length; i++)
+            {
+                var x = a.Actions[i];
+                var y = a.Actions[i];
+                if (x != y) { return false; }
+            }
+            return true;
+        }
+
+        public static bool operator !=(ReplicationBulkActionPacket a, ReplicationBulkActionPacket b)
+        {
+            return !(a == b);
+        }
+
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) { return false; }
+            if (ReferenceEquals(this, obj)) { return true; }
+            return obj.GetType() == GetType() && Equals((ReplicationBulkActionPacket)obj);
+        }
+
+        public bool Equals(ReplicationBulkActionPacket other)
+        {
+            if (ReferenceEquals(null, other)) { return false; }
+            if (ReferenceEquals(this, other)) { return true; }
+
+            if (Actions == null && other.Actions == null) { return true; }
+            if (Actions != null && other.Actions == null) { return false; }
+            if (Actions == null && other.Actions != null) { return false; }
+
+            if (Actions.Length != other.Actions.Length) { return false; }
+
+            for (var i = 0; i < Actions.Length; i++)
+            {
+                var x = Actions[i];
+                var y = other.Actions[i];
+                if (x != y) { return false; }
+            }
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            int hash = 0;
+            if (Actions != null)
+            {
+                for (var i = 0; i < Actions.Length; i++)
+                {
+                    hash = hash ^ Actions[i].GetHashCode();
+                }
+            }
+
+            return hash;
         }
     }
 }

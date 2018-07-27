@@ -11,11 +11,6 @@ namespace Hatsushimo.Packets
 
         public short Type => (short)PacketType.InputCommand;
 
-        public IPacket CreateBlank()
-        {
-            return new InputCommandPacket();
-        }
-
         public void Deserialize(BinaryReader r)
         {
             r.Read(out Mode);
@@ -34,11 +29,6 @@ namespace Hatsushimo.Packets
         public Vec2 TargetPos;
 
         public short Type => (short)PacketType.InputMove;
-
-        public IPacket CreateBlank()
-        {
-            return new InputMovePacket();
-        }
 
         public void Deserialize(BinaryReader r)
         {

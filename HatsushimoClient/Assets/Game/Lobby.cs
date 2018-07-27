@@ -37,7 +37,7 @@ namespace Assets.Game
                 if (worldID.Length == 0) { return; }
 
                 var conn = ConnectionManager.Instance;
-                var p = new WorldJoinRequestPacket
+                var p = new WorldJoinPacket
                 {
                     Nickname = nickname,
                     WorldID = worldID

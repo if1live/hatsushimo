@@ -25,14 +25,20 @@ namespace Assets.NetChan
         public static PacketDispatcher Instance;
 
         public readonly PacketObservable<PingPacket> Ping = new PacketObservable<PingPacket>();
-        readonly public PacketObservable<WelcomePacket> Welcome = new PacketObservable<WelcomePacket>();
-        readonly public PacketObservable<ReplicationAllPacket> ReplicationAll = new PacketObservable<ReplicationAllPacket>();
-        readonly public PacketObservable<ReplicationActionPacket> Replication = new PacketObservable<ReplicationActionPacket>();
-        readonly public PacketObservable<ReplicationBulkActionPacket> ReplicationBulk = new PacketObservable<ReplicationBulkActionPacket>();
-        readonly public PacketObservable<WorldJoinResponsePacket> WorldJoin = new PacketObservable<WorldJoinResponsePacket>();
-        readonly public PacketObservable<WorldLeaveResponsePacket> WorldLeave = new PacketObservable<WorldLeaveResponsePacket>();
-        readonly public PacketObservable<PlayerReadyPacket> PlayerReady = new PacketObservable<PlayerReadyPacket>();
-        readonly public PacketObservable<LeaderboardPacket> Leaderboard = new PacketObservable<LeaderboardPacket>();
+        public readonly PacketObservable<WelcomePacket> Welcome = new PacketObservable<WelcomePacket>();
+
+        public readonly PacketObservable<SignUpPacket> SignUp = new PacketObservable<SignUpPacket>();
+        public readonly PacketObservable<AuthenticationResultPacket> Authentication = new PacketObservable<AuthenticationResultPacket>();
+
+        public readonly PacketObservable<ReplicationAllPacket> ReplicationAll = new PacketObservable<ReplicationAllPacket>();
+        public readonly PacketObservable<ReplicationActionPacket> Replication = new PacketObservable<ReplicationActionPacket>();
+        public readonly PacketObservable<ReplicationBulkActionPacket> ReplicationBulk = new PacketObservable<ReplicationBulkActionPacket>();
+
+        public readonly PacketObservable<WorldJoinResultPacket> WorldJoin = new PacketObservable<WorldJoinResultPacket>();
+        public readonly PacketObservable<WorldLeaveResultPacket> WorldLeave = new PacketObservable<WorldLeaveResultPacket>();
+
+        public readonly PacketObservable<PlayerReadyPacket> PlayerReady = new PacketObservable<PlayerReadyPacket>();
+        public readonly PacketObservable<LeaderboardPacket> Leaderboard = new PacketObservable<LeaderboardPacket>();
 
         private void Awake()
         {

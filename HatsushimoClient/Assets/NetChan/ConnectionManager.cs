@@ -103,6 +103,8 @@ namespace Assets.NetChan
                 var dispatcher = PacketDispatcher.Instance;
                 if (DispatchPacket(type, reader, dispatcher.Ping)) { continue; }
                 if (DispatchPacket(type, reader, dispatcher.Welcome)) { continue; }
+                if (DispatchPacket(type, reader, dispatcher.SignUp)) { continue; }
+                if (DispatchPacket(type, reader, dispatcher.Authentication)) { continue; }
                 if (DispatchPacket(type, reader, dispatcher.ReplicationAll)) { continue; }
                 if (DispatchPacket(type, reader, dispatcher.Replication)) { continue; }
                 if (DispatchPacket(type, reader, dispatcher.ReplicationBulk)) { continue; }

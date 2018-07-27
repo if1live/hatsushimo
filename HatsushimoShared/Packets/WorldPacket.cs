@@ -4,17 +4,12 @@ using Hatsushimo.NetChan;
 
 namespace Hatsushimo.Packets
 {
-    public struct WorldJoinRequestPacket : IPacket
+    public struct WorldJoinPacket : IPacket
     {
-        public short Type => (short)PacketType.WorldJoinReq;
+        public short Type => (short)PacketType.WorldJoin;
 
         public string WorldID;
         public string Nickname;
-
-        public IPacket CreateBlank()
-        {
-            return new WorldJoinRequestPacket();
-        }
 
         public void Deserialize(BinaryReader r)
         {
@@ -29,18 +24,13 @@ namespace Hatsushimo.Packets
         }
     }
 
-    public struct WorldJoinResponsePacket : IPacket
+    public struct WorldJoinResultPacket : IPacket
     {
         public int PlayerID;
         public string WorldID;
         public string Nickname;
 
-        public short Type => (short)PacketType.WorldJoinResp;
-
-        public IPacket CreateBlank()
-        {
-            return new WorldJoinResponsePacket();
-        }
+        public short Type => (short)PacketType.WorldJoinResult;
 
         public void Deserialize(BinaryReader r)
         {
@@ -57,29 +47,19 @@ namespace Hatsushimo.Packets
         }
     }
 
-    public struct WorldLeaveRequestPacket : IPacket
+    public struct WorldLeavePacket : IPacket
     {
-        public short Type => (short)PacketType.WorldLeaveReq;
-
-        public IPacket CreateBlank()
-        {
-            return new WorldLeaveRequestPacket();
-        }
+        public short Type => (short)PacketType.WorldLeave;
 
         public void Deserialize(BinaryReader r) { }
         public void Serialize(BinaryWriter w) { }
     }
 
-    public struct WorldLeaveResponsePacket : IPacket
+    public struct WorldLeaveResultPacket : IPacket
     {
         public int PlayerID;
 
-        public short Type => (short)PacketType.WorldLeaveResp;
-
-        public IPacket CreateBlank()
-        {
-            return new WorldLeaveResponsePacket();
-        }
+        public short Type => (short)PacketType.WorldLeaveResult;
 
         public void Deserialize(BinaryReader r)
         {

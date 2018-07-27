@@ -10,11 +10,6 @@ namespace Hatsushimo.Packets
     {
         public short Type => (short)PacketType.PlayerReady;
 
-        public IPacket CreateBlank()
-        {
-            return new PlayerReadyPacket();
-        }
-
         public void Deserialize(BinaryReader r) { }
         public void Serialize(BinaryWriter w) { }
     }

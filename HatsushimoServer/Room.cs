@@ -162,9 +162,9 @@ namespace HatsushimoServer
             };
         }
 
-        WorldJoinResponsePacket GenerateRoomJoinPacket(Player player)
+        WorldJoinResultPacket GenerateRoomJoinPacket(Player player)
         {
-            return new WorldJoinResponsePacket()
+            return new WorldJoinResultPacket()
             {
                 WorldID = this.ID,
                 PlayerID = player.ID,
