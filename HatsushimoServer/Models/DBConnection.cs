@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using SQLite;
 using Optional;
 using Optional.Linq;
+using NLog;
 
 namespace HatsushimoServer.Models
 {
@@ -33,6 +34,7 @@ namespace HatsushimoServer.Models
 
     class SQLiteConnection : IDBConnection
     {
+        static readonly Logger log = LogManager.GetLogger("SQLiteConnection");
         SQLiteAsyncConnection conn;
 
         public SQLiteConnection(SQLiteAsyncConnection conn)
@@ -43,7 +45,7 @@ namespace HatsushimoServer.Models
         public async Task CreateTable()
         {
             await conn.CreateTableAsync<User>();
-            Console.WriteLine("create user table");
+            log.Info("create user table");
         }
 
         public async Task<User> GetOrCreateUser(string uuid)
@@ -57,11 +59,11 @@ namespace HatsushimoServer.Models
                     Uuid = uuid,
                 };
                 await conn.InsertAsync(user);
-                Console.WriteLine($"create user: uuid={uuid}");
+                log.Info($"create user: uuid={uuid}");
                 return user;
             }
 
-            Console.WriteLine($"sign up: uuid={uuid}");
+            log.Info($"sign up: uuid={uuid}");
             return prevUser;
         }
 

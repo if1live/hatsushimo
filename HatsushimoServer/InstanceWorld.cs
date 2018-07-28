@@ -12,6 +12,8 @@ using System.Reactive;
 using System.Reactive.Linq;
 using System.Linq;
 
+using NLog;
+
 namespace HatsushimoServer
 {
     // 각각의 방을 월드로 정의한다
@@ -19,6 +21,7 @@ namespace HatsushimoServer
     // 월드별로는 의존성을 없애서 독립적으로 작동한다
     internal class InstanceWorld
     {
+        static readonly Logger log = LogManager.GetLogger("InstanceWorld");
         public string ID { get; private set; }
         public bool Running { get; set; } = false;
 
@@ -151,7 +154,7 @@ namespace HatsushimoServer
         void HandleJoinReq(Session session, WorldJoinPacket p)
         {
             var ok = Join(session, p.Nickname);
-            Console.WriteLine($"world join: id={session.ID} world={ID} ok={ok} size={sessions.Count}");
+            log.Info($"world join: id={session.ID} world={ID} ok={ok} size={sessions.Count}");
 
             var player = GetPlayer(session);
             room.Join(player);
@@ -171,7 +174,7 @@ namespace HatsushimoServer
             room.Leave(player);
 
             var ok = Leave(session);
-            Console.WriteLine($"world leave: id={session.ID} world={ID} ok={ok} size={sessions.Count}");
+            log.Info($"world leave: id={session.ID} world={ID} ok={ok} size={sessions.Count}");
 
             var resp = new WorldLeaveResultPacket()
             {

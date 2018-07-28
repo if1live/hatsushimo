@@ -7,6 +7,7 @@ using Hatsushimo.Packets;
 using Hatsushimo.Types;
 using Hatsushimo.Utils;
 using System.Diagnostics;
+using NLog;
 
 namespace HatsushimoServer
 {
@@ -15,6 +16,8 @@ namespace HatsushimoServer
     {
         readonly Random rand = new Random();
         public string ID { get; private set; }
+
+        static readonly Logger log = LogManager.GetLogger("Room");
 
         // 기본적으로 게임 로직은 싱글 쓰레드로 돌아간다
         // 주기적으로 게임 정보를 클라에 보내주는데 이것은 비동기로 돌아간다
@@ -74,7 +77,7 @@ namespace HatsushimoServer
                 p.Session.Send(spawnPacket);
             });
 
-            Console.WriteLine($"ready room: id={player.ID} room={ID} size={players.Count}");
+            log.Info($"ready room: id={player.ID} room={ID} size={players.Count}");
             return true;
         }
 
@@ -85,7 +88,7 @@ namespace HatsushimoServer
 
             waitingPlayers.Add(newPlayer);
 
-            Console.WriteLine($"room join: id={newPlayer.ID} room={ID} size={players.Count}");
+            log.Info($"room join: id={newPlayer.ID} room={ID} size={players.Count}");
         }
 
         public void Leave(Player player)
@@ -113,7 +116,7 @@ namespace HatsushimoServer
                 p.Session.Send(removePacket);
             });
 
-            Console.WriteLine($"leave room: id={player.ID} room={ID} size={players.Count}");
+            log.Info($"leave room: id={player.ID} room={ID} size={players.Count}");
         }
 
         public Vec2 GenerateRandomPosition()
@@ -191,7 +194,7 @@ namespace HatsushimoServer
                 var packet = food.GenerateRemovePacket();
                 var session = p.Session;
                 session.Send(packet);
-                Console.WriteLine($"sent food remove packet: {packet.ID}");
+                log.Info($"sent food remove packet: {packet.ID}");
             });
         }
 

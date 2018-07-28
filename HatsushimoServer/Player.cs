@@ -4,11 +4,14 @@ using Hatsushimo;
 using Hatsushimo.Packets;
 using Hatsushimo.Types;
 using HatsushimoServer.NetChan;
+using NLog;
 
 namespace HatsushimoServer
 {
     public class Player : Actor
     {
+        static readonly Logger log = LogManager.GetLogger("Player");
+
         public Session Session { get; private set; }
 
         public Vec2 Position { get; private set; }
@@ -97,7 +100,7 @@ namespace HatsushimoServer
         void UseSkillPrimary()
         {
             if (!SkillPrimary) { return; }
-            Console.WriteLine($"use skill primary: id={ID}");
+            log.Info($"use skill primary: id={ID}");
             RunSkillPrimaryCoolTimer();
 
             // TODO 적당히 공격
@@ -106,7 +109,7 @@ namespace HatsushimoServer
         void UseSKillSecondary()
         {
             if (!SKillSecondary) { return; }
-            Console.WriteLine($"use skill secondary: id={ID}");
+            log.Info($"use skill secondary: id={ID}");
             RunSkillSecondaryCoolTimer();
         }
 

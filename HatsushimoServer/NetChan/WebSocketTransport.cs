@@ -9,6 +9,7 @@ using WebSocketSharp;
 using WebSocketSharp.Server;
 using System.Reactive;
 using System.Reactive.Subjects;
+using NLog;
 
 namespace HatsushimoServer.NetChan
 {
@@ -57,6 +58,7 @@ namespace HatsushimoServer.NetChan
 
     public class WebSocketTransport : ITransport<string>
     {
+        static readonly NLog.Logger log = LogManager.GetLogger("WebSocketTransport");
         readonly WebSocketBehavior session;
         readonly WebSocketTransportLayer layer;
 
@@ -89,6 +91,7 @@ namespace HatsushimoServer.NetChan
 
     public class WebSocketTransportLayer : ITransportLayer<string>
     {
+        static readonly NLog.Logger log = LogManager.GetLogger("WebSocketTransportLayer");
         public WebSocketSessionManager Sessions { private get; set; }
 
         Subject<WebSocketDatagram> _sent = new Subject<WebSocketDatagram>();
@@ -134,7 +137,7 @@ namespace HatsushimoServer.NetChan
                 }
                 else
                 {
-                    Console.WriteLine($"cannot send: id={p.ID} state={session.ConnectionState}");
+                    log.Info($"cannot send: id={p.ID} state={session.ConnectionState}");
                 }
             }
         }

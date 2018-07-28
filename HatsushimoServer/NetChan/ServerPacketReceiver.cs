@@ -4,6 +4,7 @@ using System.Reactive.Subjects;
 using Hatsushimo.NetChan;
 using Hatsushimo.Packets;
 using HatsushimoServer.NetChan;
+using NLog;
 
 namespace HatsushimoServer.NetChan
 {
@@ -55,6 +56,7 @@ namespace HatsushimoServer.NetChan
 
     public class ServerPacketReceiver
     {
+        static readonly Logger log = LogManager.GetLogger("ServerPacketReceiver");
         // 패킷별로 핸들러 따로 만들기
         // 패킷은 struct 위주로 만들었고 GC가 발생하지 않게 하고싶다
         // 서버가 받을 패킷만 명시하기
@@ -93,7 +95,7 @@ namespace HatsushimoServer.NetChan
             if (HandlePacket<WorldLeavePacket>(type, data, WorldLeave, session)) { return; }
             if (HandlePacket<PlayerReadyPacket>(type, data, PlayerReady, session)) { return; }
 
-            Console.Write($"handle not exist: packet={type}");
+            log.Error($"handle not exist: packet={type}");
         }
 
         bool HandlePacket<TPacket>(PacketType type, byte[] data, PacketObservable<TPacket> subject, Session session)

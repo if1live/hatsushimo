@@ -14,6 +14,7 @@ using HatsushimoServer.NetChan;
 using WebSocketSharp.Server;
 using System.IO;
 using HatsushimoServer.Models;
+using NLog;
 
 namespace HatsushimoServer
 {
@@ -22,6 +23,7 @@ namespace HatsushimoServer
         public static readonly GameService Instance;
 
         readonly IDBConnection conn;
+        static readonly Logger log = LogManager.GetLogger("GameService");
 
         static GameService()
         {
@@ -57,14 +59,14 @@ namespace HatsushimoServer
 
         void HandlePing(Session session, PingPacket p)
         {
-            // Console.WriteLine($"ping packet received : {p.millis}");
+            log.Debug($"ping packet received : {p.millis}");
             session.Send(p);
         }
 
         void HandleHeartbeat(Session session, HeartbeatPacket p)
         {
             session.RefreshHeartbeat();
-            Console.WriteLine($"heartbeat: id={session.ID}");
+            log.Info($"heartbeat: id={session.ID}");
         }
 
         void HandleConnect(Session session, ConnectPacket p)
@@ -74,7 +76,7 @@ namespace HatsushimoServer
                 UserID = session.ID,
                 Version = Config.Version,
             };
-            Console.WriteLine($"connected: welcome id={session.ID}");
+            log.Info($"connected: welcome id={session.ID}");
             session.Send(welcome);
         }
 
@@ -94,7 +96,7 @@ namespace HatsushimoServer
                 HandleWorldLeave(session, pair);
             }
 
-            Console.WriteLine($"disconnected: id={session.ID}");
+            log.Info($"disconnected: id={session.ID}");
             NetworkStack.Session.RemoveSessionWithLock(session);
         }
 
@@ -111,13 +113,13 @@ namespace HatsushimoServer
             option.MatchSome(user =>
             {
                 session.UserID = user.ID;
-                Console.WriteLine($"authentication: uuid={packet.Uuid} user_id={session.UserID}");
+                log.Info($"authentication: uuid={packet.Uuid} user_id={session.UserID}");
                 var result = new AuthenticationResultPacket() { ResultCode = 0 };
                 session.Send(result);
             });
             option.MatchNone(() =>
             {
-                Console.WriteLine($"authentication: uuid={packet.Uuid} not found");
+                log.Info($"authentication: uuid={packet.Uuid} not found");
                 var notFound = new AuthenticationResultPacket() { ResultCode = -1 };
                 session.Send(notFound);
             });
