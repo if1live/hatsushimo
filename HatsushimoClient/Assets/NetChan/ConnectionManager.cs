@@ -88,10 +88,10 @@ namespace Assets.NetChan
                 SendPacket(p);
             }).AddTo(gameObject);
 
-            while (true)
+            while (ws != null)
             {
                 byte[] bytes = null;
-                while (bytes == null)
+                while (ws != null && bytes == null)
                 {
                     if (ws.error != null)
                     {
@@ -140,9 +140,14 @@ namespace Assets.NetChan
 
         private void OnDestroy()
         {
+            Close();
+
             Debug.Assert(Instance == this);
             Instance = null;
+        }
 
+        public void Close()
+        {
             if (ws != null)
             {
                 SendPacket(new DisconnectPacket());
