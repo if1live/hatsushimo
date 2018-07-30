@@ -17,12 +17,11 @@ namespace Assets.NetChan
 
         public int intervalMillis = 1000;
 
-        public const int INF_LATENCY = 99999;
-
-        public IObservable<int> LatencyObservable {
+        public IObservable<int> LatencyObservable
+        {
             get { return latency.AsObservable(); }
         }
-        IntReactiveProperty latency = new IntReactiveProperty(INF_LATENCY);
+        Subject<int> latency = new Subject<int>();
 
         private void Awake()
         {
@@ -45,17 +44,21 @@ namespace Assets.NetChan
             var dispatcher = PacketDispatcher.Instance;
             dispatcher.Ping.Received.Subscribe(HandlePing).AddTo(gameObject);
 
-            var mgr = ConnectionManager.Instance;
-            ConnectionManager.Instance.ReadyObservable.Subscribe(_ =>
+            var conn = ConnectionManager.Instance;
+            var pingInterval = TimeSpan.FromMilliseconds(intervalMillis);
+            Observable.Interval(pingInterval)
+            .SkipUntil(conn.ReadyObservable).Subscribe(_ =>
             {
-                StartCoroutine(BeginPingLoop());
+                SendPing();
             }).AddTo(gameObject);
         }
 
         private void OnDestroy()
         {
-            Debug.Assert(Instance == this);
-            Instance = null;
+            if (Instance == this)
+            {
+                Instance = null;
+            }
         }
 
         void SendPing()
@@ -73,16 +76,7 @@ namespace Assets.NetChan
         {
             var now = TimeUtils.NowMillis;
             var diff = now - p.millis;
-            latency.SetValueAndForceNotify(diff);
-        }
-
-        IEnumerator BeginPingLoop()
-        {
-            while (true)
-            {
-                SendPing();
-                yield return new WaitForSeconds(intervalMillis * 0.001f);
-            }
+            latency.OnNext(diff);
         }
     }
 }

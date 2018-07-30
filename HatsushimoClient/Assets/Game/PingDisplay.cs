@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using Assets.NetChan;
 using UniRx;
@@ -10,9 +11,12 @@ namespace Assets.Game
     {
         public Text pingText = null;
 
-        int ping = 9999;
-        int sent = 9999;
-        int received = 9999;
+        struct NetworkStatus
+        {
+            public int ping;
+            public int send;
+            public int recv;
+        }
 
         private void Awake()
         {
@@ -24,37 +28,27 @@ namespace Assets.Game
             var checker = PingChecker.Instance;
             var conn = ConnectionManager.Instance;
 
-            checker.LatencyObservable.Subscribe(v => ping = v).AddTo(gameObject);
-            conn.SentBytes.Subscribe(len => sent = len).AddTo(gameObject);
-            conn.ReceivedBytes.Subscribe(len => received = len).AddTo(gameObject);
-        }
-
-        void OnEnable()
-        {
-            coroutine = StartCoroutine(BeginNetworkStatus());
-        }
-
-        void OnDisable()
-        {
-            StopCoroutine(coroutine);
-        }
-
-        Coroutine coroutine;
-
-        IEnumerator BeginNetworkStatus()
-        {
-            while (true)
+            var pingStream = checker.LatencyObservable;
+            var sendStream = conn.SentBytes;
+            var recvStream = conn.ReceivedBytes;
+            pingStream.CombineLatest(sendStream, recvStream, (ping, send, recv) => new NetworkStatus()
             {
-                var conn = ConnectionManager.Instance;
+                ping = ping,
+                send = send,
+                recv = recv,
+            }).Subscribe(status =>
+            {
+                RefreshNetworkStatus(status.ping, status.send, status.recv);
+            }).AddTo(gameObject);
+        }
 
-                var pingStr = $"ping: {this.ping}ms";
-                var receivedStr = $"recv: {received * 8}b/s";
-                var sentStr = $"sent: {sent * 8}b/s";
-                var msg = string.Join(" ", new string[] { pingStr, receivedStr, sentStr });
-                pingText.text = msg;
-
-                yield return null;
-            }
+        void RefreshNetworkStatus(int ping, int send, int recv)
+        {
+            var pingStr = $"ping: {ping}ms";
+            var receivedStr = $"recv: {recv * 8}b/s";
+            var sentStr = $"sent: {send * 8}b/s";
+            var msg = string.Join("\n", new string[] { pingStr, receivedStr, sentStr });
+            pingText.text = msg;
         }
     }
 }

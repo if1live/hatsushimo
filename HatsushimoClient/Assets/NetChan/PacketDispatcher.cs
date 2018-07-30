@@ -43,7 +43,6 @@ namespace Assets.NetChan
 
         private void Awake()
         {
-            Debug.Assert(Instance == null);
             Instance = this;
         }
 

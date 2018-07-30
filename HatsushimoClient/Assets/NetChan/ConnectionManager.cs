@@ -8,6 +8,7 @@ using Hatsushimo.Packets;
 using System.IO;
 using System.Threading.Tasks;
 using Hatsushimo.Utils;
+using UnityEngine.SceneManagement;
 
 namespace Assets.NetChan
 {
@@ -18,6 +19,9 @@ namespace Assets.NetChan
         WebSocket ws;
         public string host = "ws://127.0.0.1";
         public int port = Config.ServerPort;
+
+        // 네트워크 에러 발생하면 초기 화면으로 가서 접속 재시도
+        public string initialScene = "ServerSelect";
 
         static readonly PacketCodec codec = new PacketCodec();
 
@@ -44,11 +48,14 @@ namespace Assets.NetChan
         ReactiveProperty<int> _sentBytes = new ReactiveProperty<int>();
         ReactiveProperty<int> _receivedBytes = new ReactiveProperty<int>();
 
+        public IObservable<string> ErrorRaised { get { return _error.AsObservable(); } }
+        Subject<string> _error = new Subject<string>();
+
         public IObservable<bool> ReadyObservable
         {
-            get { return ready.Where(x => x).AsObservable(); }
+            get { return readySubject.AsObservable(); }
         }
-        BoolReactiveProperty ready = new BoolReactiveProperty(false);
+        Subject<bool> readySubject = new Subject<bool>();
 
         private void Awake()
         {
@@ -66,6 +73,8 @@ namespace Assets.NetChan
             }
         }
 
+        IDisposable loop = null;
+
         void Start()
         {
             var bandwidthInterval = TimeSpan.FromMilliseconds(100);
@@ -77,12 +86,36 @@ namespace Assets.NetChan
                 _sentBytes.SetValueAndForceNotify(bandwidth.GetSentBytesPerSecond(ts));
             }).AddTo(gameObject);
 
-            coroutine_start = StartCoroutine(BeginStart());
+            var heartbeatInterval = TimeSpan.FromSeconds(Config.HeartbeatInterval);
+            Observable.Interval(heartbeatInterval).SkipUntil(ReadyObservable).Subscribe(_ =>
+            {
+                SendPacket(new HeartbeatPacket());
+            }).AddTo(gameObject);
+
+            ErrorRaised.Subscribe(msg =>
+            {
+                Debug.LogError($"Error: " + ws.error);
+
+                if (loop != null)
+                {
+                    loop.Dispose();
+                    loop = null;
+                }
+
+                // dont destory on load로 등록된 네트워크 관련 객체 삭제
+                // 네트워크 접속 실패시 처음부터 재시작하는게 목적
+                // TOOD 최초 접속 에러와 게임 도중 접속 에러를 분리하기
+                Destroy(PingChecker.Instance.gameObject);
+                Destroy(ConnectionManager.Instance.gameObject);
+
+                SceneManager.LoadScene(initialScene, LoadSceneMode.Single);
+
+            }).AddTo(gameObject);
+
+            loop = Observable.FromCoroutine(BeginLoop).Subscribe();
         }
 
-        Coroutine coroutine_start;
-
-        IEnumerator BeginStart()
+        IEnumerator BeginLoop()
         {
             var url = ServerURL;
             Debug.Log($"connect to {url}");
@@ -91,21 +124,13 @@ namespace Assets.NetChan
 
             if (ws.error != null)
             {
-                Debug.LogError($"Error: " + ws.error);
+                _error.OnNext(ws.error);
                 yield break;
             }
 
             // connection success
-            ready.SetValueAndForceNotify(true);
+            readySubject.OnNext(true);
             SendPacket(new ConnectPacket());
-
-            // heartbeat
-            var heartbeatInterval = TimeSpan.FromSeconds(Config.HeartbeatInterval);
-            Observable.Interval(heartbeatInterval).Subscribe(_ =>
-            {
-                var p = new HeartbeatPacket();
-                SendPacket(p);
-            }).AddTo(gameObject);
 
             while (ws != null)
             {
@@ -114,7 +139,7 @@ namespace Assets.NetChan
                 {
                     if (ws.error != null)
                     {
-                        Debug.LogError($"Error: " + ws.error);
+                        _error.OnNext(ws.error);
                     }
 
                     bytes = ws.Recv();
@@ -163,16 +188,18 @@ namespace Assets.NetChan
         {
             Close();
 
-            Debug.Assert(Instance == this);
-            Instance = null;
+            if (Instance == this)
+            {
+                Instance = null;
+            }
         }
 
         public void Close()
         {
-            if (coroutine_start != null)
+            if (loop != null)
             {
-                StopCoroutine(coroutine_start);
-                coroutine_start = null;
+                loop.Dispose();
+                loop = null;
             }
 
             if (ws != null)
