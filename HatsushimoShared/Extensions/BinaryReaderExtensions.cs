@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using Hatsushimo.NetChan;
 
@@ -89,5 +90,23 @@ namespace Hatsushimo.Extensions
                 v[i] = x;
             }
         }
+
+        public static void ReadArray(this BinaryReader r, out int[] arr)
+        {
+            short len = 0;
+            r.Read(out len);
+            if (len == -1)
+            {
+                arr = null;
+                return;
+            }
+
+            arr = new int[len];
+            for (var i = 0; i < len; i++)
+            {
+                r.Read(out arr[i]);
+            }
+        }
+
     }
 }

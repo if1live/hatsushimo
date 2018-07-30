@@ -71,5 +71,22 @@ namespace Hatsushimo.Extensions
                 w.WriteObject(v[i]);
             }
         }
+
+        public static void WriteArray(this BinaryWriter w, int[] arr)
+        {
+            if (arr == null)
+            {
+                w.Write((short)-1);
+                return;
+            }
+
+            short len = (short)arr.Length;
+            w.Write(len);
+
+            for (var i = 0; i < len; i++)
+            {
+                w.Write(arr[i]);
+            }
+        }
     }
 }

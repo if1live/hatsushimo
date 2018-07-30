@@ -239,6 +239,24 @@ namespace HatsushimoServerTest.Extensions
             Assert.Null(b);
         }
 
+        [Fact]
+        public void TestIntArray()
+        {
+            var sw = new MemoryStream();
+            var writer = new BinaryWriter(sw);
+
+            int[] a = new int[] { 1, 2, 3 };
+            writer.WriteArray(a);
+
+            var sr = new MemoryStream(sw.ToArray());
+            var reader = new BinaryReader(sr);
+
+            int[] b = null;
+            reader.ReadArray(out b);
+
+            Assert.Equal(a, b);
+        }
+
         void AssertEqualArray<T>(T[] a, T[] b, IEqualityComparer<T> comp)
         {
             Assert.Equal(a.Length, b.Length);
