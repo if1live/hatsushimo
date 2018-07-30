@@ -29,9 +29,11 @@ namespace Assets.Game
                 var sb = new StringBuilder();
                 foreach (var r in p.Top)
                 {
-                    var player = replication.FindPlayer(r.ID);
-                    Debug.Assert(player != null, $"cannot player id={r.ID}");
-                    sb.AppendLine($"{r.Ranking} name={player.nickname}: id={r.ID} score={r.Score}");
+                    Player player = null;
+                    if (replication.TryGetPlayer(r.ID, out player))
+                    {
+                        sb.AppendLine($"{r.Ranking} name={player.nickname}: id={r.ID} score={r.Score}");
+                    }
                 }
                 sb.AppendLine($"players = {p.Players}");
                 message.text = sb.ToString();

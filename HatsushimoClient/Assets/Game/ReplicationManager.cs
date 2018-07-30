@@ -191,9 +191,9 @@ namespace Assets.Game
             return player;
         }
 
-        public Player FindPlayer(int id)
+        public bool TryGetPlayer(int id, out Player player)
         {
-            return playerTable[id];
+            return playerTable.TryGetValue(id, out player);
         }
 
         void RemovePlayer(int id)

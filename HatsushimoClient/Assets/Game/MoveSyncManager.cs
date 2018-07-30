@@ -25,12 +25,20 @@ namespace Assets.Game
             }).AddTo(this);
         }
 
-        void ApplyMove(MoveNotify move)
+        bool ApplyMove(MoveNotify move)
         {
             // TODO 플레이어 이외에 이동하는게 생기면 분기
+            // 이동 정보 패킷은 immediate로 보내는데
+            // 플레이서 소환 패킷은 lazy로 보낼지도 모른다
+            // 두 패킷의 의존성이 없다고 가정하고 안전하게 예외처리
             var replication = ReplicationManager.Instance;
-            var player = replication.FindPlayer(move.ID);
-            player.ApplyMove(move);
+            Player player = null;
+            if (replication.TryGetPlayer(move.ID, out player))
+            {
+                player.ApplyMove(move);
+                return true;
+            }
+            return false;
         }
 
 
