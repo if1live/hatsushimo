@@ -24,7 +24,19 @@ namespace HatsushimoServer
 
         public override ActorType Type => ActorType.Player;
 
-        public int Score { get; private set; }
+        public int Score
+        {
+            get
+            {
+                var score = 0;
+                score += score_food;
+                score += score_kill;
+                return score;
+            }
+        }
+
+        int score_food = 0;
+        int score_kill = 0;
 
         // skill은 2개면 되겠지?
         public bool SkillPrimary { get; private set; } = true;
@@ -35,7 +47,6 @@ namespace HatsushimoServer
             this.ID = id;
             this.Session = session;
 
-            Score = 0;
             SetPosition(Vec2.Zero);
             TargetPosition = Vec2.Zero;
         }
@@ -51,6 +62,8 @@ namespace HatsushimoServer
             {
                 var diff = next - prev;
                 Direction = diff.Normalize();
+
+                log.Info($"pos={next.X}\t{next.Y}");
             }
 
             Position = next;
@@ -68,9 +81,14 @@ namespace HatsushimoServer
             SetPosition(nextPos);
         }
 
-        public void GainScore(int s)
+        // TODO score 계산 공식은 레벨과 묶여서 복잡해질 가능성이 있으니 분리하기
+        public void GainFoodScore(int score)
         {
-            this.Score += s;
+            score_food += score;
+        }
+        public void GainKillScore(int score)
+        {
+            score_kill += score;
         }
 
         async void RunSkillPrimaryCoolTimer()

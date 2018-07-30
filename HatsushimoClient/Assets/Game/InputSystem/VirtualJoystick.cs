@@ -1,3 +1,6 @@
+using System;
+using UniRx;
+using UniRx.Triggers;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -18,6 +21,20 @@ namespace Assets.Game.InputSystem
             {
                 return _inputVector;
             }
+        }
+
+        public IObservable<Vector3> InputChanged
+        {
+            get; private set;
+        }
+
+        void Start()
+        {
+            InputChanged = gameObject.UpdateAsObservable().Select(_ => {
+                var h = Horizontal();
+                var v = Vertical();
+                return new Vector3(h, v);
+            });
         }
 
         public void OnPointerDown(PointerEventData e)

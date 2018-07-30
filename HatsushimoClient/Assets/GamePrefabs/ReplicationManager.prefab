@@ -20,6 +20,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4204943954263746}
   - component: {fileID: 114935509278271598}
+  - component: {fileID: 114971989019786132}
   m_Layer: 0
   m_Name: ReplicationManager
   m_TagString: Untagged
@@ -57,3 +58,14 @@ MonoBehaviour:
     type: 2}
   prefab_food: {fileID: 114870256049195746, guid: a888e06984912034794adb2c8f7fb707,
     type: 2}
+--- !u!114 &114971989019786132
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1396113893035254}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef5fc60331f2f3d4981a8d96b9522167, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

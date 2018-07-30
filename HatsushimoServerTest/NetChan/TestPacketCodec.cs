@@ -31,6 +31,38 @@ namespace HatsushimoServerTest.NetChan
             Assert.True(ok);
             Assert.Equal(a, b);
         }
+    }
+
+    public class TestPacketSlicer
+    {
+        [Fact]
+        public void TestEmpty()
+        {
+            var reader = new BinaryReader(new MemoryStream(new byte[] { }));
+            var slicer = new PacketSlicer(reader);
+
+            Assert.False(slicer.MoveNext());
+        }
+
+
+        [Fact]
+        public void TestSinglePacket()
+        {
+            var codec = new PacketCodec();
+            var a = new ConnectPacket();
+            var stream = new MemoryStream();
+            var writer = new BinaryWriter(stream);
+            var data = codec.Encode(a);
+
+            var reader = new BinaryReader(new MemoryStream(data));
+            var slicer = new PacketSlicer(reader);
+
+            Assert.True(slicer.MoveNext());
+            Assert.Equal((short)a.Type, slicer.CurrentType);
+            ConnectPacket p;
+            Assert.True(slicer.GetCurrent(out p));
+            Assert.Equal(a, p);
+        }
 
         [Fact]
         public void TestMultiplePacket()
@@ -45,29 +77,27 @@ namespace HatsushimoServerTest.NetChan
             var data = ByteJoin.Combine(codec.Encode(a), codec.Encode(b));
 
             var reader = new BinaryReader(new MemoryStream(data));
+            var slicer = new PacketSlicer(reader);
 
             // 1st packet
             {
-                var type = codec.ReadPacketType(reader);
+                Assert.True(slicer.MoveNext());
                 ConnectPacket p;
-                var ok = codec.TryDecode(type, reader, out p);
-                Assert.True(ok);
+                Assert.True(slicer.GetCurrent(out p));
                 Assert.Equal(a, p);
             }
 
             // 2nd packet
             {
-                var type = codec.ReadPacketType(reader);
+                Assert.True(slicer.MoveNext());
                 DisconnectPacket p;
-                var ok = codec.TryDecode(type, reader, out p);
-                Assert.True(ok);
+                Assert.True(slicer.GetCurrent(out p));
                 Assert.Equal(b, p);
             }
 
             // end of stream
             {
-                var type = codec.ReadPacketType(reader);
-                Assert.Equal((short)PacketType.Invalid, type);
+                Assert.False(slicer.MoveNext());
             }
         }
     }

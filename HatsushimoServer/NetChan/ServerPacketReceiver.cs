@@ -80,11 +80,10 @@ namespace HatsushimoServer.NetChan
         {
             var stream = new MemoryStream(data);
             var reader = new BinaryReader(stream);
-            while (true)
+            var slicer = new PacketSlicer(reader);
+            while(slicer.MoveNext())
             {
-                var type = (PacketType)codec.ReadPacketType(reader);
-                if (type == PacketType.Invalid) { break; }
-                HandlePacket(type, reader, session);
+                HandlePacket((PacketType)slicer.CurrentType, reader, session);
             }
         }
 

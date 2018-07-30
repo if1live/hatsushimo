@@ -11,8 +11,9 @@ namespace Hatsushimo
         public const int FoodCount = 10;
         public const int LeaderboardSize = 5;
 
-        public const int SendRateCoord = 15;
-        public const int SendRateLeaderboard = 15;
+        public const int MoveSyncIntervalMillis = 100;
+        public const int LeaderboardSyncIntervalMillis = 500;
+        public const int GameLoopIntervalMillis = 1000 / 60;
 
         public const float CoolTimeCommandPrimary = 0.3f;
         public const float CoolTimeCommandSecondary = 2;

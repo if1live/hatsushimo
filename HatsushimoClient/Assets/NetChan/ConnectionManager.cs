@@ -155,11 +155,10 @@ namespace Assets.NetChan
 
                 var stream = new MemoryStream(bytes);
                 var reader = new BinaryReader(stream);
-                // 패킷 여러개가 붙어있을지도 모른다
-                while (true)
+                var slicer = new PacketSlicer(reader);
+                while(slicer.MoveNext())
                 {
-                    PacketType type = (PacketType)codec.ReadPacketType(reader);
-                    if (type == PacketType.Invalid) { break; }
+                    var type = (PacketType)slicer.CurrentType;
                     Dispatch(type, reader);
                 }
             }

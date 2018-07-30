@@ -232,7 +232,7 @@ namespace HatsushimoServer
 
                 // 먹은 플레이어는 점수 획득
                 gainedFoods.Select(pair => pair.food).ToList()
-                    .ForEach(food => player.GainScore(food.Score));
+                    .ForEach(food => player.GainFoodScore(food.Score));
 
                 // 모든 플레이어에게 삭제 패킷 보내기
                 gainedFoods.Select(pair => pair.food).ToList()

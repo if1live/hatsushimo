@@ -235,6 +235,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mode: 2
   cooltime: 2
+  buttonName: Fire2
   button: {fileID: 114054160592200792}
 --- !u!114 &114525013354098256
 MonoBehaviour:
@@ -276,6 +277,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mode: 1
   cooltime: 0.3
+  buttonName: Fire1
   button: {fileID: 114357572741656738}
 --- !u!114 &114638408482726266
 MonoBehaviour:

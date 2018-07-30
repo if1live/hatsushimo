@@ -82,7 +82,6 @@ namespace Assets.Game
 
             // 이동 관련 추가 작업이 필요하면 고치기
             Moved.Subscribe(move => {
-                Debug.Log($"pos={move.TargetPos.X} {move.TargetPos.Y}");
                 TargetPos = move.TargetPos.ToVector3();
                 // TODO 이동 계산을 구현하기
                 Speed = 10;

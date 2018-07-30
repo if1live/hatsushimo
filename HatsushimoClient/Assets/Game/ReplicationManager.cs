@@ -65,17 +65,6 @@ namespace Assets.Game
             {
                 HandleReplicationAction(packet);
             }).AddTo(this);
-
-            // TODO 위치 동기화는 역할을 다른곳으로 넘긴다
-            dispatcher.MoveNotify.Received.ObserveOnMainThread().Subscribe(packet =>
-            {
-                foreach (var move in packet.list)
-                {
-                    var player = playerTable[move.ID];
-                    player.ApplyMove(move);
-                }
-
-            }).AddTo(this);
         }
 
         void HandleReplicationAction(ReplicationActionPacket packet)

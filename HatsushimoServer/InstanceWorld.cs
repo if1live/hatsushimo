@@ -39,13 +39,13 @@ namespace HatsushimoServer
             this.ID = id;
             this.room = new Room(id);
 
-            Observable.Interval(TimeSpan.FromMilliseconds(1000 / 60))
+            Observable.Interval(TimeSpan.FromMilliseconds(Config.GameLoopIntervalMillis))
                 .Subscribe(_ => Update());
 
-            Observable.Interval(TimeSpan.FromMilliseconds(1000 / Config.SendRateCoord))
+            Observable.Interval(TimeSpan.FromMilliseconds(Config.MoveSyncIntervalMillis))
                 .Subscribe(_ => NetworkUpdate());
 
-            Observable.Interval(TimeSpan.FromMilliseconds(1000 / Config.SendRateLeaderboard))
+            Observable.Interval(TimeSpan.FromMilliseconds(Config.LeaderboardSyncIntervalMillis))
                 .Subscribe(_ => LeaderboardUpdate());
 
             // handle packet
