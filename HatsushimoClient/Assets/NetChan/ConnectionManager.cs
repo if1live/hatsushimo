@@ -7,6 +7,7 @@ using Hatsushimo.NetChan;
 using Hatsushimo.Packets;
 using System.IO;
 using System.Threading.Tasks;
+using Hatsushimo.Utils;
 
 namespace Assets.NetChan
 {
@@ -36,10 +37,12 @@ namespace Assets.NetChan
             }
         }
 
-        public int SentPerSecond { get { return _sentByteLength; } }
-        public int ReceivedPerSecond { get { return _receivedByteLength; } }
-        int _sentByteLength = 0;
-        int _receivedByteLength = 0;
+
+        readonly BandwidthChecker bandwidth = new BandwidthChecker();
+        public IObservable<int> SentBytes { get {  return _sentBytes.AsObservable(); } }
+        public IObservable<int> ReceivedBytes { get { return _receivedBytes; } }
+        ReactiveProperty<int> _sentBytes = new ReactiveProperty<int>();
+        ReactiveProperty<int> _receivedBytes = new ReactiveProperty<int>();
 
         public IObservable<bool> ReadyObservable
         {
@@ -65,6 +68,15 @@ namespace Assets.NetChan
 
         IEnumerator Start()
         {
+            var bandwidthInterval = TimeSpan.FromMilliseconds(100);
+            Observable.Interval(bandwidthInterval).Subscribe(_ =>
+            {
+                var ts = TimeUtils.NowTimestamp - 1000;
+                bandwidth.Flush(ts);
+                _receivedBytes.SetValueAndForceNotify(bandwidth.GetReceivedBytesPerSeconds(ts));
+                _sentBytes.SetValueAndForceNotify(bandwidth.GetSentBytesPerSecond(ts));
+            }).AddTo(gameObject);
+
             var url = ServerURL;
             Debug.Log($"connect to {url}");
             ws = new WebSocket(new Uri(url));
@@ -102,7 +114,8 @@ namespace Assets.NetChan
                     yield return null;
                 }
 
-                ModifyReceivedSize(bytes.Length);
+                var now = TimeUtils.NowTimestamp;
+                bandwidth.AddReceived(bytes.Length, now);
 
                 var stream = new MemoryStream(bytes);
                 var reader = new BinaryReader(stream);
@@ -162,19 +175,10 @@ namespace Assets.NetChan
         {
             var bytes = codec.Encode(p);
             ws.Send(bytes);
-            ModifySentSize(bytes.Length);
-        }
+            Debug.Log($"send: bytes={bytes.Length}");
 
-        async void ModifySentSize(int s) {
-            _sentByteLength += s;
-            await Task.Delay(TimeSpan.FromSeconds(1));
-            _sentByteLength -= s;
-        }
-
-        async void ModifyReceivedSize(int s) {
-            _receivedByteLength += s;
-            await Task.Delay(TimeSpan.FromSeconds(1));
-            _receivedByteLength -= s;
+            var now = TimeUtils.NowTimestamp;
+            bandwidth.AddSent(bytes.Length, now);
         }
     }
 }

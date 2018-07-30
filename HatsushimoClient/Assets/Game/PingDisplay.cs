@@ -11,6 +11,8 @@ namespace Assets.Game
         public Text pingText = null;
 
         int ping = 9999;
+        int sent = 9999;
+        int received = 9999;
 
         private void Awake()
         {
@@ -20,11 +22,11 @@ namespace Assets.Game
         void Start()
         {
             var checker = PingChecker.Instance;
+            var conn = ConnectionManager.Instance;
 
-            checker.LatencyObservable.Subscribe(latency =>
-            {
-                this.ping = latency;
-            }).AddTo(gameObject);
+            checker.LatencyObservable.Subscribe(v => ping = v).AddTo(gameObject);
+            conn.SentBytes.Subscribe(len => sent = len).AddTo(gameObject);
+            conn.ReceivedBytes.Subscribe(len => received = len).AddTo(gameObject);
         }
 
         void OnEnable()
@@ -45,10 +47,10 @@ namespace Assets.Game
             {
                 var conn = ConnectionManager.Instance;
 
-                var ping = $"ping: {this.ping}ms";
-                var received = $"recv: {conn.ReceivedPerSecond*8}b/s";
-                var sent = $"sent: {conn.SentPerSecond*8}b/s";
-                var msg = string.Join(" ", new string[] { ping, received, sent });
+                var pingStr = $"ping: {this.ping}ms";
+                var receivedStr = $"recv: {received * 8}b/s";
+                var sentStr = $"sent: {sent * 8}b/s";
+                var msg = string.Join(" ", new string[] { pingStr, receivedStr, sentStr });
                 pingText.text = msg;
 
                 yield return null;

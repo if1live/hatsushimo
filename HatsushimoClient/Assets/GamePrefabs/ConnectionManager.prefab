@@ -64,7 +64,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6147ee2f7cc5d444581c206a9e68bb25, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  intervalMillis: 1000
+  intervalMillis: 3000
 --- !u!114 &114757155846392730
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -77,3 +77,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   host: ws://127.0.0.1
+  port: 3000
