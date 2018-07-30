@@ -180,6 +180,8 @@ namespace Assets.NetChan
             if (DispatchPacket(type, reader, dispatcher.WorldLeave)) { return true; }
             if (DispatchPacket(type, reader, dispatcher.PlayerReady)) { return true; }
             if (DispatchPacket(type, reader, dispatcher.Leaderboard)) { return true; }
+            if (DispatchPacket(type, reader, dispatcher.MoveNotify)) { return true; }
+
 
             Debug.Log($"handler not found: packet_type={type}");
             return false;

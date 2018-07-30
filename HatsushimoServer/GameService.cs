@@ -53,8 +53,9 @@ namespace HatsushimoServer
             sessionLayer.WorldLeave.Received.Subscribe(d => HandleWorldLeave(d.Session, d));
 
             sessionLayer.InputCommand.Received.Subscribe(d => EnqueueWorldPacket(d));
-            sessionLayer.InputMove.Received.Subscribe(d => EnqueueWorldPacket(d));
             sessionLayer.PlayerReady.Received.Subscribe(d => EnqueueWorldPacket(d));
+
+            sessionLayer.Move.Received.Subscribe(d => EnqueueWorldPacket(d));
         }
 
         void HandlePing(Session session, PingPacket p)

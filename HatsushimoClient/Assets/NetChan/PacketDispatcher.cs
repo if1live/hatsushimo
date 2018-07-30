@@ -41,6 +41,8 @@ namespace Assets.NetChan
         public readonly PacketObservable<PlayerReadyPacket> PlayerReady = new PacketObservable<PlayerReadyPacket>();
         public readonly PacketObservable<LeaderboardPacket> Leaderboard = new PacketObservable<LeaderboardPacket>();
 
+        public readonly PacketObservable<MoveNotifyPacket> MoveNotify = new PacketObservable<MoveNotifyPacket>();
+
         private void Awake()
         {
             Instance = this;

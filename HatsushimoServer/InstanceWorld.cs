@@ -55,7 +55,7 @@ namespace HatsushimoServer
 
             r.PlayerReady.Received.Subscribe(pair => HandlePlayerReady(pair.Session, pair.Packet));
             r.InputCommand.Received.Subscribe(pair => HandleInputCommand(pair.Session, pair.Packet));
-            r.InputMove.Received.Subscribe(pair => HandleInputMove(pair.Session, pair.Packet));
+            r.Move.Received.Subscribe(pair => HandleMove(pair.Session, pair.Packet));
         }
 
         void Update()
@@ -95,22 +95,17 @@ namespace HatsushimoServer
             var players = new List<Player>();
             room.GetPlayers(ref players);
 
+            // 위치 정보 갱신
             players.ForEach(player =>
             {
-                var actions = players.Select(p => new ReplicationActionPacket()
+                var moves = players.Select(p => new MoveNotify()
                 {
-                    Action = ReplicationAction.Update,
                     ID = p.ID,
-                    ActorType = p.Type,
-                    Pos = p.Position,
                     TargetPos = p.TargetPosition,
-                    Speed = p.Speed,
-                    Extra = "",
                 });
-
-                var packet = new ReplicationBulkActionPacket()
+                var packet = new MoveNotifyPacket()
                 {
-                    Actions = actions.ToArray(),
+                    list = moves.ToArray(),
                 };
                 player.Session.SendImmediate(packet);
             });
@@ -189,7 +184,7 @@ namespace HatsushimoServer
             player.UseSkill(p.Mode);
         }
 
-        void HandleInputMove(Session session, InputMovePacket p)
+        void HandleMove(Session session, MovePacket p)
         {
             var player = GetPlayer(session);
             var speed = 10;

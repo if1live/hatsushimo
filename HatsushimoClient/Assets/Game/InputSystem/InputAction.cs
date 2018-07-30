@@ -32,7 +32,7 @@ namespace Assets.Game.InputSystem
                         Mode = mode,
                     };
                 case InputActionTypes.Move:
-                    return new InputMovePacket
+                    return new MovePacket
                     {
                         TargetPos = new Vec2(target.x, target.y),
                     };

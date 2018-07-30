@@ -23,21 +23,5 @@ namespace Hatsushimo.Packets
     }
 
 
-    public struct InputMovePacket : IPacket
-    {
-        // 속도보다 목표 지점을 보내는게 보정하기 좋다더라
-        public Vec2 TargetPos;
 
-        public short Type => (short)PacketType.InputMove;
-
-        public void Deserialize(BinaryReader r)
-        {
-            r.ReadValue(ref TargetPos);
-        }
-
-        public void Serialize(BinaryWriter w)
-        {
-            w.WriteValue(TargetPos);
-        }
-    }
 }

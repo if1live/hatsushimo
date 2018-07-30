@@ -86,6 +86,24 @@ namespace Hatsushimo.Packets
         }
     }
 
+    // 객체의 ID만 알아도 지울수 있다
+    public struct ReplicationBulkRemovePacket : IPacket
+    {
+        public int[] IDList;
+
+        public short Type => (short)PacketType.ReplicationBulkRemove;
+
+        public void Deserialize(BinaryReader r)
+        {
+            r.ReadArray(out IDList);
+        }
+
+        public void Serialize(BinaryWriter w)
+        {
+            w.WriteArray(IDList);
+        }
+    }
+
     public struct ReplicationActionPacket : IPacket
     {
         public ReplicationAction Action;

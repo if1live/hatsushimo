@@ -94,9 +94,9 @@ namespace HatsushimoServerTest.Packets
         }
 
         [Fact]
-        public void TestInputMovePacket()
+        public void TestMovePacket()
         {
-            var a = new InputMovePacket()
+            var a = new MovePacket()
             {
                 TargetPos = new Vec2(1, 2),
             };

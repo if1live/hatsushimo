@@ -55,7 +55,7 @@ namespace Assets.Game
 
             dispatcher.ReplicationBulk.Received.Subscribe(packet =>
             {
-                foreach(var act in packet.Actions)
+                foreach (var act in packet.Actions)
                 {
                     HandleReplicationAction(act);
                 }
@@ -64,7 +64,18 @@ namespace Assets.Game
             dispatcher.Replication.Received.ObserveOnMainThread().Subscribe(packet =>
             {
                 HandleReplicationAction(packet);
-            });
+            }).AddTo(this);
+
+            // TODO 위치 동기화는 역할을 다른곳으로 넘긴다
+            dispatcher.MoveNotify.Received.ObserveOnMainThread().Subscribe(packet =>
+            {
+                foreach (var move in packet.list)
+                {
+                    var player = playerTable[move.ID];
+                    player.ApplyMove(move);
+                }
+
+            }).AddTo(this);
         }
 
         void HandleReplicationAction(ReplicationActionPacket packet)
@@ -99,7 +110,7 @@ namespace Assets.Game
                 var player = CreatePlayer(id, pos);
                 player.ApplyReplication(packet);
             }
-            else if(packet.ActorType == ActorType.Food)
+            else if (packet.ActorType == ActorType.Food)
             {
                 CreateFood(id, pos);
             }
@@ -110,7 +121,7 @@ namespace Assets.Game
             //Debug.Log($"replicaiton update id={packet.ID}");
 
             var id = packet.ID;
-            if(packet.ActorType == ActorType.Player)
+            if (packet.ActorType == ActorType.Player)
             {
                 var player = playerTable[id];
                 player.ApplyReplication(packet);
@@ -130,7 +141,7 @@ namespace Assets.Game
                 // TODO 자신이 죽는 경우
                 Debug.Log("TODO self remove");
             }
-            else if(playerTable.ContainsKey(id))
+            else if (playerTable.ContainsKey(id))
             {
                 RemovePlayer(id);
             }

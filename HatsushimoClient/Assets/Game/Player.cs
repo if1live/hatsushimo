@@ -15,7 +15,8 @@ namespace Assets.Game
         public Vector3 TargetPos;
         public float Speed;
 
-        public bool IsOwner {
+        public bool IsOwner
+        {
             get
             {
                 var info = ConnectionInfo.Info;
@@ -24,18 +25,27 @@ namespace Assets.Game
             }
         }
 
-        IObservable<ReplicationActionPacket> ReplicationReceived {
+        IObservable<ReplicationActionPacket> ReplicationReceived
+        {
             get { return replication.Skip(1).AsObservable(); }
         }
         ReactiveProperty<ReplicationActionPacket> replication = new ReactiveProperty<ReplicationActionPacket>();
 
-        IObservable<PlayerInitial> InitialReceived {
+        IObservable<PlayerInitial> InitialReceived
+        {
             get { return initial.Skip(1).AsObservable(); }
         }
         ReactiveProperty<PlayerInitial> initial = new ReactiveProperty<PlayerInitial>();
 
+        IObservable<MoveNotify> Moved
+        {
+            get { return moved.Skip(1).AsObservable(); }
+        }
+        ReactiveProperty<MoveNotify> moved = new ReactiveProperty<MoveNotify>();
+
         public void ApplyReplication(ReplicationActionPacket p) { replication.Value = p; }
         public void ApplyInitial(PlayerInitial p) { initial.Value = p; }
+        public void ApplyMove(MoveNotify m) { moved.Value = m; }
 
 
         private void Start()
@@ -56,7 +66,7 @@ namespace Assets.Game
                     var pos = packet.Pos.ToVector3();
                     transform.position = pos;
                 }
-                
+
             }).AddTo(this);
 
             InitialReceived.Subscribe(packet =>
@@ -67,7 +77,15 @@ namespace Assets.Game
 
                 var pos = packet.Pos.ToVector3();
                 transform.position = pos;
-                
+
+            }).AddTo(this);
+
+            // 이동 관련 추가 작업이 필요하면 고치기
+            Moved.Subscribe(move => {
+                Debug.Log($"pos={move.TargetPos.X} {move.TargetPos.Y}");
+                TargetPos = move.TargetPos.ToVector3();
+                // TODO 이동 계산을 구현하기
+                Speed = 10;
             }).AddTo(this);
         }
     }
