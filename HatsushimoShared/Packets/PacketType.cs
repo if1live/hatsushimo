@@ -2,6 +2,8 @@ namespace Hatsushimo.Packets
 {
     public enum PacketType
     {
+        Invalid = 0,
+
         Connect = 1,
         Disconnect,
 

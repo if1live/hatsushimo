@@ -3,6 +3,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Reactive;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using Hatsushimo.NetChan;
 using Hatsushimo.Packets;
@@ -42,6 +44,10 @@ namespace HatsushimoServer.NetChan
             this.transport = transport;
             this.Nickname = DefaultNickname;
             RefreshHeartbeat();
+
+            // TODO unsubscribe? dispose?
+            var flushInterval = TimeSpan.FromMilliseconds(300);
+            Observable.Interval(flushInterval).Subscribe(_ => Flush());
         }
 
         public void RefreshHeartbeat()
@@ -49,12 +55,41 @@ namespace HatsushimoServer.NetChan
             LastHeartbeatTimestamp = TimeUtils.NowTimestamp;
         }
 
-        public bool Send<T>(T p) where T : IPacket
+        public bool SendImmediate<T>(T p) where T : IPacket
         {
             if (State != SessionState.Connected) { return false; }
             var bytes = codec.Encode(p);
             transport.Send(bytes);
             return true;
+        }
+
+        // 즉시 처리할 보낼 필요 없는 패킷을 모아서 한번에 보내기
+        readonly List<byte[]> queue = new List<byte[]>();
+        readonly Object lockobj = new Object();
+
+        public bool SendLazy<T>(T p) where T : IPacket
+        {
+            if (State != SessionState.Connected) { return false; }
+            var bytes = codec.Encode(p);
+            lock (lockobj)
+            {
+                queue.Add(bytes);
+            }
+            return true;
+        }
+
+        void Flush()
+        {
+            List<byte[]> cloned = null;
+            lock (lockobj)
+            {
+                if (queue.Count == 0) { return; }
+                cloned = new List<byte[]>(queue);
+                queue.Clear();
+            }
+
+            var bulk = ByteJoin.Combine(cloned);
+            transport.Send(bulk);
         }
 
         public void CloseTransport()

@@ -80,30 +80,44 @@ namespace HatsushimoServer.NetChan
         {
             var stream = new MemoryStream(data);
             var reader = new BinaryReader(stream);
-            var type = (PacketType)codec.ReadPacketType(reader);
-
-            // 패킷 추가되면 핸들러 추가
-            if (HandlePacket<ConnectPacket>(type, data, Connect, session)) { return; }
-            if (HandlePacket<DisconnectPacket>(type, data, Disconnect, session)) { return; }
-            if (HandlePacket<PingPacket>(type, data, Ping, session)) { return; }
-            if (HandlePacket<HeartbeatPacket>(type, data, Heartbeat, session)) { return; }
-            if (HandlePacket<SignUpPacket>(type, data, SignUp, session)) { return; }
-            if (HandlePacket<AuthenticationPacket>(type, data, Authentication, session)) { return; }
-            if (HandlePacket<InputCommandPacket>(type, data, InputCommand, session)) { return; }
-            if (HandlePacket<InputMovePacket>(type, data, InputMove, session)) { return; }
-            if (HandlePacket<WorldJoinPacket>(type, data, WorldJoin, session)) { return; }
-            if (HandlePacket<WorldLeavePacket>(type, data, WorldLeave, session)) { return; }
-            if (HandlePacket<PlayerReadyPacket>(type, data, PlayerReady, session)) { return; }
-
-            log.Error($"handle not exist: packet={type}");
+            while (true)
+            {
+                var type = (PacketType)codec.ReadPacketType(reader);
+                if (type == PacketType.Invalid) { break; }
+                HandlePacket(type, reader, session);
+            }
         }
 
-        bool HandlePacket<TPacket>(PacketType type, byte[] data, PacketObservable<TPacket> subject, Session session)
+        bool HandlePacket(PacketType type, BinaryReader reader, Session session)
+        {
+            // 패킷 추가되면 핸들러 추가
+            if (HandlePacket<ConnectPacket>(type, reader, Connect, session)) { return true; }
+            if (HandlePacket<DisconnectPacket>(type, reader, Disconnect, session)) { return true; }
+            if (HandlePacket<PingPacket>(type, reader, Ping, session)) { return true; }
+            if (HandlePacket<HeartbeatPacket>(type, reader, Heartbeat, session)) { return true; }
+            if (HandlePacket<SignUpPacket>(type, reader, SignUp, session)) { return true; }
+            if (HandlePacket<AuthenticationPacket>(type, reader, Authentication, session)) { return true; }
+            if (HandlePacket<InputCommandPacket>(type, reader, InputCommand, session)) { return true; }
+            if (HandlePacket<InputMovePacket>(type, reader, InputMove, session)) { return true; }
+            if (HandlePacket<WorldJoinPacket>(type, reader, WorldJoin, session)) { return true; }
+            if (HandlePacket<WorldLeavePacket>(type, reader, WorldLeave, session)) { return true; }
+            if (HandlePacket<PlayerReadyPacket>(type, reader, PlayerReady, session)) { return true; }
+
+            log.Error($"handle not exist: packet={type}");
+            return false;
+        }
+
+        bool HandlePacket<TPacket>(PacketType type, BinaryReader reader, PacketObservable<TPacket> subject, Session session)
         where TPacket : IPacket, new()
         {
             TPacket p = new TPacket();
             if (type == (PacketType)p.Type)
             {
+                // binary를 필요한 범위로 자르는 간단한 방법은 직렬화 쓰는거
+                // 패킷 내용에 따라서 패킷의 길이가 바뀔수 있기때문에
+                // decode-encode하는게 제일 무난하다
+                codec.TryDecode((short)type, reader, out p);
+                var data = codec.Encode(p);
                 subject.OnNext(new ReceivedPacket<TPacket>(session, data));
                 return true;
             }

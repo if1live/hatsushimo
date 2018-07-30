@@ -27,7 +27,14 @@ namespace Hatsushimo.NetChan
 
         public short ReadPacketType(BinaryReader reader)
         {
-            return reader.ReadInt16();
+            try
+            {
+                return reader.ReadInt16();
+            }
+            catch (EndOfStreamException)
+            {
+                return 0;
+            }
         }
 
         public bool TryDecode<T>(short type, BinaryReader reader, out T packet) where T : IPacket, new()

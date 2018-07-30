@@ -102,19 +102,19 @@ class AutoClient : MonoBehaviour
         var welcome = await Recv<WelcomePacket>();
         HandleWelcome(welcome);
 
-        conn.SendPacket(new PingPacket() { millis = this.ping });
+        conn.SendImmediate(new PingPacket() { millis = this.ping });
         var ping = await Recv<PingPacket>();
         HandlePing(ping);
 
-        conn.SendPacket(new SignUpPacket() { Uuid = botUuid });
+        conn.SendImmediate(new SignUpPacket() { Uuid = botUuid });
         var signup = await Recv<SignUpResultPacket>();
         HandleSignUp(signup);
 
-        conn.SendPacket(new AuthenticationPacket() { Uuid = botUuid });
+        conn.SendImmediate(new AuthenticationPacket() { Uuid = botUuid });
         var auth = await Recv<AuthenticationResultPacket>();
         HandleAuthentication(auth);
 
-        conn.SendPacket(new WorldJoinPacket()
+        conn.SendImmediate(new WorldJoinPacket()
         {
             WorldID = worldID,
             Nickname = nickname,
@@ -122,17 +122,17 @@ class AutoClient : MonoBehaviour
         var join = await Recv<WorldJoinResultPacket>();
         HandleWorldJoin(join);
 
-        conn.SendPacket(new PlayerReadyPacket());
+        conn.SendImmediate(new PlayerReadyPacket());
         var ready = await Recv<PlayerReadyPacket>();
         HandlePlayerReady(ready);
 
         // TODO game loop 테스트 구현?
 
-        conn.SendPacket(new WorldLeavePacket());
+        conn.SendImmediate(new WorldLeavePacket());
         var leave = await Recv<WorldLeaveResultPacket>();
         HandleWorldLeave(leave);
 
-        conn.SendPacket(new DisconnectPacket());
+        conn.SendImmediate(new DisconnectPacket());
         var disconnect = await Recv<DisconnectPacket>();
         HandleDisconnect(disconnect);
 
@@ -143,19 +143,20 @@ class AutoClient : MonoBehaviour
     async Task<TPacket> Recv<TPacket>() where TPacket : IPacket, new()
     {
         var dummy = new TPacket();
-        var expectedType = dummy.Type;
+        var expectedType = (PacketType)dummy.Type;
         var tryCount = 100;
         for (int i = 0; i < tryCount; i++)
         {
             while (queue.Count > 0)
             {
                 var packet = queue.Dequeue();
-                if (packet.Type == expectedType)
+                var t = (PacketType)packet.Type;
+                if (t == expectedType)
                 {
                     return (TPacket)packet;
                 }
             }
-            await Task.Delay(TimeSpan.FromMilliseconds(10));
+            await Task.Delay(TimeSpan.FromMilliseconds(100));
         }
         Debug.Assert(false, $"timeout : expected packet type: {expectedType}");
         return dummy;

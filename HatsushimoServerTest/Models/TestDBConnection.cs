@@ -2,6 +2,7 @@ using System;
 using HatsushimoServer.Models;
 using Xunit;
 
+/*
 [assembly: CollectionBehavior(MaxParallelThreads = 1)]
 namespace HatsushimoServerTest.Models
 {
@@ -59,3 +60,4 @@ namespace HatsushimoServerTest.Models
     }
 
 }
+*/

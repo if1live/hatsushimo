@@ -52,7 +52,7 @@ namespace Assets.Game.InputSystem
             // TODO command가 한 프레임에 2개 발생하면 어떻게 처리되는가? 스트림이 알아서 잘 해주나?
             CommandObservable.Subscribe(action =>
             {
-                mgr.SendPacket(action.ToPacket());
+                mgr.SendImmediate(action.ToPacket());
             });
 
             // 이동 명령은 적당한 주기로 처리하기
@@ -63,7 +63,7 @@ namespace Assets.Game.InputSystem
                 .DistinctUntilChanged()
                 .AsObservable().Subscribe(action =>
                 {
-                    mgr.SendPacket(action.ToPacket());
+                    mgr.SendImmediate(action.ToPacket());
                 });
         }
     }

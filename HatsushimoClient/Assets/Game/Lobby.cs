@@ -57,7 +57,7 @@ namespace Assets.Game
                 {
                     Uuid = UUID,
                 };
-                conn.SendPacket(p);
+                conn.SendImmediate(p);
 
                 // 중복 클릭 방지
                 joinButton.interactable = false;
@@ -74,7 +74,7 @@ namespace Assets.Game
                 };
 
                 var conn = ConnectionManager.Instance;
-                conn.SendPacket(auth);
+                conn.SendImmediate(auth);
             }).AddTo(this);
 
             dispatcher.Authentication.Received.ObserveOnMainThread().Subscribe(p =>
@@ -90,7 +90,7 @@ namespace Assets.Game
                     };
 
                     var conn = ConnectionManager.Instance;
-                    conn.SendPacket(join);
+                    conn.SendImmediate(join);
                 }
             }).AddTo(this);
 

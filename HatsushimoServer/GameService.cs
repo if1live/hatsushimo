@@ -60,7 +60,7 @@ namespace HatsushimoServer
         void HandlePing(Session session, PingPacket p)
         {
             log.Debug($"ping packet received : {p.millis}");
-            session.Send(p);
+            session.SendImmediate(p);
         }
 
         void HandleHeartbeat(Session session, HeartbeatPacket p)
@@ -77,7 +77,7 @@ namespace HatsushimoServer
                 Version = Config.Version,
             };
             log.Info($"connected: welcome id={session.ID}");
-            session.Send(welcome);
+            session.SendLazy(welcome);
         }
 
         void HandleDisconnect(Session session, DisconnectPacket p)
@@ -104,7 +104,7 @@ namespace HatsushimoServer
 
             log.Info($"disconnect: id={session.ID}");
             var disconnect = new DisconnectPacket();
-            session.Send(disconnect);
+            session.SendLazy(disconnect);
 
             // 연결 끊어도 된다는 표시 해두기. 언제 끊어도 상관 없어야한다
             NetworkStack.Session.CloseSessionActive(session);
@@ -114,7 +114,7 @@ namespace HatsushimoServer
         {
             var user = await conn.GetOrCreateUser(packet.Uuid);
             var result = new SignUpResultPacket() { ResultCode = 0 };
-            session.Send(result);
+            session.SendLazy(result);
         }
 
         async void HandleAuthentication(Session session, AuthenticationPacket packet)
@@ -125,13 +125,13 @@ namespace HatsushimoServer
                 session.UserID = user.ID;
                 log.Info($"authentication: uuid={packet.Uuid} user_id={session.UserID}");
                 var result = new AuthenticationResultPacket() { ResultCode = 0 };
-                session.Send(result);
+                session.SendLazy(result);
             });
             option.MatchNone(() =>
             {
                 log.Info($"authentication: uuid={packet.Uuid} not found");
                 var notFound = new AuthenticationResultPacket() { ResultCode = -1 };
-                session.Send(notFound);
+                session.SendLazy(notFound);
             });
         }
 

@@ -85,7 +85,7 @@ namespace HatsushimoServer
                 var packet = newLeaderboard.GenerateLeaderboardPacket();
                 players.ForEach(player =>
                 {
-                    player.Session.Send(packet);
+                    player.Session.SendLazy(packet);
                 });
             }
         }
@@ -112,7 +112,7 @@ namespace HatsushimoServer
                 {
                     Actions = actions.ToArray(),
                 };
-                player.Session.Send(packet);
+                player.Session.SendImmediate(packet);
             });
         }
 
@@ -165,7 +165,7 @@ namespace HatsushimoServer
                 WorldID = ID,
                 Nickname = session.Nickname,
             };
-            session.Send(resp);
+            session.SendLazy(resp);
         }
 
         void HandleLeaveReq(Session session, WorldLeavePacket p)
@@ -180,7 +180,7 @@ namespace HatsushimoServer
             {
                 PlayerID = session.ID,
             };
-            player.Session.Send(resp);
+            player.Session.SendLazy(resp);
         }
 
         void HandleInputCommand(Session session, InputCommandPacket p)
@@ -204,7 +204,7 @@ namespace HatsushimoServer
         {
             var player = GetPlayer(session);
             room.SpawnPlayer(player);
-            player.Session.Send(leaderboard.GenerateLeaderboardPacket());
+            player.Session.SendImmediate(leaderboard.GenerateLeaderboardPacket());
         }
     }
 }

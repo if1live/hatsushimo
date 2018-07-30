@@ -33,7 +33,7 @@ namespace Assets.Game
                 statusText.text = msg;
             }).AddTo(this);
 
-            mgr.SendPacket(new PlayerReadyPacket());
+            mgr.SendImmediate(new PlayerReadyPacket());
         }
 
         private void OnDestroy()

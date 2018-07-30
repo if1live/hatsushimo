@@ -9,6 +9,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Hatsushimo.Utils;
 using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 namespace Assets.NetChan
 {
@@ -89,8 +90,11 @@ namespace Assets.NetChan
             var heartbeatInterval = TimeSpan.FromSeconds(Config.HeartbeatInterval);
             Observable.Interval(heartbeatInterval).SkipUntil(ReadyObservable).Subscribe(_ =>
             {
-                SendPacket(new HeartbeatPacket());
+                SendImmediate(new HeartbeatPacket());
             }).AddTo(this);
+
+            var flushInterval = TimeSpan.FromMilliseconds(300);
+            Observable.Interval(flushInterval).SkipUntil(ReadyObservable).Subscribe(_ => Flush()).AddTo(this);
 
             ErrorRaised.Subscribe(msg =>
             {
@@ -130,7 +134,7 @@ namespace Assets.NetChan
 
             // connection success
             readySubject.OnNext(true);
-            SendPacket(new ConnectPacket());
+            SendImmediate(new ConnectPacket());
 
             while (ws != null)
             {
@@ -151,24 +155,34 @@ namespace Assets.NetChan
 
                 var stream = new MemoryStream(bytes);
                 var reader = new BinaryReader(stream);
-                var type = (PacketType)codec.ReadPacketType(reader);
-
-                var dispatcher = PacketDispatcher.Instance;
-                if (DispatchPacket(type, reader, dispatcher.Ping)) { continue; }
-                if (DispatchPacket(type, reader, dispatcher.Welcome)) { continue; }
-                if (DispatchPacket(type, reader, dispatcher.Disconnect)) { continue; }
-                if (DispatchPacket(type, reader, dispatcher.SignUp)) { continue; }
-                if (DispatchPacket(type, reader, dispatcher.Authentication)) { continue; }
-                if (DispatchPacket(type, reader, dispatcher.ReplicationAll)) { continue; }
-                if (DispatchPacket(type, reader, dispatcher.Replication)) { continue; }
-                if (DispatchPacket(type, reader, dispatcher.ReplicationBulk)) { continue; }
-                if (DispatchPacket(type, reader, dispatcher.WorldJoin)) { continue; }
-                if (DispatchPacket(type, reader, dispatcher.WorldLeave)) { continue; }
-                if (DispatchPacket(type, reader, dispatcher.PlayerReady)) { continue; }
-                if (DispatchPacket(type, reader, dispatcher.Leaderboard)) { continue; }
-
-                Debug.Log($"handler not found: packet_type={type}");
+                // 패킷 여러개가 붙어있을지도 모른다
+                while (true)
+                {
+                    PacketType type = (PacketType)codec.ReadPacketType(reader);
+                    if (type == PacketType.Invalid) { break; }
+                    Dispatch(type, reader);
+                }
             }
+        }
+
+        bool Dispatch(PacketType type, BinaryReader reader)
+        {
+            var dispatcher = PacketDispatcher.Instance;
+            if (DispatchPacket(type, reader, dispatcher.Ping)) { return true; }
+            if (DispatchPacket(type, reader, dispatcher.Welcome)) { return true; }
+            if (DispatchPacket(type, reader, dispatcher.Disconnect)) { return true; }
+            if (DispatchPacket(type, reader, dispatcher.SignUp)) { return true; }
+            if (DispatchPacket(type, reader, dispatcher.Authentication)) { return true; }
+            if (DispatchPacket(type, reader, dispatcher.ReplicationAll)) { return true; }
+            if (DispatchPacket(type, reader, dispatcher.Replication)) { return true; }
+            if (DispatchPacket(type, reader, dispatcher.ReplicationBulk)) { return true; }
+            if (DispatchPacket(type, reader, dispatcher.WorldJoin)) { return true; }
+            if (DispatchPacket(type, reader, dispatcher.WorldLeave)) { return true; }
+            if (DispatchPacket(type, reader, dispatcher.PlayerReady)) { return true; }
+            if (DispatchPacket(type, reader, dispatcher.Leaderboard)) { return true; }
+
+            Debug.Log($"handler not found: packet_type={type}");
+            return false;
         }
 
         bool DispatchPacket<TPacket>(PacketType type, BinaryReader reader, PacketObservable<TPacket> subject)
@@ -204,7 +218,7 @@ namespace Assets.NetChan
 
             if (ws != null)
             {
-                SendPacket(new DisconnectPacket());
+                SendImmediate(new DisconnectPacket());
 
                 ws.Close();
                 ws = null;
@@ -212,11 +226,28 @@ namespace Assets.NetChan
         }
 
 
-        public void SendPacket<T>(T p) where T : IPacket
+        public void SendImmediate<T>(T p) where T : IPacket
         {
             var bytes = codec.Encode(p);
             ws.Send(bytes);
 
+            var now = TimeUtils.NowTimestamp;
+            bandwidth.AddSent(bytes.Length, now);
+        }
+
+        readonly List<byte[]> queue = new List<byte[]>();
+        public void SendLazy<T>(T p) where T : IPacket
+        {
+            var bytes = codec.Encode(p);
+            queue.Add(bytes);
+        }
+
+        public void Flush()
+        {
+            var bytes = ByteJoin.Combine(queue);
+            queue.Clear();
+
+            ws.Send(bytes);
             var now = TimeUtils.NowTimestamp;
             bandwidth.AddSent(bytes.Length, now);
         }

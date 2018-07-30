@@ -69,7 +69,7 @@ namespace Assets.NetChan
             {
                 millis = TimeUtils.NowMillis,
             };
-            mgr.SendPacket(p);
+            mgr.SendImmediate(p);
         }
 
         void HandlePing(PingPacket p)

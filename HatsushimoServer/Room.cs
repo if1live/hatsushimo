@@ -64,17 +64,17 @@ namespace HatsushimoServer
             }
 
             // 신규 유저에게 월드 정보 알려주기
-            player.Session.Send(GenerateReplicaitonAllPacket());
+            player.Session.SendImmediate(GenerateReplicaitonAllPacket());
 
             // 접속한 유저에게 완료 신호 보냄
             // 게임 로직을 돌릴수 있다는 신호임
-            player.Session.Send(new PlayerReadyPacket());
+            player.Session.SendImmediate(new PlayerReadyPacket());
 
             // 기존 유저들에게 새로 생성된 플레이어 정보를 알려주기
             var spawnPacket = player.GenerateCreatePacket();
             prevPlayers.ForEach(p =>
             {
-                p.Session.Send(spawnPacket);
+                p.Session.SendLazy(spawnPacket);
             });
 
             log.Info($"ready room: id={player.ID} room={ID} size={players.Count}");
@@ -113,7 +113,7 @@ namespace HatsushimoServer
             var removePacket = player.GenerateRemovePacket();
             this.players.Where(p => p != player).ToList().ForEach(p =>
             {
-                p.Session.Send(removePacket);
+                p.Session.SendLazy(removePacket);
             });
 
             log.Info($"leave room: id={player.ID} room={ID} size={players.Count}");
@@ -183,7 +183,7 @@ namespace HatsushimoServer
             players.ForEach(p =>
             {
                 var session = p.Session;
-                session.Send(packet);
+                session.SendLazy(packet);
             });
         }
 
@@ -193,7 +193,7 @@ namespace HatsushimoServer
             {
                 var packet = food.GenerateRemovePacket();
                 var session = p.Session;
-                session.Send(packet);
+                session.SendLazy(packet);
                 log.Info($"sent food remove packet: {packet.ID}");
             });
         }

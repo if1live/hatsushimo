@@ -40,7 +40,7 @@ namespace HatsushimoServer.NetChan
             // 소켓이 닫히는건 아래쪽 레이어에서 감지한다
             // 상위레이어로 소켓이 닫혔다는걸 알려주기
             var p = new DisconnectPacket();
-            session.Send(p);
+            session.SendImmediate(p);
 
             NetworkStack.Session.CloseSessionPassive(session);
             session = null;

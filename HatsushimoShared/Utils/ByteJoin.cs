@@ -5,7 +5,7 @@ using System.Linq;
 namespace Hatsushimo.Utils
 {
     // https://stackoverflow.com/questions/415291/best-way-to-combine-two-or-more-byte-arrays-in-c-sharp
-    class ByteJoin
+    public class ByteJoin
     {
         public static byte[] Combine(byte[] first, byte[] second)
         {
