@@ -42,7 +42,7 @@ namespace HatsushimoServer.NetChan
             var p = new DisconnectPacket();
             session.Send(p);
 
-            NetworkStack.Session.CloseSession(session);
+            NetworkStack.Session.CloseSessionPassive(session);
             session = null;
         }
 

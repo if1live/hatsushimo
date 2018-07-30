@@ -82,6 +82,12 @@ namespace HatsushimoServer
 
         void HandleDisconnect(Session session, DisconnectPacket p)
         {
+            if (session.State == SessionState.Disconnected)
+            {
+                log.Info($"already disconnected: id={session.ID}");
+                return;
+            }
+
             // 연결 종료는 소켓이 끊어질떄도 있고
             // 유저가 직접 종료시키는 경우도 있다
             // disconnect를 여러번 호출해도 꺠지지 않도록 하자
@@ -96,8 +102,12 @@ namespace HatsushimoServer
                 HandleWorldLeave(session, pair);
             }
 
-            log.Info($"disconnected: id={session.ID}");
-            NetworkStack.Session.RemoveSessionWithLock(session);
+            log.Info($"disconnect: id={session.ID}");
+            var disconnect = new DisconnectPacket();
+            session.Send(disconnect);
+
+            // 연결 끊어도 된다는 표시 해두기. 언제 끊어도 상관 없어야한다
+            NetworkStack.Session.CloseSessionActive(session);
         }
 
         async void HandleSignUp(Session session, SignUpPacket packet)

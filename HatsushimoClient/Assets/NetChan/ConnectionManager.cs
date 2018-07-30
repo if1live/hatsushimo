@@ -39,7 +39,7 @@ namespace Assets.NetChan
 
 
         readonly BandwidthChecker bandwidth = new BandwidthChecker();
-        public IObservable<int> SentBytes { get {  return _sentBytes.AsObservable(); } }
+        public IObservable<int> SentBytes { get { return _sentBytes.AsObservable(); } }
         public IObservable<int> ReceivedBytes { get { return _receivedBytes; } }
         ReactiveProperty<int> _sentBytes = new ReactiveProperty<int>();
         ReactiveProperty<int> _receivedBytes = new ReactiveProperty<int>();
@@ -66,7 +66,7 @@ namespace Assets.NetChan
             }
         }
 
-        IEnumerator Start()
+        void Start()
         {
             var bandwidthInterval = TimeSpan.FromMilliseconds(100);
             Observable.Interval(bandwidthInterval).Subscribe(_ =>
@@ -77,6 +77,13 @@ namespace Assets.NetChan
                 _sentBytes.SetValueAndForceNotify(bandwidth.GetSentBytesPerSecond(ts));
             }).AddTo(gameObject);
 
+            coroutine_start = StartCoroutine(BeginStart());
+        }
+
+        Coroutine coroutine_start;
+
+        IEnumerator BeginStart()
+        {
             var url = ServerURL;
             Debug.Log($"connect to {url}");
             ws = new WebSocket(new Uri(url));
@@ -124,6 +131,7 @@ namespace Assets.NetChan
                 var dispatcher = PacketDispatcher.Instance;
                 if (DispatchPacket(type, reader, dispatcher.Ping)) { continue; }
                 if (DispatchPacket(type, reader, dispatcher.Welcome)) { continue; }
+                if (DispatchPacket(type, reader, dispatcher.Disconnect)) { continue; }
                 if (DispatchPacket(type, reader, dispatcher.SignUp)) { continue; }
                 if (DispatchPacket(type, reader, dispatcher.Authentication)) { continue; }
                 if (DispatchPacket(type, reader, dispatcher.ReplicationAll)) { continue; }
@@ -161,6 +169,12 @@ namespace Assets.NetChan
 
         public void Close()
         {
+            if (coroutine_start != null)
+            {
+                StopCoroutine(coroutine_start);
+                coroutine_start = null;
+            }
+
             if (ws != null)
             {
                 SendPacket(new DisconnectPacket());
@@ -175,7 +189,6 @@ namespace Assets.NetChan
         {
             var bytes = codec.Encode(p);
             ws.Send(bytes);
-            Debug.Log($"send: bytes={bytes.Length}");
 
             var now = TimeUtils.NowTimestamp;
             bandwidth.AddSent(bytes.Length, now);

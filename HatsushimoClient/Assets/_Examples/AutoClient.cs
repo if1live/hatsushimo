@@ -4,135 +4,88 @@ using Assets.NetChan;
 using Hatsushimo;
 using Hatsushimo.Packets;
 using UnityEditor;
-
-enum AutoClientState
-{
-    Init,
-
-    WelcomeReceived,
-
-    PingSent,
-    PingReceived,
-
-    SignUpSent,
-    SignUpReceived,
-
-    AuthenticationSent,
-    AuthenticationReceived,
-
-    WorldJoinSent,
-    WorldJoinReceived,
-
-    InGame,
-
-    WorldLeaveSent,
-    WorldLeaveReceived,
-
-    // TODO
-    // 명시적인 disconnect
-
-    PlayerReadySent,
-    PlayerReadyReceived,
-
-    //LeaderboardReceived,
-
-    Finished,
-}
+using System.Threading.Tasks;
+using Hatsushimo.NetChan;
+using System.Collections.Generic;
+using System;
 
 class AutoClient : MonoBehaviour
 {
-    AutoClientState state = AutoClientState.Init;
-
     int ping = 1234;
     string botUuid = "bot-uuid";
     string worldID = "default";
     string nickname = "bot-nick";
 
+    void HandleWelcome(WelcomePacket p)
+    {
+        Debug.Assert(p.Version == Config.Version);
+    }
+
+    void HandlePing(PingPacket p)
+    {
+        Debug.Assert(p.millis == ping);
+    }
+
+    void HandleSignUp(SignUpResultPacket p)
+    {
+        Debug.Assert(0 == p.ResultCode);
+    }
+
+    void HandleAuthentication(AuthenticationResultPacket p)
+    {
+        Debug.Assert(0 == p.ResultCode);
+    }
+
+    void HandleWorldJoin(WorldJoinResultPacket p)
+    {
+        Debug.Assert(nickname == p.Nickname);
+        Debug.Assert(worldID == p.WorldID);
+    }
+
+    void HandleWorldLeave(WorldLeaveResultPacket p)
+    {
+    }
+
+    void HandlePlayerReady(PlayerReadyPacket p)
+    {
+    }
+
+    void HandleDisconnect(DisconnectPacket p)
+    {
+    }
+
+    readonly Queue<IPacket> queue = new Queue<IPacket>();
+
     void RegisterHandler()
     {
-        var dispatcher = PacketDispatcher.Instance;
-        dispatcher.Welcome.Received.ObserveOnMainThread().Subscribe(p =>
-        {
-            Debug.Log("test welcome");
-            Debug.Assert(state == AutoClientState.Init);
-            Debug.Assert(p.Version == Config.Version);
-            state = AutoClientState.WelcomeReceived;
-        }).AddTo(gameObject);
+        var d = PacketDispatcher.Instance;
+        RegisterHandler(d.Welcome);
+        RegisterHandler(d.Ping);
+        RegisterHandler(d.Disconnect);
+        RegisterHandler(d.SignUp);
+        RegisterHandler(d.Authentication);
+        RegisterHandler(d.WorldJoin);
+        RegisterHandler(d.WorldLeave);
+        RegisterHandler(d.PlayerReady);
+    }
 
-        dispatcher.Ping.Received.ObserveOnMainThread().Subscribe(p =>
-        {
-            Debug.Log("test ping");
-            Debug.Assert(state == AutoClientState.PingSent);
-            Debug.Assert(p.millis == ping);
-            state = AutoClientState.PingReceived;
-        }).AddTo(gameObject);
-
-        dispatcher.SignUp.Received.ObserveOnMainThread().Subscribe(p =>
-        {
-            Debug.Log("test sign up");
-            Debug.Assert(state == AutoClientState.SignUpSent);
-            Debug.Assert(0 == p.ResultCode);
-            state = AutoClientState.SignUpReceived;
-        }).AddTo(gameObject);
-        dispatcher.Authentication.Received.ObserveOnMainThread().Subscribe(p =>
-        {
-            Debug.Log("test authentication");
-            Debug.Assert(state == AutoClientState.AuthenticationSent);
-            Debug.Assert(0 == p.ResultCode);
-            state = AutoClientState.AuthenticationReceived;
-        }).AddTo(gameObject);
-
-        // dispatcher.Replication.Received.ObserveOnMainThread().Subscribe(p =>
-        // {
-        //     Debug.Log("test replication?");
-        // }).AddTo(gameObject);
-        // dispatcher.ReplicationAll.Received.ObserveOnMainThread().Subscribe(p =>
-        // {
-        //     Debug.Log("test replication all?");
-        // }).AddTo(gameObject);
-        // dispatcher.ReplicationBulk.Received.ObserveOnMainThread().Subscribe(p =>
-        // {
-        //     Debug.Log("replication bulk?");
-        // }).AddTo(gameObject);
-
-        dispatcher.WorldJoin.Received.ObserveOnMainThread().Subscribe(p =>
-        {
-            Debug.Log("test world join");
-            Debug.Assert(state == AutoClientState.WorldJoinSent);
-            Debug.Assert(nickname == p.Nickname);
-            Debug.Assert(worldID == p.WorldID);
-            state = AutoClientState.WorldJoinReceived;
-        }).AddTo(gameObject);
-        dispatcher.WorldLeave.Received.ObserveOnMainThread().Subscribe(p =>
-        {
-            Debug.Log("test world leave");
-            Debug.Assert(state == AutoClientState.WorldLeaveSent);
-            state = AutoClientState.WorldLeaveReceived;
-        }).AddTo(gameObject);
-
-        dispatcher.PlayerReady.Received.ObserveOnMainThread().Subscribe(p =>
-        {
-            Debug.Log("test player ready");
-            Debug.Assert(state == AutoClientState.PlayerReadySent);
-            state = AutoClientState.PlayerReadyReceived;
-        }).AddTo(gameObject);
-
-        // dispatcher.Leaderboard.Received.ObserveOnMainThread().Subscribe(p =>
-        // {
-        //     Debug.Log("test leaderboard?");
-        // }).AddTo(gameObject);
+    void RegisterHandler<TPacket>(PacketObservable<TPacket> subject) where TPacket : IPacket
+    {
+        subject.Received.ObserveOnMainThread().Subscribe(p => queue.Enqueue(p)).AddTo(gameObject);
     }
 
     void Start()
     {
         var conn = ConnectionManager.Instance;
-        conn.ReadyObservable.Subscribe(_ => RegisterHandler());
-
+        conn.ReadyObservable.Subscribe(_ =>
+        {
+            RegisterHandler();
+            RunTest();
+        });
     }
 
     void Shutdown()
     {
-        running = false;
         ConnectionManager.Instance.Close();
 #if UNITY_EDITOR
         if (EditorApplication.isPlaying)
@@ -142,67 +95,69 @@ class AutoClient : MonoBehaviour
 #endif
     }
 
-    bool running = true;
-    void Update()
+    async void RunTest()
     {
-        if (!running) { return; }
         var conn = ConnectionManager.Instance;
-        switch (state)
+
+        var welcome = await Recv<WelcomePacket>();
+        HandleWelcome(welcome);
+
+        conn.SendPacket(new PingPacket() { millis = this.ping });
+        var ping = await Recv<PingPacket>();
+        HandlePing(ping);
+
+        conn.SendPacket(new SignUpPacket() { Uuid = botUuid });
+        var signup = await Recv<SignUpResultPacket>();
+        HandleSignUp(signup);
+
+        conn.SendPacket(new AuthenticationPacket() { Uuid = botUuid });
+        var auth = await Recv<AuthenticationResultPacket>();
+        HandleAuthentication(auth);
+
+        conn.SendPacket(new WorldJoinPacket()
         {
-            case AutoClientState.WelcomeReceived:
-                conn.SendPacket(new PingPacket() { millis = ping });
-                state = AutoClientState.PingSent;
-                break;
+            WorldID = worldID,
+            Nickname = nickname,
+        });
+        var join = await Recv<WorldJoinResultPacket>();
+        HandleWorldJoin(join);
 
-            case AutoClientState.PingReceived:
-                conn.SendPacket(new SignUpPacket() { Uuid = botUuid });
-                state = AutoClientState.SignUpSent;
-                break;
+        conn.SendPacket(new PlayerReadyPacket());
+        var ready = await Recv<PlayerReadyPacket>();
+        HandlePlayerReady(ready);
 
-            case AutoClientState.SignUpReceived:
-                conn.SendPacket(new AuthenticationPacket() { Uuid = botUuid });
-                state = AutoClientState.AuthenticationSent;
-                break;
+        // TODO game loop 테스트 구현?
 
-            case AutoClientState.AuthenticationReceived:
-                conn.SendPacket(new WorldJoinPacket()
+        conn.SendPacket(new WorldLeavePacket());
+        var leave = await Recv<WorldLeaveResultPacket>();
+        HandleWorldLeave(leave);
+
+        conn.SendPacket(new DisconnectPacket());
+        var disconnect = await Recv<DisconnectPacket>();
+        HandleDisconnect(disconnect);
+
+        Debug.Log("test completed");
+        Shutdown();
+    }
+
+    async Task<TPacket> Recv<TPacket>() where TPacket : IPacket, new()
+    {
+        var dummy = new TPacket();
+        var expectedType = dummy.Type;
+        var tryCount = 100;
+        for (int i = 0; i < tryCount; i++)
+        {
+            while (queue.Count > 0)
+            {
+                var packet = queue.Dequeue();
+                if (packet.Type == expectedType)
                 {
-                    WorldID = worldID,
-                    Nickname = nickname,
-                });
-                state = AutoClientState.WorldJoinSent;
-                break;
-
-            case AutoClientState.WorldJoinReceived:
-                conn.SendPacket(new PlayerReadyPacket());
-                state = AutoClientState.PlayerReadySent;
-                break;
-
-            case AutoClientState.PlayerReadyReceived:
-                // TODO world leave 반응 패킷이 없다
-                conn.SendPacket(new WorldLeavePacket());
-                state = AutoClientState.WorldLeaveSent;
-                break;
-
-            case AutoClientState.WorldLeaveReceived:
-                state = AutoClientState.Finished;
-                break;
-
-            // TODO world leave의 리턴 구현하기
-            case AutoClientState.WorldLeaveSent:
-                Debug.Log("complete test?");
-                Shutdown();
-                break;
-
-            case AutoClientState.Finished:
-                Debug.Log("complete test");
-                Shutdown();
-                break;
-
-
-            default:
-                break;
+                    return (TPacket)packet;
+                }
+            }
+            await Task.Delay(TimeSpan.FromMilliseconds(10));
         }
-
+        Debug.Assert(false, $"timeout : expected packet type: {expectedType}");
+        return dummy;
     }
 }

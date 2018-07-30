@@ -180,8 +180,7 @@ namespace HatsushimoServer
             {
                 PlayerID = session.ID,
             };
-            // TODO world에 있는 사람들만 나갔다는걸 알면 된다
-            // TOOD replication remove에서 처리하니까 필요 없을지도
+            player.Session.Send(resp);
         }
 
         void HandleInputCommand(Session session, InputCommandPacket p)

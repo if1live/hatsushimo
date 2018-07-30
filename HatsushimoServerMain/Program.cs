@@ -22,7 +22,8 @@ namespace HatsushimoServerMain
             config.AddTarget("console", consoleTarget);
 
             // Step 4. Define rules
-            LoggingRule rule1 = new LoggingRule("*", LogLevel.Debug, consoleTarget);
+            //LoggingRule rule1 = new LoggingRule("*", LogLevel.Debug, consoleTarget);
+            LoggingRule rule1 = new LoggingRule("*", LogLevel.Info, consoleTarget);
             config.LoggingRules.Add(rule1);
 
             // Step 5. Activate the configuration

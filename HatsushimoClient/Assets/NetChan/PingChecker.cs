@@ -26,8 +26,18 @@ namespace Assets.NetChan
 
         private void Awake()
         {
-            Debug.Assert(Instance == null);
-            Instance = this;
+            if (Instance == null)
+            {
+                Debug.Assert(Instance == null);
+                Instance = this;
+
+                DontDestroyOnLoad(this.gameObject);
+            }
+            else
+            {
+                Debug.Log("PingChecker is already exist, remove self");
+                GameObject.Destroy(this.gameObject);
+            }
         }
 
         private void Start()
