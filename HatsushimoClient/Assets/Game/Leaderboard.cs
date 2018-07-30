@@ -36,7 +36,7 @@ namespace Assets.Game
                 sb.AppendLine($"players = {p.Players}");
                 message.text = sb.ToString();
 
-            }).AddTo(gameObject);
+            }).AddTo(this);
         }
     }
 }

@@ -51,7 +51,7 @@ namespace Assets.Game
                     var pos = i.Pos.ToVector3();
                     CreateFood(i.ID, pos);
                 }
-            }).AddTo(gameObject);
+            }).AddTo(this);
 
             dispatcher.ReplicationBulk.Received.Subscribe(packet =>
             {
@@ -59,7 +59,7 @@ namespace Assets.Game
                 {
                     HandleReplicationAction(act);
                 }
-            }).AddTo(gameObject);
+            }).AddTo(this);
 
             dispatcher.Replication.Received.ObserveOnMainThread().Subscribe(packet =>
             {

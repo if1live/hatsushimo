@@ -84,13 +84,13 @@ namespace Assets.NetChan
                 bandwidth.Flush(ts);
                 _receivedBytes.SetValueAndForceNotify(bandwidth.GetReceivedBytesPerSeconds(ts));
                 _sentBytes.SetValueAndForceNotify(bandwidth.GetSentBytesPerSecond(ts));
-            }).AddTo(gameObject);
+            }).AddTo(this);
 
             var heartbeatInterval = TimeSpan.FromSeconds(Config.HeartbeatInterval);
             Observable.Interval(heartbeatInterval).SkipUntil(ReadyObservable).Subscribe(_ =>
             {
                 SendPacket(new HeartbeatPacket());
-            }).AddTo(gameObject);
+            }).AddTo(this);
 
             ErrorRaised.Subscribe(msg =>
             {
@@ -110,7 +110,7 @@ namespace Assets.NetChan
 
                 SceneManager.LoadScene(initialScene, LoadSceneMode.Single);
 
-            }).AddTo(gameObject);
+            }).AddTo(this);
 
             loop = Observable.FromCoroutine(BeginLoop).Subscribe();
         }

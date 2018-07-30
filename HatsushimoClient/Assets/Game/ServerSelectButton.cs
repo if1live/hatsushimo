@@ -22,7 +22,7 @@ namespace Assets.Game
                 var info = ConnectionInfo.Info;
                 addressInputField.text = address;
                 info.ServerHost = address;
-            }).AddTo(gameObject);
+            }).AddTo(this);
         }
     }
 }

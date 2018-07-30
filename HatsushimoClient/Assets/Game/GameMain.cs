@@ -31,7 +31,7 @@ namespace Assets.Game
                 };
                 var msg = string.Join("\n", lines);
                 statusText.text = msg;
-            }).AddTo(gameObject);
+            }).AddTo(this);
 
             mgr.SendPacket(new PlayerReadyPacket());
         }

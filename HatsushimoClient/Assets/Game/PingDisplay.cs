@@ -39,7 +39,7 @@ namespace Assets.Game
             }).Subscribe(status =>
             {
                 RefreshNetworkStatus(status.ping, status.send, status.recv);
-            }).AddTo(gameObject);
+            }).AddTo(this);
         }
 
         void RefreshNetworkStatus(int ping, int send, int recv)

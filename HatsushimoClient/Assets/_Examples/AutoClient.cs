@@ -71,7 +71,7 @@ class AutoClient : MonoBehaviour
 
     void RegisterHandler<TPacket>(PacketObservable<TPacket> subject) where TPacket : IPacket
     {
-        subject.Received.ObserveOnMainThread().Subscribe(p => queue.Enqueue(p)).AddTo(gameObject);
+        subject.Received.ObserveOnMainThread().Subscribe(p => queue.Enqueue(p)).AddTo(this);
     }
 
     void Start()

@@ -57,7 +57,7 @@ namespace Assets.Game
                     transform.position = pos;
                 }
                 
-            }).AddTo(gameObject);
+            }).AddTo(this);
 
             InitialReceived.Subscribe(packet =>
             {
@@ -68,7 +68,7 @@ namespace Assets.Game
                 var pos = packet.Pos.ToVector3();
                 transform.position = pos;
                 
-            }).AddTo(gameObject);
+            }).AddTo(this);
         }
     }
 }

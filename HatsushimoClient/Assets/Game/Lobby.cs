@@ -39,12 +39,12 @@ namespace Assets.Game
                 // 같은 컴퓨터에서 실행할 경우
                 var uuid = Guid.NewGuid();
                 uuidField.text = uuid.ToString();
-            }).AddTo(gameObject);
+            }).AddTo(this);
 
             ConnectionManager.Instance.ReadyObservable.ObserveOnMainThread().Subscribe(conn =>
             {
                 joinButton.interactable = true;
-            }).AddTo(gameObject);
+            }).AddTo(this);
 
             joinButton.OnClickAsObservable().Subscribe(_ =>
             {
@@ -61,7 +61,7 @@ namespace Assets.Game
 
                 // 중복 클릭 방지
                 joinButton.interactable = false;
-            }).AddTo(gameObject);
+            }).AddTo(this);
 
             var dispatcher = PacketDispatcher.Instance;
             dispatcher.SignUp.Received.ObserveOnMainThread().Subscribe(p =>
@@ -75,7 +75,7 @@ namespace Assets.Game
 
                 var conn = ConnectionManager.Instance;
                 conn.SendPacket(auth);
-            }).AddTo(gameObject);
+            }).AddTo(this);
 
             dispatcher.Authentication.Received.ObserveOnMainThread().Subscribe(p =>
             {
@@ -92,7 +92,7 @@ namespace Assets.Game
                     var conn = ConnectionManager.Instance;
                     conn.SendPacket(join);
                 }
-            }).AddTo(gameObject);
+            }).AddTo(this);
 
             dispatcher.WorldJoin.Received.ObserveOnMainThread().Subscribe(p =>
             {
@@ -105,7 +105,7 @@ namespace Assets.Game
 
                 // TOOD async scene loading
                 SceneManager.LoadScene("Game", LoadSceneMode.Single);
-            }).AddTo(gameObject);
+            }).AddTo(this);
         }
     }
 }

@@ -42,7 +42,7 @@ namespace Assets.NetChan
         private void Start()
         {
             var dispatcher = PacketDispatcher.Instance;
-            dispatcher.Ping.Received.Subscribe(HandlePing).AddTo(gameObject);
+            dispatcher.Ping.Received.Subscribe(HandlePing).AddTo(this);
 
             var conn = ConnectionManager.Instance;
             var pingInterval = TimeSpan.FromMilliseconds(intervalMillis);
@@ -50,7 +50,7 @@ namespace Assets.NetChan
             .SkipUntil(conn.ReadyObservable).Subscribe(_ =>
             {
                 SendPing();
-            }).AddTo(gameObject);
+            }).AddTo(this);
         }
 
         private void OnDestroy()
