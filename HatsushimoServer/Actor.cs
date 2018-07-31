@@ -8,19 +8,14 @@ namespace HatsushimoServer
         public int ID { get; protected set; }
         public abstract ActorType Type { get; }
 
-        public abstract ReplicationActionPacket GenerateCreatePacket();
-        public ReplicationActionPacket GenerateRemovePacket()
+        public ReplicationRemovePacket GenerateRemovePacket()
         {
-            return new ReplicationActionPacket()
+            return new ReplicationRemovePacket()
             {
-                Action = ReplicationAction.Remove,
                 ID = ID,
-                ActorType = Type,
-                Pos = Vec2.Zero,
-                TargetPos = Vec2.Zero,
-                Speed = 0,
-                Extra = "",
             };
         }
+
+        // TOOD generic 잘 쓰면 create packet 를 인터페이스로 분리할수 있을거같다
     }
 }

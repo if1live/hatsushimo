@@ -27,9 +27,9 @@ namespace Assets.Game.InputSystem
             switch(type)
             {
                 case InputActionTypes.Command:
-                    return new InputCommandPacket
+                    return new AttackPacket
                     {
-                        Mode = mode,
+                        Mode = (short)mode,
                     };
                 case InputActionTypes.Move:
                     return new MovePacket

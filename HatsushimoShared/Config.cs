@@ -19,5 +19,7 @@ namespace Hatsushimo
         public const float CoolTimeCommandSecondary = 2;
 
         public const float HeartbeatInterval = 20.0f;
+
+        public const int FoodScore = 1;
     }
 }

@@ -146,19 +146,17 @@ namespace HatsushimoServer
             }
         }
 
-
-        public override ReplicationActionPacket GenerateCreatePacket()
+        public ReplicationCreatePlayerPacket GenerateCreatePacket()
         {
-            return new ReplicationActionPacket()
+            var status = new PlayerStatus()
             {
-                Action = ReplicationAction.Create,
                 ID = ID,
-                ActorType = Type,
                 Pos = Position,
                 TargetPos = TargetPosition,
                 Speed = Speed,
-                Extra = Session.Nickname,
+                Nickname = Session.Nickname,
             };
+            return new ReplicationCreatePlayerPacket() { status = status };
         }
     }
 }

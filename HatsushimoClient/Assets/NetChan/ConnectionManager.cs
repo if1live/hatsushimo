@@ -173,14 +173,17 @@ namespace Assets.NetChan
             if (DispatchPacket(type, reader, dispatcher.SignUp)) { return true; }
             if (DispatchPacket(type, reader, dispatcher.Authentication)) { return true; }
             if (DispatchPacket(type, reader, dispatcher.ReplicationAll)) { return true; }
-            if (DispatchPacket(type, reader, dispatcher.Replication)) { return true; }
-            if (DispatchPacket(type, reader, dispatcher.ReplicationBulk)) { return true; }
+            if (DispatchPacket(type, reader, dispatcher.CreatePlayer)) { return true; }
+            if (DispatchPacket(type, reader, dispatcher.CreateFood)) { return true; }
+            if (DispatchPacket(type, reader, dispatcher.CreateProjectile)) { return true; }
+            if (DispatchPacket(type, reader, dispatcher.ReplicationRemove)) { return true; }
+            if (DispatchPacket(type, reader, dispatcher.ReplicationBulkRemove)) { return true; }
             if (DispatchPacket(type, reader, dispatcher.WorldJoin)) { return true; }
             if (DispatchPacket(type, reader, dispatcher.WorldLeave)) { return true; }
             if (DispatchPacket(type, reader, dispatcher.PlayerReady)) { return true; }
             if (DispatchPacket(type, reader, dispatcher.Leaderboard)) { return true; }
             if (DispatchPacket(type, reader, dispatcher.MoveNotify)) { return true; }
-
+            if (DispatchPacket(type, reader, dispatcher.AttackNotify)) { return true; }
 
             Debug.Log($"handler not found: packet_type={type}");
             return false;

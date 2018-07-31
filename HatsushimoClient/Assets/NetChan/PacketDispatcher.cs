@@ -32,8 +32,13 @@ namespace Assets.NetChan
         public readonly PacketObservable<AuthenticationResultPacket> Authentication = new PacketObservable<AuthenticationResultPacket>();
 
         public readonly PacketObservable<ReplicationAllPacket> ReplicationAll = new PacketObservable<ReplicationAllPacket>();
-        public readonly PacketObservable<ReplicationActionPacket> Replication = new PacketObservable<ReplicationActionPacket>();
-        public readonly PacketObservable<ReplicationBulkActionPacket> ReplicationBulk = new PacketObservable<ReplicationBulkActionPacket>();
+
+        public readonly PacketObservable<ReplicationCreatePlayerPacket> CreatePlayer = new PacketObservable<ReplicationCreatePlayerPacket>();
+        public readonly PacketObservable<ReplicationCreateFoodPacket> CreateFood = new PacketObservable<ReplicationCreateFoodPacket>();
+        public readonly PacketObservable<ReplicationCreateProjectilePacket> CreateProjectile = new PacketObservable<ReplicationCreateProjectilePacket>();
+
+        public readonly PacketObservable<ReplicationRemovePacket> ReplicationRemove = new PacketObservable<ReplicationRemovePacket>();
+        public readonly PacketObservable<ReplicationBulkRemovePacket> ReplicationBulkRemove = new PacketObservable<ReplicationBulkRemovePacket>();
 
         public readonly PacketObservable<WorldJoinResultPacket> WorldJoin = new PacketObservable<WorldJoinResultPacket>();
         public readonly PacketObservable<WorldLeaveResultPacket> WorldLeave = new PacketObservable<WorldLeaveResultPacket>();
@@ -42,6 +47,7 @@ namespace Assets.NetChan
         public readonly PacketObservable<LeaderboardPacket> Leaderboard = new PacketObservable<LeaderboardPacket>();
 
         public readonly PacketObservable<MoveNotifyPacket> MoveNotify = new PacketObservable<MoveNotifyPacket>();
+        public readonly PacketObservable<AttackNotifyPacket> AttackNotify = new PacketObservable<AttackNotifyPacket>();
 
         private void Awake()
         {

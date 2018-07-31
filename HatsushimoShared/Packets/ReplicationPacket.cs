@@ -11,6 +11,7 @@ namespace Hatsushimo.Packets
         None = 0,
         Player,
         Food,
+        Projectile,
     }
 
     public enum ReplicationAction
@@ -21,7 +22,7 @@ namespace Hatsushimo.Packets
         Remove,
     }
 
-    public struct PlayerInitial : ISerialize
+    public struct PlayerStatus : ISerialize
     {
         public int ID;
         public string Nickname;
@@ -48,7 +49,7 @@ namespace Hatsushimo.Packets
         }
     }
 
-    public struct FoodInitial : ISerialize
+    public struct FoodStatus : ISerialize
     {
         public int ID;
         public Vec2 Pos;
@@ -66,10 +67,42 @@ namespace Hatsushimo.Packets
         }
     }
 
+    // 게임에 진입하는 순간에 투사체 정보가 없다면
+    // 뜬금없이 죽는 타인이 보일것이다
+    public struct ProjectileStatus : ISerialize
+    {
+        public int ID;
+        public Vec2 Position;
+        // TODO direction을 각도 기반으로 바꾸면 변수 1개로 줄일수 있다
+        // direction대신 각도+speed로 압축
+        public Vec2 Direction;
+        public float Speed;
+        public short LifetimeMillis;
+
+        public void Deserialize(BinaryReader r)
+        {
+            r.Read(out ID);
+            r.ReadValue(ref Position);
+            r.ReadValue(ref Direction);
+            r.Read(out Speed);
+            r.Read(out LifetimeMillis);
+        }
+
+        public void Serialize(BinaryWriter w)
+        {
+            w.Write(ID);
+            w.WriteValue(Position);
+            w.WriteValue(Direction);
+            w.Write(Speed);
+            w.Write(LifetimeMillis);
+        }
+    }
+
     public struct ReplicationAllPacket : IPacket
     {
-        public PlayerInitial[] Players;
-        public FoodInitial[] Foods;
+        public PlayerStatus[] Players;
+        public FoodStatus[] Foods;
+        public ProjectileStatus[] Projectiles;
 
         public short Type => (short)PacketType.ReplicationAll;
 
@@ -77,12 +110,14 @@ namespace Hatsushimo.Packets
         {
             r.ReadValues(out Players);
             r.ReadValues(out Foods);
+            r.ReadValues(out Projectiles);
         }
 
         public void Serialize(BinaryWriter w)
         {
             w.WriteValues(Players);
             w.WriteValues(Foods);
+            w.WriteValues(Projectiles);
         }
     }
 
@@ -104,186 +139,47 @@ namespace Hatsushimo.Packets
         }
     }
 
-    public struct ReplicationActionPacket : IPacket
+    // remove bulk로 묶어서 처리하는 것을 구현하기 전까지는 낱개 삭제를 쓰자
+    public struct ReplicationRemovePacket : IPacket
     {
-        public ReplicationAction Action;
         public int ID;
-        public ActorType ActorType;
-        public Vec2 Pos;
-        public Vec2 TargetPos;
-        public float Speed;
-        public string Extra;
 
-        public short Type => (short)PacketType.ReplicationAction;
+        public short Type => (short)PacketType.ReplicationRemove;
 
         public void Deserialize(BinaryReader r)
         {
-            short actionVal = 0;
-            r.Read(out actionVal);
-            Action = (ReplicationAction)actionVal;
-
             r.Read(out ID);
-
-            short actorTypeVal = 0;
-            r.Read(out actorTypeVal);
-            ActorType = (ActorType)actorTypeVal;
-
-            r.ReadValue(ref Pos);
-            r.ReadValue(ref TargetPos);
-            r.Read(out Speed);
-            r.ReadString(out Extra);
         }
 
         public void Serialize(BinaryWriter w)
         {
-            // TODO string=null인 경우 터진다
-            // 이를 serialize 차원에서 우회하고싶다
-            w.Write((short)Action);
             w.Write(ID);
-            w.Write((short)ActorType);
-            w.WriteValue(Pos);
-            w.WriteValue(TargetPos);
-            w.Write(Speed);
-            w.WriteString(Extra);
-        }
-
-        public static bool operator ==(ReplicationActionPacket a, ReplicationActionPacket b)
-        {
-            if (ReferenceEquals(a, b)) { return true; }
-            if (ReferenceEquals(a, null)) { return false; }
-            if (ReferenceEquals(b, null)) { return false; }
-
-            return (a.Action == b.Action)
-                && (a.ID == b.ID)
-                && (a.ActorType == b.ActorType)
-                && (a.Pos == b.Pos)
-                && (a.TargetPos == b.TargetPos)
-                && (a.Speed == b.Speed)
-                && (a.Extra == b.Extra);
-        }
-
-        public static bool operator !=(ReplicationActionPacket a, ReplicationActionPacket b)
-        {
-            return !(a == b);
-        }
-
-
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj)) { return false; }
-            if (ReferenceEquals(this, obj)) { return true; }
-            return obj.GetType() == GetType() && Equals((ReplicationActionPacket)obj);
-        }
-
-        public bool Equals(ReplicationActionPacket other)
-        {
-            if (ReferenceEquals(null, other)) { return false; }
-            if (ReferenceEquals(this, other)) { return true; }
-            return Action.Equals(other.Action)
-                && ID.Equals(other.ID)
-                && ActorType.Equals(other.ActorType)
-                && Pos.Equals(other.Pos)
-                && TargetPos.Equals(other.TargetPos)
-                && Speed.Equals(other.Speed)
-                && Extra.Equals(other.Extra);
-        }
-
-        public override int GetHashCode()
-        {
-            int hash = Action.GetHashCode();
-            hash = hash ^ ID.GetHashCode();
-            hash = hash ^ ActorType.GetHashCode();
-            hash = hash ^ Pos.GetHashCode();
-            hash = hash ^ TargetPos.GetHashCode();
-            hash = hash ^ Speed.GetHashCode();
-            hash = hash ^ Extra.GetHashCode();
-            return hash;
         }
     }
 
-
-    public struct ReplicationBulkActionPacket : IPacket
+    public struct ReplicationCreateFoodPacket : IPacket
     {
-        public ReplicationActionPacket[] Actions;
+        public FoodStatus status;
+        public short Type => (short)PacketType.ReplicationCreateFood;
+        public void Deserialize(BinaryReader r) { r.ReadValue(ref status); }
+        public void Serialize(BinaryWriter w) { w.WriteValue(status); }
+    }
 
-        public short Type => (short)PacketType.ReplicationBulkAction;
+    public struct ReplicationCreatePlayerPacket : IPacket
+    {
+        public PlayerStatus status;
 
-        public void Deserialize(BinaryReader r)
-        {
-            r.ReadValues(out Actions);
-        }
+        public short Type => (short)PacketType.ReplicationCreatePlayer;
+        public void Deserialize(BinaryReader r) { r.ReadValue(ref status); }
+        public void Serialize(BinaryWriter w) { w.WriteValue(status); }
+    }
 
-        public void Serialize(BinaryWriter w)
-        {
-            w.WriteValues(Actions);
-        }
+    public struct ReplicationCreateProjectilePacket : IPacket
+    {
+        public ProjectileStatus status;
 
-        public static bool operator ==(ReplicationBulkActionPacket a, ReplicationBulkActionPacket b)
-        {
-            if (ReferenceEquals(a, b)) { return true; }
-            if (ReferenceEquals(a, null)) { return false; }
-            if (ReferenceEquals(b, null)) { return false; }
-
-            if (a.Actions == null && b.Actions == null) { return true; }
-            if (a.Actions != null && b.Actions == null) { return false; }
-            if (a.Actions == null && b.Actions != null) { return false; }
-
-            if (a.Actions.Length != b.Actions.Length) { return false; }
-
-            for (var i = 0; i < a.Actions.Length; i++)
-            {
-                var x = a.Actions[i];
-                var y = a.Actions[i];
-                if (x != y) { return false; }
-            }
-            return true;
-        }
-
-        public static bool operator !=(ReplicationBulkActionPacket a, ReplicationBulkActionPacket b)
-        {
-            return !(a == b);
-        }
-
-
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj)) { return false; }
-            if (ReferenceEquals(this, obj)) { return true; }
-            return obj.GetType() == GetType() && Equals((ReplicationBulkActionPacket)obj);
-        }
-
-        public bool Equals(ReplicationBulkActionPacket other)
-        {
-            if (ReferenceEquals(null, other)) { return false; }
-            if (ReferenceEquals(this, other)) { return true; }
-
-            if (Actions == null && other.Actions == null) { return true; }
-            if (Actions != null && other.Actions == null) { return false; }
-            if (Actions == null && other.Actions != null) { return false; }
-
-            if (Actions.Length != other.Actions.Length) { return false; }
-
-            for (var i = 0; i < Actions.Length; i++)
-            {
-                var x = Actions[i];
-                var y = other.Actions[i];
-                if (x != y) { return false; }
-            }
-            return true;
-        }
-
-        public override int GetHashCode()
-        {
-            int hash = 0;
-            if (Actions != null)
-            {
-                for (var i = 0; i < Actions.Length; i++)
-                {
-                    hash = hash ^ Actions[i].GetHashCode();
-                }
-            }
-
-            return hash;
-        }
+        public short Type => (short)PacketType.ReplicationCreateProjectile;
+        public void Deserialize(BinaryReader r) { r.ReadValue(ref status); }
+        public void Serialize(BinaryWriter w) { w.WriteValue(status); }
     }
 }

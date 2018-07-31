@@ -27,15 +27,19 @@ namespace Hatsushimo.Packets
 
         Leaderboard,
 
-        InputCommand,
-
         ReplicationAll,
-        ReplicationAction,
-        ReplicationBulkAction,
 
+        ReplicationRemove,
         ReplicationBulkRemove,
+
+        ReplicationCreateFood,
+        ReplicationCreatePlayer,
+        ReplicationCreateProjectile,
 
         Move,
         MoveNotify,
+
+        Attack,
+        AttackNotify,
     }
 }

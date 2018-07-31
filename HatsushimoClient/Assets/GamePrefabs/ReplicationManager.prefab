@@ -58,6 +58,8 @@ MonoBehaviour:
     type: 2}
   prefab_food: {fileID: 114870256049195746, guid: a888e06984912034794adb2c8f7fb707,
     type: 2}
+  prefab_projectile: {fileID: 114254576928895040, guid: 5571d733de65d2f41b64034ffbf07c81,
+    type: 2}
 --- !u!114 &114971989019786132
 MonoBehaviour:
   m_ObjectHideFlags: 1

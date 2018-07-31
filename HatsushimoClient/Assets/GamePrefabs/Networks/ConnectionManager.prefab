@@ -65,3 +65,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   host: ws://127.0.0.1
   port: 3000
+  initialScene: ServerSelect

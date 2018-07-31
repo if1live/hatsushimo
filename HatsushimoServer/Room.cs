@@ -29,9 +29,11 @@ namespace HatsushimoServer
         // 방에는 참가했지만 로딩이 끝나지 않는 경우를 처리하는게 목적
         readonly List<Player> waitingPlayers = new List<Player>();
         readonly List<Food> foods = new List<Food>();
+        readonly List<Projectile> projectiles = new List<Projectile>();
 
         // 방에서만 사용하는 객체는 id를 따로 발급
         readonly IEnumerator<int> foodIDGen = IDGenerator.MakeFoodID().GetEnumerator();
+        readonly IEnumerator<int> projectileIDGen = IDGenerator.MakeProjectileID().GetEnumerator();
 
         public Room(string id)
         {
@@ -131,19 +133,36 @@ namespace HatsushimoServer
         Food MakeFood()
         {
             var pos = GenerateRandomPosition();
-            var score = 1;
 
             foodIDGen.MoveNext();
             var id = foodIDGen.Current;
 
-            var food = new Food(id, pos, score);
+            var food = new Food(id, pos);
             return food;
+        }
+
+        public void RegisterProjectile(Projectile projectile)
+        {
+            projectiles.Add(projectile);
+        }
+
+        public Projectile MakeProjectile(Player player)
+        {
+            log.Info($"projectile creat");
+            var pos = player.Position;
+            var dir = player.Direction;
+
+            projectileIDGen.MoveNext();
+            var id = projectileIDGen.Current;
+
+            var projectile = new Projectile(id, pos, dir);
+            return projectile;
         }
 
 
         ReplicationAllPacket GenerateReplicaitonAllPacket()
         {
-            var players = this.players.Select(p => new PlayerInitial()
+            var players = this.players.Select(p => new PlayerStatus()
             {
                 ID = p.ID,
                 Nickname = p.Session.Nickname,
@@ -152,16 +171,26 @@ namespace HatsushimoServer
                 Speed = p.Speed,
             });
 
-            var foods = this.foods.Select(f => new FoodInitial()
+            var foods = this.foods.Select(f => new FoodStatus()
             {
                 ID = f.ID,
                 Pos = f.Position,
+            });
+
+            var projectiles = this.projectiles.Select(p => new ProjectileStatus()
+            {
+                ID = p.ID,
+                Position = p.Position,
+                Direction = p.Direction,
+                Speed = p.Speed,
+                LifetimeMillis = (short)(p.Lifetime * 1000),
             });
 
             return new ReplicationAllPacket()
             {
                 Players = players.ToArray(),
                 Foods = foods.ToArray(),
+                Projectiles = projectiles.ToArray(),
             };
         }
 
@@ -195,6 +224,16 @@ namespace HatsushimoServer
                 var session = p.Session;
                 session.SendLazy(packet);
                 log.Info($"sent food remove packet: {packet.ID}");
+            });
+        }
+
+        public void SendProjectileCreatePacket(Projectile projectile)
+        {
+            var packet = projectile.GenerateCreatePacket();
+            players.ForEach(p =>
+            {
+                var session = p.Session;
+                session.SendImmediate(packet);
             });
         }
 
@@ -232,7 +271,7 @@ namespace HatsushimoServer
 
                 // 먹은 플레이어는 점수 획득
                 gainedFoods.Select(pair => pair.food).ToList()
-                    .ForEach(food => player.GainFoodScore(food.Score));
+                    .ForEach(food => player.GainFoodScore(Config.FoodCount));
 
                 // 모든 플레이어에게 삭제 패킷 보내기
                 gainedFoods.Select(pair => pair.food).ToList()
@@ -248,10 +287,27 @@ namespace HatsushimoServer
             });
         }
 
+        void ProjectileUpdateLoop(float dt)
+        {
+            projectiles.ForEach(projectile => projectile.DecreaseLifetime(dt));
+
+            var deadIdxList = projectiles
+            .Select((p, idx) => new { projectile = p, idx = idx })
+            .Where(pair => pair.projectile.Lifetime <= 0)
+            .Select(pair => pair.idx)
+            .OrderByDescending(x => x).ToList();
+
+            foreach (var idx in deadIdxList)
+            {
+                projectiles.RemoveAt(idx);
+            }
+        }
+
         public void GameLoop()
         {
             float dt = 1.0f / 60;
             PlayerUpdateLoop(dt);
+            ProjectileUpdateLoop(dt);
             GenerateFoodLoop();
             CheckFoodLoop();
         }

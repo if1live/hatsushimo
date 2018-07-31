@@ -52,7 +52,7 @@ namespace HatsushimoServer
             sessionLayer.WorldJoin.Received.Subscribe(d => HandleWorldJoin(d.Session, d));
             sessionLayer.WorldLeave.Received.Subscribe(d => HandleWorldLeave(d.Session, d));
 
-            sessionLayer.InputCommand.Received.Subscribe(d => EnqueueWorldPacket(d));
+            sessionLayer.Attack.Received.Subscribe(d => EnqueueWorldPacket(d));
             sessionLayer.PlayerReady.Received.Subscribe(d => EnqueueWorldPacket(d));
 
             sessionLayer.Move.Received.Subscribe(d => EnqueueWorldPacket(d));

@@ -54,7 +54,7 @@ namespace HatsushimoServer
             r.WorldLeave.Received.Subscribe(pair => HandleLeaveReq(pair.Session, pair.Packet));
 
             r.PlayerReady.Received.Subscribe(pair => HandlePlayerReady(pair.Session, pair.Packet));
-            r.InputCommand.Received.Subscribe(pair => HandleInputCommand(pair.Session, pair.Packet));
+            r.Attack.Received.Subscribe(pair => HandleAttack(pair.Session, pair.Packet));
             r.Move.Received.Subscribe(pair => HandleMove(pair.Session, pair.Packet));
         }
 
@@ -178,10 +178,14 @@ namespace HatsushimoServer
             player.Session.SendLazy(resp);
         }
 
-        void HandleInputCommand(Session session, InputCommandPacket p)
+        void HandleAttack(Session session, AttackPacket p)
         {
             var player = GetPlayer(session);
             player.UseSkill(p.Mode);
+
+            var projectile = room.MakeProjectile(player);
+            room.RegisterProjectile(projectile);
+            room.SendProjectileCreatePacket(projectile);
         }
 
         void HandleMove(Session session, MovePacket p)

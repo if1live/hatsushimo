@@ -105,9 +105,9 @@ namespace HatsushimoServerTest.Packets
         }
 
         [Fact]
-        public void TestInputCommandPacket()
+        public void TestAttaclPacket()
         {
-            var a = new InputCommandPacket()
+            var a = new AttackPacket()
             {
                 Mode = 123,
             };
@@ -129,43 +129,6 @@ namespace HatsushimoServerTest.Packets
             };
             var b = SerializeAndDeserialize(a);
 
-            Assert.Equal(a, b);
-        }
-
-        ReplicationActionPacket CreateFakeReplicationActionPacket()
-        {
-            return new ReplicationActionPacket()
-            {
-                Action = ReplicationAction.Create,
-                ID = 123,
-                ActorType = ActorType.Player,
-                Pos = new Vec2(1, 2),
-                TargetPos = new Vec2(3, 4),
-                Speed = 5,
-                Extra = "todo",
-            };
-        }
-
-        [Fact]
-        public void TestReplicationActionPacket()
-        {
-            var a = CreateFakeReplicationActionPacket();
-            var b = SerializeAndDeserialize(a);
-            Assert.Equal(a, b);
-        }
-
-        [Fact]
-        public void TestReplicationBulkActionPacket()
-        {
-            var a = new ReplicationBulkActionPacket()
-            {
-                Actions = new ReplicationActionPacket[]
-                {
-                    CreateFakeReplicationActionPacket(),
-                    CreateFakeReplicationActionPacket(),
-                },
-            };
-            var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }
 

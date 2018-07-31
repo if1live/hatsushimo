@@ -1,6 +1,7 @@
 using Assets.Game.Extensions;
 using Assets.NetChan;
 using Hatsushimo.Packets;
+using Hatsushimo.Utils;
 using System;
 using System.Collections.Generic;
 using UniRx;
@@ -15,9 +16,11 @@ namespace Assets.Game
         public Player prefab_enemy;
         public Player prefab_my;
         public Food prefab_food;
+        public Projectile prefab_projectile;
 
         Dictionary<int, Food> foodTable = new Dictionary<int, Food>();
         Dictionary<int, Player> playerTable = new Dictionary<int, Player>();
+        Dictionary<int, Projectile> projectileTable = new Dictionary<int, Projectile>();
 
         private void Awake()
         {
@@ -36,120 +39,65 @@ namespace Assets.Game
 
             dispatcher.ReplicationAll.Received.Subscribe(packet =>
             {
-                Debug.Log("replicaiton all received");
-
-                // 플레이어 생성
-                foreach (var p in packet.Players)
-                {
-                    var pos = p.Pos.ToVector3();
-                    var player = GetOrCreatePlayer(p.ID, pos);
-                    player.ApplyInitial(p);
-                }
-
-                foreach (var i in packet.Foods)
-                {
-                    var pos = i.Pos.ToVector3();
-                    CreateFood(i.ID, pos);
-                }
+                //Debug.Log("replicaiton all received");
+                foreach (var p in packet.Players) { CreatePlayer(p); }
+                foreach (var f in packet.Foods) { CreateFood(f); }
+                foreach (var p in packet.Projectiles) { CreateProjectile(p); }
             }).AddTo(this);
 
-            dispatcher.ReplicationBulk.Received.Subscribe(packet =>
-            {
-                foreach (var act in packet.Actions)
-                {
-                    HandleReplicationAction(act);
-                }
-            }).AddTo(this);
+            dispatcher.CreateFood.Received.Subscribe(p => CreateFood(p.status));
+            dispatcher.CreatePlayer.Received.Subscribe(p => CreatePlayer(p.status));
+            dispatcher.CreateProjectile.Received.Subscribe(p => CreateProjectile(p.status));
 
-            dispatcher.Replication.Received.ObserveOnMainThread().Subscribe(packet =>
+            dispatcher.ReplicationRemove.Received.Subscribe(p => Remove(p.ID));
+            dispatcher.ReplicationBulkRemove.Received.Subscribe(packet =>
             {
-                HandleReplicationAction(packet);
-            }).AddTo(this);
+                foreach (var id in packet.IDList) { Remove(id); }
+            });
         }
 
-        void HandleReplicationAction(ReplicationActionPacket packet)
+        public Food CreateFood(FoodStatus status)
         {
-            switch (packet.Action)
-            {
-                case ReplicationAction.Create:
-                    HandleReplicationCreate(packet);
-                    break;
-                case ReplicationAction.Update:
-                    HandleReplicationUpdate(packet);
-                    break;
-                case ReplicationAction.Remove:
-                    HandleReplicationRemove(packet);
-                    break;
-                default:
-                    break;
-            };
-        }
-
-        void HandleReplicationCreate(ReplicationActionPacket packet)
-        {
-            //Debug.Log($"replicaiton create id={packet.ID}");
-
-            var info = ConnectionInfo.Info;
-            var myid = info.PlayerID;
-            var id = packet.ID;
-            var pos = packet.Pos.ToVector3();
-
-            if (packet.ActorType == ActorType.Player)
-            {
-                var player = CreatePlayer(id, pos);
-                player.ApplyReplication(packet);
-            }
-            else if (packet.ActorType == ActorType.Food)
-            {
-                CreateFood(id, pos);
-            }
-        }
-
-        void HandleReplicationUpdate(ReplicationActionPacket packet)
-        {
-            //Debug.Log($"replicaiton update id={packet.ID}");
-
-            var id = packet.ID;
-            if (packet.ActorType == ActorType.Player)
-            {
-                var player = playerTable[id];
-                player.ApplyReplication(packet);
-            }
-        }
-
-        void HandleReplicationRemove(ReplicationActionPacket packet)
-        {
-            //Debug.Log($"replicaiton remove id={packet.ID}");
-
-            var info = ConnectionInfo.Info;
-            var myid = info.PlayerID;
-            var id = packet.ID;
-
-            if (myid == id)
-            {
-                // TODO 자신이 죽는 경우
-                Debug.Log("TODO self remove");
-            }
-            else if (playerTable.ContainsKey(id))
-            {
-                RemovePlayer(id);
-            }
-            else if (foodTable.ContainsKey(id))
-            {
-                RemoveFood(id);
-            }
-        }
-
-
-        Food CreateFood(int id, Vector3 pos)
-        {
+            var id = status.ID;
             Debug.Assert(foodTable.ContainsKey(id) == false, $"food={id} already exist in food table");
             var food = Instantiate(prefab_food);
             foodTable[id] = food;
             food.transform.SetParent(transform);
             food.id = id;
-            food.transform.position = pos;
+            food.transform.position = status.Pos.ToVector3();
             return food;
+        }
+
+        public Player CreatePlayer(PlayerStatus status)
+        {
+            var id = status.ID;
+            var pos = status.Pos.ToVector3();
+            var player = GetOrCreatePlayer(id, pos);
+            player.ApplyStatus(status);
+            return player;
+        }
+
+        Projectile CreateProjectile(ProjectileStatus status)
+        {
+            //Debug.Log($"create projectile id={status.ID} ts={TimeUtils.NowTimestamp}");
+
+            var id = status.ID;
+            Debug.Assert(projectileTable.ContainsKey(id) == false, $"projectile={id} already exists in projectile table");
+            var projectile = Instantiate(prefab_projectile);
+            projectileTable[id] = projectile;
+            projectile.transform.SetParent(transform);
+            projectile.id = id;
+            projectile.transform.position = status.Position.ToVector3();
+            projectile.Velocity = status.Direction.ToVector3() * status.Speed;
+            projectile.Lifetime = status.LifetimeMillis * 0.001f;
+            return projectile;
+        }
+
+        public void Remove(int id)
+        {
+            if (foodTable.ContainsKey(id)) { RemoveFood(id); }
+            if (playerTable.ContainsKey(id)) { RemovePlayer(id); }
+            if (projectileTable.ContainsKey(id)) { RemoveProjectile(id); }
         }
 
         void RemoveFood(int id)
@@ -158,6 +106,14 @@ namespace Assets.Game
             var item = foodTable[id];
             foodTable.Remove(id);
             Destroy(item.gameObject);
+        }
+
+        void RemoveProjectile(int id)
+        {
+            Debug.Assert(projectileTable.ContainsKey(id) == true, $"projectile={id} not exist in projectile table");
+            var found = projectileTable[id];
+            projectileTable.Remove(id);
+            Destroy(found.gameObject);
         }
 
         Player GetPlayerPrefab(int id)

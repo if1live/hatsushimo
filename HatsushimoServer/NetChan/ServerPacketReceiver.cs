@@ -68,7 +68,7 @@ namespace HatsushimoServer.NetChan
         public readonly PacketObservable<HeartbeatPacket> Heartbeat = new PacketObservable<HeartbeatPacket>();
         public readonly PacketObservable<SignUpPacket> SignUp = new PacketObservable<SignUpPacket>();
         public readonly PacketObservable<AuthenticationPacket> Authentication = new PacketObservable<AuthenticationPacket>();
-        public readonly PacketObservable<InputCommandPacket> InputCommand = new PacketObservable<InputCommandPacket>();
+        public readonly PacketObservable<AttackPacket> Attack = new PacketObservable<AttackPacket>();
         public readonly PacketObservable<MovePacket> Move = new PacketObservable<MovePacket>();
         public readonly PacketObservable<WorldJoinPacket> WorldJoin = new PacketObservable<WorldJoinPacket>();
         public readonly PacketObservable<WorldLeavePacket> WorldLeave = new PacketObservable<WorldLeavePacket>();
@@ -96,7 +96,7 @@ namespace HatsushimoServer.NetChan
             if (HandlePacket<HeartbeatPacket>(type, reader, Heartbeat, session)) { return true; }
             if (HandlePacket<SignUpPacket>(type, reader, SignUp, session)) { return true; }
             if (HandlePacket<AuthenticationPacket>(type, reader, Authentication, session)) { return true; }
-            if (HandlePacket<InputCommandPacket>(type, reader, InputCommand, session)) { return true; }
+            if (HandlePacket<AttackPacket>(type, reader, Attack, session)) { return true; }
             if (HandlePacket<MovePacket>(type, reader, Move, session)) { return true; }
             if (HandlePacket<WorldJoinPacket>(type, reader, WorldJoin, session)) { return true; }
             if (HandlePacket<WorldLeavePacket>(type, reader, WorldLeave, session)) { return true; }

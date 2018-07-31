@@ -25,17 +25,11 @@ namespace Assets.Game
             }
         }
 
-        IObservable<ReplicationActionPacket> ReplicationReceived
+        IObservable<PlayerStatus> StatusReceived
         {
-            get { return replication.Skip(1).AsObservable(); }
+            get { return status.Skip(1).AsObservable(); }
         }
-        ReactiveProperty<ReplicationActionPacket> replication = new ReactiveProperty<ReplicationActionPacket>();
-
-        IObservable<PlayerInitial> InitialReceived
-        {
-            get { return initial.Skip(1).AsObservable(); }
-        }
-        ReactiveProperty<PlayerInitial> initial = new ReactiveProperty<PlayerInitial>();
+        ReactiveProperty<PlayerStatus> status = new ReactiveProperty<PlayerStatus>();
 
         IObservable<MoveNotify> Moved
         {
@@ -43,33 +37,13 @@ namespace Assets.Game
         }
         ReactiveProperty<MoveNotify> moved = new ReactiveProperty<MoveNotify>();
 
-        public void ApplyReplication(ReplicationActionPacket p) { replication.Value = p; }
-        public void ApplyInitial(PlayerInitial p) { initial.Value = p; }
+        public void ApplyStatus(PlayerStatus p) { status.Value = p; }
         public void ApplyMove(MoveNotify m) { moved.Value = m; }
 
 
         private void Start()
         {
-            ReplicationReceived.Subscribe(packet =>
-            {
-                Debug.Assert(packet.ID == id, $"id mismatch: my={id} packet={packet.ID} action={packet.Action}");
-
-                nickname = packet.Extra;
-                TargetPos = packet.TargetPos.ToVector3();
-                Speed = packet.Speed;
-
-                // 생성 요청의 경우는 즉시 소환하지만
-                // 갱신 요청의 경우 즉수 움직이면 순간이동때문에 어색하다
-                // 갱신 요청은 target pos를 이용해서 처리하기
-                if (packet.Action == ReplicationAction.Create)
-                {
-                    var pos = packet.Pos.ToVector3();
-                    transform.position = pos;
-                }
-
-            }).AddTo(this);
-
-            InitialReceived.Subscribe(packet =>
+            StatusReceived.Subscribe(packet =>
             {
                 id = packet.ID;
                 nickname = packet.Nickname;
