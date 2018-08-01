@@ -9,46 +9,45 @@ namespace Assets.Game
     public class Projectile : MonoBehaviour
     {
         public int id;
+        public Vector3 finalPosition;
 
-        public float Lifetime
+        // 투사체가 날아가는 시간
+        public float moveTime;
+
+        // 투사체가 멈춘후 살아있는 시간
+        public float lifeTime;
+
+        public Vector3 velocity;
+
+        public void Subscribe()
         {
-            set
+            var moveFinishStream = Observable.Timer(TimeSpan.FromSeconds(moveTime));
+            var lifeFinishStream = Observable.Timer(TimeSpan.FromSeconds(lifeTime));
+
+            // 정지시점이 되기전까지 이동
+            gameObject.UpdateAsObservable().TakeUntil(moveFinishStream).Subscribe(_ =>
             {
-                _lifetime.Value = value;
-                gameObject.UpdateAsObservable().Subscribe(_ =>
-                {
-                    var dt = Time.deltaTime;
-                    _lifetime.Value -= dt;
-                });
+                var dt = Time.deltaTime;
+                var curr = transform.localPosition;
+                var diff = velocity * dt;
+                var next = curr + diff;
+                transform.localPosition = next;
+            });
 
-                _lifetime.AsObservable().SkipWhile(x => x > 0).Subscribe(_ =>
-                {
-                    var mgr = ReplicationManager.Instance;
-                    mgr.Remove(id);
-                    Destroy(gameObject);
-                    //Debug.Log($"projectile destory id={id} ts={TimeUtils.NowTimestamp}");
-                }).AddTo(this);
-            }
-        }
-        [SerializeField]
-        FloatReactiveProperty _lifetime = new FloatReactiveProperty();
-
-        public Vector3 Velocity
-        {
-            set
+            // 정지시점이 되면 최종 위치로 확실히 이동
+            moveFinishStream.First().Subscribe(_ =>
             {
-                _velocity.Value = value;
+                transform.localPosition = finalPosition;
+            }).AddTo(this);
 
-                gameObject.UpdateAsObservable().Subscribe(_ => {
-                    var dt = Time.deltaTime;
-                    var curr = transform.localPosition;
-                    var diff = _velocity.Value * dt;
-                    var next = curr + diff;
-                    transform.localPosition = next;
-                });
-            }
+            // 살아있는 시간이 끝나면 정지
+            lifeFinishStream.First().Subscribe(_ =>
+            {
+                var mgr = ReplicationManager.Instance;
+                mgr.Remove(id);
+                Destroy(gameObject);
+                //Debug.Log($"projectile destory id={id} ts={TimeUtils.NowTimestamp}");
+            }).AddTo(this);
         }
-        [SerializeField]
-        Vector3ReactiveProperty _velocity = new Vector3ReactiveProperty();
     }
 }

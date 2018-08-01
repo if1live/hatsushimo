@@ -182,9 +182,9 @@ namespace HatsushimoServer
             {
                 ID = p.ID,
                 Position = p.Position,
-                Direction = p.Direction,
-                Speed = p.Speed,
-                LifetimeMillis = (short)(p.Lifetime * 1000),
+                FinalPosition = p.FinalPosition,
+                LifeTimeMillis = (short)(p.LifeTime * 1000),
+                MoveTimeMillis = (short)(p.MoveTime * 1000),
             });
 
             return new ReplicationAllPacket()
@@ -257,8 +257,7 @@ namespace HatsushimoServer
 
         void ProjectileUpdateLoop(float dt)
         {
-            projectiles.ForEach(p => p.UpadteMove(dt));
-            projectiles.ForEach(p => p.DecreaseLifetime(dt));
+            projectiles.ForEach(p => p.Update(dt));
 
             var deadIdxList = projectiles
             .Select((p, idx) => new { projectile = p, idx = idx })

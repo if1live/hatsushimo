@@ -69,32 +69,41 @@ namespace Hatsushimo.Packets
 
     // 게임에 진입하는 순간에 투사체 정보가 없다면
     // 뜬금없이 죽는 타인이 보일것이다
+    // 시작점과 끝점과 날아가는 시간을 알면
+    // 속도를 계산할수 있다
     public struct ProjectileStatus : ISerialize
     {
         public int ID;
         public Vec2 Position;
-        // TODO direction을 각도 기반으로 바꾸면 변수 1개로 줄일수 있다
-        // direction대신 각도+speed로 압축
-        public Vec2 Direction;
-        public float Speed;
-        public short LifetimeMillis;
+        public Vec2 FinalPosition;
+        public short MoveTimeMillis;
+        public short LifeTimeMillis;
 
         public void Deserialize(BinaryReader r)
         {
             r.Read(out ID);
             r.ReadValue(ref Position);
-            r.ReadValue(ref Direction);
-            r.Read(out Speed);
-            r.Read(out LifetimeMillis);
+            r.ReadValue(ref FinalPosition);
+            r.Read(out MoveTimeMillis);
+            r.Read(out LifeTimeMillis);
         }
 
         public void Serialize(BinaryWriter w)
         {
             w.Write(ID);
             w.WriteValue(Position);
-            w.WriteValue(Direction);
-            w.Write(Speed);
-            w.Write(LifetimeMillis);
+            w.WriteValue(FinalPosition);
+            w.Write(MoveTimeMillis);
+            w.Write(LifeTimeMillis);
+        }
+
+        public Vec2 Direction
+        {
+            get
+            {
+                var diff = FinalPosition - Position;
+                return diff.Normalize();
+            }
         }
     }
 

@@ -1,5 +1,6 @@
 using Assets.Game.Extensions;
 using Assets.NetChan;
+using Hatsushimo;
 using Hatsushimo.Packets;
 using Hatsushimo.Utils;
 using System;
@@ -88,8 +89,11 @@ namespace Assets.Game
             projectile.transform.SetParent(transform);
             projectile.id = id;
             projectile.transform.position = status.Position.ToVector3();
-            projectile.Velocity = status.Direction.ToVector3() * status.Speed;
-            projectile.Lifetime = status.LifetimeMillis * 0.001f;
+            projectile.finalPosition = status.FinalPosition.ToVector3();
+            projectile.velocity = status.Direction.ToVector3() * Config.ProjectileSpeed;
+            projectile.moveTime = status.MoveTimeMillis * 0.001f;
+            projectile.lifeTime = status.LifeTimeMillis * 0.001f;
+            projectile.Subscribe();
             return projectile;
         }
 

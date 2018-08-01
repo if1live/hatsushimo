@@ -12,10 +12,17 @@ namespace HatsushimoServer
         public int OwnerID { get; private set; }
         public Vec2 Position { get; private set; }
         public Vec2 Direction { get; private set; }
-        public float Lifetime { get; private set; }
         public float Speed { get; private set; }
+        public float LifeTime { get; private set; }
+        public float MoveTime { get; private set; }
 
-        public bool Alive { get { return (Lifetime >= 0); } }
+        // 죽창은 적당히 날아간후 멈춘다
+        // 발사 패킷 하나로 죽창의 이동과 정지까지 확실히 구현하기 위해
+        // 시작과 정지 위치까지 관리한다
+        public Vec2 InitialPosition { get; private set; }
+        public Vec2 FinalPosition { get; private set; }
+
+        public bool Alive { get { return (LifeTime >= 0); } }
 
         public Projectile(int id, int ownerID, Vec2 pos, Vec2 dir)
         {
@@ -24,26 +31,34 @@ namespace HatsushimoServer
             this.Position = pos;
             this.Direction = dir;
 
-            this.Lifetime = Config.ProjectileLifetime;
+            this.MoveTime = Config.ProjectileMoveTime;
+            this.LifeTime = Config.ProjectileLifeTime;
             this.Speed = Config.ProjectileSpeed;
+
+            InitialPosition = pos;
+            FinalPosition = InitialPosition + dir * Speed * MoveTime;
         }
 
-        public bool DecreaseLifetime(float dt)
+        public void Update(float dt)
         {
-            this.Lifetime -= dt;
-            if (Lifetime <= 0) { return false; }
-            return true;
-        }
+            // TODO 생존시간같은거 관리는 async로 넘길수 있을거같은데
+            this.LifeTime -= dt;
+            this.MoveTime -= dt;
 
-        public void UpadteMove(float dt)
-        {
-            var diff = Direction * Speed * dt;
-            var nextPos = Position + diff;
+            if (this.MoveTime >= 0)
+            {
+                var diff = Direction * Speed * dt;
+                var nextPos = Position + diff;
 
-            var w = Config.RoomWidth;
-            var h = Config.RoomHeight;
-            nextPos = VectorHelper.FilterPosition(nextPos, w, h);
-            this.Position = nextPos;
+                var w = Config.RoomWidth;
+                var h = Config.RoomHeight;
+                nextPos = VectorHelper.FilterPosition(nextPos, w, h);
+                this.Position = nextPos;
+            }
+            else
+            {
+                this.Position = FinalPosition;
+            }
         }
 
         public ReplicationCreateProjectilePacket GenerateCreatePacket()
@@ -52,9 +67,9 @@ namespace HatsushimoServer
             {
                 ID = ID,
                 Position = Position,
-                Direction = Direction,
-                LifetimeMillis = (short)(Lifetime * 1000),
-                Speed = Speed,
+                FinalPosition = FinalPosition,
+                LifeTimeMillis = (short)(LifeTime * 1000),
+                MoveTimeMillis = (short)(MoveTime * 1000),
             };
             return new ReplicationCreateProjectilePacket() { status = status };
         }
