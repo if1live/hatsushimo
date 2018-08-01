@@ -20,6 +20,14 @@ namespace Hatsushimo
 
         public const float HeartbeatInterval = 20.0f;
 
+        // food
         public const int FoodScore = 1;
+
+        // projectile
+        public const float ProjectileSpeed = 10.0f;
+        public const float ProjectileLifetime = 3.0f;
+
+        // player
+        public const float PlayerSpeed = 3.0f;
     }
 }

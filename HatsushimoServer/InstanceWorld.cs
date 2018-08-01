@@ -191,7 +191,7 @@ namespace HatsushimoServer
         void HandleMove(Session session, MovePacket p)
         {
             var player = GetPlayer(session);
-            var speed = 10;
+            var speed = Config.PlayerSpeed;
             player.TargetPosition = p.TargetPos;
             player.Speed = speed;
         }

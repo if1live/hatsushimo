@@ -1,5 +1,6 @@
 using Assets.Game.Extensions;
 using Assets.NetChan;
+using Hatsushimo;
 using Hatsushimo.Packets;
 using System;
 using UniRx;
@@ -58,7 +59,7 @@ namespace Assets.Game
             Moved.Subscribe(move => {
                 TargetPos = move.TargetPos.ToVector3();
                 // TODO 이동 계산을 구현하기
-                Speed = 10;
+                Speed = Config.PlayerSpeed;
             }).AddTo(this);
         }
     }

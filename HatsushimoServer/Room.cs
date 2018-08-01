@@ -154,8 +154,9 @@ namespace HatsushimoServer
 
             projectileIDGen.MoveNext();
             var id = projectileIDGen.Current;
+            var ownerID = player.ID;
 
-            var projectile = new Projectile(id, pos, dir);
+            var projectile = new Projectile(id, ownerID, pos, dir);
             return projectile;
         }
 
@@ -254,6 +255,24 @@ namespace HatsushimoServer
             players.ForEach(player => player.UpdateMove(dt));
         }
 
+        void ProjectileUpdateLoop(float dt)
+        {
+            projectiles.ForEach(p => p.UpadteMove(dt));
+            projectiles.ForEach(p => p.DecreaseLifetime(dt));
+
+            var deadIdxList = projectiles
+            .Select((p, idx) => new { projectile = p, idx = idx })
+            .Where(pair => pair.projectile.Alive == false)
+            .Select(pair => pair.idx)
+            .OrderByDescending(x => x).ToList();
+
+            foreach (var idx in deadIdxList)
+            {
+                projectiles.RemoveAt(idx);
+            }
+        }
+
+
         void CheckFoodLoop()
         {
             // 음식을 먹으면 점수를 올리고 음식을 목록에서 삭제
@@ -287,20 +306,50 @@ namespace HatsushimoServer
             });
         }
 
-        void ProjectileUpdateLoop(float dt)
+        void CheckKillLoop()
         {
-            projectiles.ForEach(projectile => projectile.DecreaseLifetime(dt));
-
-            var deadIdxList = projectiles
-            .Select((p, idx) => new { projectile = p, idx = idx })
-            .Where(pair => pair.projectile.Lifetime <= 0)
-            .Select(pair => pair.idx)
-            .OrderByDescending(x => x).ToList();
-
-            foreach (var idx in deadIdxList)
+            projectiles.ForEach(projectile =>
             {
-                projectiles.RemoveAt(idx);
-            }
+                var candidates = this.players.Where(player => player.ID != projectile.OwnerID);
+
+                // TODO 죽창 충돌처리 개선하기
+                // 일단은 점-점으로 계산
+                var hitPlayers = candidates.Select((players, idx) => new { player = players, idx = idx })
+                .Where(pair =>
+                {
+                    var ALLOW_DISTANCE = 1;
+                    var p1 = projectile.Position;
+                    var p2 = pair.player.Position;
+                    return VectorHelper.IsInRange(p1, p2, ALLOW_DISTANCE);
+                }).ToList();
+
+                if (hitPlayers.Count > 0)
+                {
+                    var owner = this.players.Find(p => p.ID == projectile.OwnerID);
+                    if (owner != null)
+                    {
+                        // 창을 던진후 유저가 죽었을 가능성이 있다
+                        owner.GainKillScore(hitPlayers.Count);
+                    }
+
+                    // TODO 유저가 죽었다는것과 유저가 나갔다는것을 구분해야한다
+                    // 죽은 유저를 방에서 즉시 제거하는게 최선인가?
+
+                    // 유저가 죽었다는걸 다른 유저에게 알려준다
+                    // TODO 알려주는 범위 통제하면 대역폭을 아낄수 있다
+                    // TODO 객체 삭제 패킷과 유저 죽음 패킷은 분리하는게 가능하다
+                    var deadIds = hitPlayers.Select(p => p.player.ID);
+                    var deadPacket = new ReplicationBulkRemovePacket()
+                    {
+                        IDList = deadIds.ToArray(),
+                    };
+                    players.ForEach(p => p.Session.SendImmediate(deadPacket));
+
+                    // 죽은 유저는 유저 목록에서 삭제
+                    var idxList = hitPlayers.Select(p => p.idx).OrderByDescending(x => x).ToList();
+                    idxList.ForEach(idx => players.RemoveAt(idx));
+                }
+            });
         }
 
         public void GameLoop()
@@ -310,6 +359,7 @@ namespace HatsushimoServer
             ProjectileUpdateLoop(dt);
             GenerateFoodLoop();
             CheckFoodLoop();
+            CheckKillLoop();
         }
 
         // 비동기 작업을 위해 데이터에 접근하는 경우 기존 내용을 복사하기

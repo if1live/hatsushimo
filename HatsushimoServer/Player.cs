@@ -30,7 +30,7 @@ namespace HatsushimoServer
             {
                 var score = 0;
                 score += score_food;
-                score += score_kill;
+                score += score_kill * 100;
                 return score;
             }
         }
