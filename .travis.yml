@@ -6,8 +6,15 @@ dotnet: 2.1
 sudo: false
 
 script:
+  # shared lib
   - cd HatsushimoTest; dotnet test; cd ..
-  - cd MikazukiTest; dotnet build; cd ..
+  
+  # server
+  - cd MikazukiTest; dotnet test; cd ..
+  - cd MikazukiRunner; dotnet build; cd ..
+  
+  # bot
+  - cd ShigureRunner; dotnet build; cd ..
 
 branches:
   only:
