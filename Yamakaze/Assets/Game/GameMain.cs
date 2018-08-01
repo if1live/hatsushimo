@@ -17,8 +17,7 @@ namespace Assets.Game
             var mgr = ConnectionManager.Instance;
             var info = ConnectionInfo.Info;
 
-            var dispatcher = PacketDispatcher.Instance;
-            dispatcher.PlayerReady.Received.ObserveOnMainThread().Subscribe(_ =>
+            mgr.PlayerReady.Received.ObserveOnMainThread().Subscribe(_ =>
             {
                 waitingText.gameObject.SetActive(false);
 

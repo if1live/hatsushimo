@@ -34,6 +34,8 @@ namespace Assets.Game
 
         private void Start()
         {
+            var conn = ConnectionManager.Instance;
+
             genUUIDButton.OnClickAsObservable().Subscribe(_ => {
                 // 같은 클라에서 같은 uuid 생성되는게 싫을떄
                 // 같은 컴퓨터에서 실행할 경우
@@ -41,7 +43,7 @@ namespace Assets.Game
                 uuidField.text = uuid.ToString();
             }).AddTo(this);
 
-            ConnectionManager.Instance.ReadyObservable.ObserveOnMainThread().Subscribe(conn =>
+            ConnectionManager.Instance.ReadyObservable.ObserveOnMainThread().Subscribe(_ =>
             {
                 joinButton.interactable = true;
             }).AddTo(this);
@@ -52,7 +54,6 @@ namespace Assets.Game
                 if (Nickname.Length == 0) { return; }
                 if (WorldID.Length == 0) { return; }
 
-                var conn = ConnectionManager.Instance;
                 var p = new SignUpPacket()
                 {
                     Uuid = UUID,
@@ -63,8 +64,7 @@ namespace Assets.Game
                 joinButton.interactable = false;
             }).AddTo(this);
 
-            var dispatcher = PacketDispatcher.Instance;
-            dispatcher.SignUp.Received.ObserveOnMainThread().Subscribe(p =>
+            conn.SignUp.Received.ObserveOnMainThread().Subscribe(p =>
             {
                 Debug.Log($"sign up result: {p.ResultCode}");
 
@@ -73,11 +73,10 @@ namespace Assets.Game
                     Uuid = UUID,
                 };
 
-                var conn = ConnectionManager.Instance;
                 conn.SendImmediate(auth);
             }).AddTo(this);
 
-            dispatcher.Authentication.Received.ObserveOnMainThread().Subscribe(p =>
+            conn.Authentication.Received.ObserveOnMainThread().Subscribe(p =>
             {
                 Debug.Log($"authentication result: {p.ResultCode}");
 
@@ -89,12 +88,11 @@ namespace Assets.Game
                         WorldID = WorldID
                     };
 
-                    var conn = ConnectionManager.Instance;
                     conn.SendImmediate(join);
                 }
             }).AddTo(this);
 
-            dispatcher.WorldJoin.Received.ObserveOnMainThread().Subscribe(p =>
+            conn.WorldJoin.Received.ObserveOnMainThread().Subscribe(p =>
             {
                 Debug.Log($"world id: {p.WorldID} / player id={p.PlayerID}");
 

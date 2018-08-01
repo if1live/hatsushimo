@@ -41,10 +41,9 @@ namespace Assets.NetChan
 
         private void Start()
         {
-            var dispatcher = PacketDispatcher.Instance;
-            dispatcher.Ping.Received.Subscribe(HandlePing).AddTo(this);
-
             var conn = ConnectionManager.Instance;
+            conn.Ping.Received.Subscribe(HandlePing).AddTo(this);
+
             var pingInterval = TimeSpan.FromMilliseconds(intervalMillis);
             Observable.Interval(pingInterval)
             .SkipUntil(conn.ReadyObservable).Subscribe(_ =>

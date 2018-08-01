@@ -1,9 +1,9 @@
 using UniRx;
 using UnityEngine;
 using Hatsushimo;
+using Hatsushimo.NetChan;
 using System.Collections;
 using System;
-using Hatsushimo.NetChan;
 using Hatsushimo.Packets;
 using System.IO;
 using System.Threading.Tasks;
@@ -58,6 +58,8 @@ namespace Assets.NetChan
         }
         Subject<bool> readySubject = new Subject<bool>();
 
+        readonly PacketDispatcher<int> dispatcher = new PacketDispatcher<int>();
+
         private void Awake()
         {
             if (Instance == null)
@@ -78,6 +80,8 @@ namespace Assets.NetChan
 
         void Start()
         {
+            InitializePacketObservables();
+
             var bandwidthInterval = TimeSpan.FromMilliseconds(100);
             Observable.Interval(bandwidthInterval).Subscribe(_ =>
             {
@@ -152,55 +156,9 @@ namespace Assets.NetChan
 
                 var now = TimeUtils.NowTimestamp;
                 bandwidth.AddReceived(bytes.Length, now);
-
-                var stream = new MemoryStream(bytes);
-                var reader = new BinaryReader(stream);
-                var iter = new PacketEnumerator(reader);
-                while(iter.MoveNext())
-                {
-                    var type = (PacketType)iter.CurrentType;
-                    Dispatch(type, reader);
-                }
+                dispatcher.Dispatch(bytes, 0);
             }
         }
-
-        bool Dispatch(PacketType type, BinaryReader reader)
-        {
-            var dispatcher = PacketDispatcher.Instance;
-            if (DispatchPacket(type, reader, dispatcher.Ping)) { return true; }
-            if (DispatchPacket(type, reader, dispatcher.Welcome)) { return true; }
-            if (DispatchPacket(type, reader, dispatcher.Disconnect)) { return true; }
-            if (DispatchPacket(type, reader, dispatcher.SignUp)) { return true; }
-            if (DispatchPacket(type, reader, dispatcher.Authentication)) { return true; }
-            if (DispatchPacket(type, reader, dispatcher.ReplicationAll)) { return true; }
-            if (DispatchPacket(type, reader, dispatcher.CreatePlayer)) { return true; }
-            if (DispatchPacket(type, reader, dispatcher.CreateFood)) { return true; }
-            if (DispatchPacket(type, reader, dispatcher.CreateProjectile)) { return true; }
-            if (DispatchPacket(type, reader, dispatcher.ReplicationRemove)) { return true; }
-            if (DispatchPacket(type, reader, dispatcher.ReplicationBulkRemove)) { return true; }
-            if (DispatchPacket(type, reader, dispatcher.WorldJoin)) { return true; }
-            if (DispatchPacket(type, reader, dispatcher.WorldLeave)) { return true; }
-            if (DispatchPacket(type, reader, dispatcher.PlayerReady)) { return true; }
-            if (DispatchPacket(type, reader, dispatcher.Leaderboard)) { return true; }
-            if (DispatchPacket(type, reader, dispatcher.MoveNotify)) { return true; }
-            if (DispatchPacket(type, reader, dispatcher.AttackNotify)) { return true; }
-
-            Debug.Log($"handler not found: packet_type={type}");
-            return false;
-        }
-
-        bool DispatchPacket<TPacket>(PacketType type, BinaryReader reader, PacketObservable<TPacket> subject)
-        where TPacket : IPacket, new()
-        {
-            TPacket packet;
-            if (codec.TryDecode<TPacket>((short)type, reader, out packet))
-            {
-                subject.SetValueAndForceNotify(packet);
-                return true;
-            }
-            return false;
-        }
-
 
         private void OnDestroy()
         {
@@ -254,6 +212,170 @@ namespace Assets.NetChan
             ws.Send(bytes);
             var now = TimeUtils.NowTimestamp;
             bandwidth.AddSent(bytes.Length, now);
+        }
+
+        public UniRxPacketObservable<PingPacket> Ping;
+        public UniRxPacketObservable<WelcomePacket> Welcome;
+        public UniRxPacketObservable<DisconnectPacket> Disconnect;
+
+        public UniRxPacketObservable<SignUpResultPacket> SignUp;
+        public UniRxPacketObservable<AuthenticationResultPacket> Authentication;
+
+        public UniRxPacketObservable<ReplicationAllPacket> ReplicationAll;
+
+        public UniRxPacketObservable<ReplicationCreatePlayerPacket> CreatePlayer;
+        public UniRxPacketObservable<ReplicationCreateFoodPacket> CreateFood;
+        public UniRxPacketObservable<ReplicationCreateProjectilePacket> CreateProjectile;
+
+        public UniRxPacketObservable<ReplicationRemovePacket> ReplicationRemove;
+        public UniRxPacketObservable<ReplicationBulkRemovePacket> ReplicationBulkRemove;
+
+        public UniRxPacketObservable<WorldJoinResultPacket> WorldJoin;
+        public UniRxPacketObservable<WorldLeaveResultPacket> WorldLeave;
+
+        public UniRxPacketObservable<PlayerReadyPacket> PlayerReady;
+        public UniRxPacketObservable<LeaderboardPacket> Leaderboard;
+
+        public UniRxPacketObservable<MoveNotifyPacket> MoveNotify;
+        public UniRxPacketObservable<AttackNotifyPacket> AttackNotify;
+
+        void InitializePacketObservables()
+        {
+            // packet event
+            Ping = new UniRxPacketObservable<PingPacket>(
+                h => (arg) => h(arg),
+                h => dispatcher.Ping += h,
+                h => dispatcher.Ping -= h
+            );
+
+            Welcome = new UniRxPacketObservable<WelcomePacket>(
+                h => (arg) => h(arg),
+                h => dispatcher.Welcome += h,
+                h => dispatcher.Welcome -= h
+            );
+
+            Disconnect = new UniRxPacketObservable<DisconnectPacket>(
+                h => (arg) => h(arg),
+                h => dispatcher.Disconnect += h,
+                h => dispatcher.Disconnect -= h
+            );
+
+            SignUp = new UniRxPacketObservable<SignUpResultPacket>(
+                h => (arg) => h(arg),
+                h => dispatcher.SignUpResult += h,
+                h => dispatcher.SignUpResult -= h
+            );
+
+            Authentication = new UniRxPacketObservable<AuthenticationResultPacket>(
+                h => (arg) => h(arg),
+                h => dispatcher.AuthenticationResult += h,
+                h => dispatcher.AuthenticationResult -= h
+            );
+
+            ReplicationAll = new UniRxPacketObservable<ReplicationAllPacket>(
+                h => (arg) => h(arg),
+                h => dispatcher.ReplicationAll += h,
+                h => dispatcher.ReplicationAll -= h
+            );
+
+            CreateFood = new UniRxPacketObservable<ReplicationCreateFoodPacket>(
+                h => (arg) => h(arg),
+                h => dispatcher.CreateFood += h,
+                h => dispatcher.CreateFood -= h
+            );
+
+            CreatePlayer = new UniRxPacketObservable<ReplicationCreatePlayerPacket>(
+                h => (arg) => h(arg),
+                h => dispatcher.CreatePlayer += h,
+                h => dispatcher.CreatePlayer -= h
+            );
+
+            CreateProjectile = new UniRxPacketObservable<ReplicationCreateProjectilePacket>(
+                h => (arg) => h(arg),
+                h => dispatcher.CreateProjectile += h,
+                h => dispatcher.CreateProjectile -= h
+            );
+
+            ReplicationRemove = new UniRxPacketObservable<ReplicationRemovePacket>(
+                h => (arg) => h(arg),
+                h => dispatcher.ReplicationRemove += h,
+                h => dispatcher.ReplicationRemove -= h
+            );
+
+            ReplicationBulkRemove = new UniRxPacketObservable<ReplicationBulkRemovePacket>(
+                h => (arg) => h(arg),
+                h => dispatcher.ReplicationBulkRemove += h,
+                h => dispatcher.ReplicationBulkRemove -= h
+            );
+
+            WorldJoin = new UniRxPacketObservable<WorldJoinResultPacket>(
+                h => (arg) => h(arg),
+                h => dispatcher.WorldJoinResult += h,
+                h => dispatcher.WorldJoinResult -= h
+            );
+
+            WorldLeave = new UniRxPacketObservable<WorldLeaveResultPacket>(
+                h => (arg) => h(arg),
+                h => dispatcher.WorldLeaveResult += h,
+                h => dispatcher.WorldLeaveResult -= h
+            );
+
+            PlayerReady = new UniRxPacketObservable<PlayerReadyPacket>(
+                h => (arg) => h(arg),
+                h => dispatcher.PlayerReady += h,
+                h => dispatcher.PlayerReady -= h
+            );
+
+            Leaderboard = new UniRxPacketObservable<LeaderboardPacket>(
+                h => (arg) => h(arg),
+                h => dispatcher.Leaderboard += h,
+                h => dispatcher.Leaderboard -= h
+            );
+
+            MoveNotify = new UniRxPacketObservable<MoveNotifyPacket>(
+                h => (arg) => h(arg),
+                h => dispatcher.MoveNotify += h,
+                h => dispatcher.MoveNotify -= h
+            );
+
+            AttackNotify = new UniRxPacketObservable<AttackNotifyPacket>(
+                h => (arg) => h(arg),
+                h => dispatcher.AttackNotify += h,
+                h => dispatcher.AttackNotify -= h
+            );
+        }
+    }
+
+    public class UniRxPacketObservable<TPacket> where TPacket : IPacket, new()
+    {
+        Func<Action<PacketReceiveEventArgs<TPacket, int>>, PacketReceiveEventHandler<TPacket, int>> conversion;
+        Action<PacketReceiveEventHandler<TPacket, int>> addHandler;
+        Action<PacketReceiveEventHandler<TPacket, int>> removeHandler;
+
+        public UniRxPacketObservable(
+            Func<Action<PacketReceiveEventArgs<TPacket, int>>, PacketReceiveEventHandler<TPacket, int>> conversion,
+            Action<PacketReceiveEventHandler<TPacket, int>> addHandler,
+            Action<PacketReceiveEventHandler<TPacket, int>> removeHandler
+        )
+        {
+            this.conversion = conversion;
+            this.addHandler = addHandler;
+            this.removeHandler = removeHandler;
+        }
+
+        public IObservable<TPacket> Received
+        {
+            get
+            {
+                return Observable.FromEvent<
+                    PacketReceiveEventHandler<TPacket, int>,
+                    PacketReceiveEventArgs<TPacket, int>
+                >(
+                    conversion,
+                    addHandler,
+                    removeHandler
+                ).Select(x => x.Packet);
+            }
         }
     }
 }

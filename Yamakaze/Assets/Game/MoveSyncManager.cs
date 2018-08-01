@@ -18,8 +18,8 @@ namespace Assets.Game
 
         void Start()
         {
-            var dispatcher = PacketDispatcher.Instance;
-            dispatcher.MoveNotify.Received.ObserveOnMainThread().Subscribe(packet =>
+            var conn = ConnectionManager.Instance;
+            conn.MoveNotify.Received.ObserveOnMainThread().Subscribe(packet =>
             {
                 foreach (var move in packet.list) { ApplyMove(move); }
             }).AddTo(this);

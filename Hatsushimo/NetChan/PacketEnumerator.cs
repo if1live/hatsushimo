@@ -8,7 +8,7 @@ namespace Hatsushimo.NetChan
         readonly PacketCodec codec = new PacketCodec();
 
         short currType;
-        public int CurrentType { get { return currType; } }
+        public short CurrentType { get { return currType; } }
 
         public PacketEnumerator(BinaryReader reader)
         {

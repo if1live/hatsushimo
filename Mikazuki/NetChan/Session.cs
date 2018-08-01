@@ -100,7 +100,7 @@ namespace Mikazuki.NetChan
     }
 
     // 세션 레이어를 통해서 유저를 관리한다
-    public class SessionLayer : ServerPacketReceiver
+    public class SessionLayer : RxPacketDispatcher
     {
         static readonly Logger log = LogManager.GetLogger("SessionLayer");
 

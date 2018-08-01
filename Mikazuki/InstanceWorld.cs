@@ -31,7 +31,7 @@ namespace Mikazuki
 
         readonly Dictionary<int, Player> playerTable = new Dictionary<int, Player>();
 
-        readonly ServerPacketReceiver receiver = new ServerPacketReceiver();
+        readonly RxPacketDispatcher dispatcher = new RxPacketDispatcher();
 
         public InstanceWorld(string id)
         {
@@ -48,7 +48,7 @@ namespace Mikazuki
                 .Subscribe(_ => LeaderboardUpdate());
 
             // handle packet
-            var r = receiver;
+            var r = dispatcher;
             r.WorldJoin.Received.Subscribe(pair => HandleJoinReq(pair.Session, pair.Packet));
             r.WorldLeave.Received.Subscribe(pair => HandleLeaveReq(pair.Session, pair.Packet));
 
@@ -63,7 +63,7 @@ namespace Mikazuki
             byte[] data = null;
             while (recvQueue.TryDequeue(out session, out data))
             {
-                receiver.OnNext(session, data);
+                dispatcher.OnNext(session, data);
             }
             room.GameLoop();
         }

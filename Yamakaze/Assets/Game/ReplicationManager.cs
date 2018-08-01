@@ -31,14 +31,14 @@ namespace Assets.Game
 
         private void Start()
         {
-            var dispatcher = PacketDispatcher.Instance;
+            var conn = ConnectionManager.Instance;
 
-            dispatcher.PlayerReady.Received.Subscribe(_ =>
+            conn.PlayerReady.Received.Subscribe(_ =>
             {
                 Debug.Log("player ready");
             });
 
-            dispatcher.ReplicationAll.Received.Subscribe(packet =>
+            conn.ReplicationAll.Received.Subscribe(packet =>
             {
                 //Debug.Log("replicaiton all received");
                 foreach (var p in packet.Players) { CreatePlayer(p); }
@@ -46,12 +46,12 @@ namespace Assets.Game
                 foreach (var p in packet.Projectiles) { CreateProjectile(p); }
             }).AddTo(this);
 
-            dispatcher.CreateFood.Received.Subscribe(p => CreateFood(p.status));
-            dispatcher.CreatePlayer.Received.Subscribe(p => CreatePlayer(p.status));
-            dispatcher.CreateProjectile.Received.Subscribe(p => CreateProjectile(p.status));
+            conn.CreateFood.Received.Subscribe(p => CreateFood(p.status));
+            conn.CreatePlayer.Received.Subscribe(p => CreatePlayer(p.status));
+            conn.CreateProjectile.Received.Subscribe(p => CreateProjectile(p.status));
 
-            dispatcher.ReplicationRemove.Received.Subscribe(p => Remove(p.ID));
-            dispatcher.ReplicationBulkRemove.Received.Subscribe(packet =>
+            conn.ReplicationRemove.Received.Subscribe(p => Remove(p.ID));
+            conn.ReplicationBulkRemove.Received.Subscribe(packet =>
             {
                 foreach (var id in packet.IDList) { Remove(id); }
             });

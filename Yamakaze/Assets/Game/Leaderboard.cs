@@ -20,8 +20,8 @@ namespace Assets.Game
 
         private void Start()
         {
-            var dispatcher = PacketDispatcher.Instance;
-            dispatcher.Leaderboard.Received.ObserveOnMainThread().Subscribe(p =>
+            var conn = ConnectionManager.Instance;
+            conn.Leaderboard.Received.ObserveOnMainThread().Subscribe(p =>
             {
                 var replication = ReplicationManager.Instance;
                 Debug.Assert(replication != null);
