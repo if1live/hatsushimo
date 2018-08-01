@@ -9,34 +9,44 @@ simple io game
 * server : .Net Core
 * client : Unity 2018.2
 
-* HatsushimoShared : c# shared library
-* HatsushimoServer : game server library
-* HatsushimoServerTest : unit test for HatsushimoShared, HatsushimoServer
-* HatsushimoServerMain : game server binary
-* HatsushimoClient : game client
+* Hatsushimo : shared library
+	* Hatsushimo
+	* HatsushimoTest
+* Mikazuki : game server
+	* Mikazuki
+	* MikazukiTest
+	* MikazukiRunner : executable
+* Shigure : bot
+	* Shigure
+	* ShigureRunner : executable
+* Yamakaze : game client
+	* Yamakaze
+
 
 ## build and test
 
 ```
-cd HatsushimoServerTest
+cd HatsushimoTest
 dotnet test
-
-# watch
-dotnet watch test
 ```
 
 ```
-cd HatsushimoServerMain
+cd MikazukiTest
+dotnet test
+```
+
+```
+cd MikazukiRunner
 dotnet run
-
-# watch
-dotnet watch run
 ```
 
 ```
-cd HatsushimoShared
-dotnet build -o ..\HatsushimoClient\Assets\HatsushimoShared\
-
-# watch
-dotnet watch -- build -o ..\HatsushimoClient\Assets\HatsushimoShared\
+cd Hatsushimo
+dotnet build -o ..\Yamakaze\Assets\Hatsushimo\
 ```
+
+```
+cd Shigure
+dotnet run
+```
+

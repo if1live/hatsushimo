@@ -1,2 +1,10 @@
-/client_android/*
-/client_standalone/*
+/*_android/*
+/*_standalone/*
+
+# dotnet
+bin
+obj
+
+# vsconfig
+**/.vscode/launch.json
+**/.vscode/tasks.json

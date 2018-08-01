@@ -1,19 +1,25 @@
 {
 	"folders": [
 		{
-			"path": "HatsushimoShared"
+			"path": "Hatsushimo"
 		},
 		{
-			"path": "HatsushimoServer"
+			"path": "HatsushimoTest"
 		},
 		{
-			"path": "HatsushimoServerTest"
+			"path": "Mikazuki"
 		},
 		{
-			"path": "HatsushimoServerMain"
+			"path": "MikazukiTest"
 		},
 		{
-			"path": "HatsushimoClient"
+			"path": "MikazukiRunner"
+		},
+		{
+			"path": "Shigure"
+		},
+		{
+			"path": "ShigureRunner"
 		}
 	],
 	"settings": {}

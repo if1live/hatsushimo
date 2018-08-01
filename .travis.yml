@@ -6,13 +6,8 @@ dotnet: 2.1
 sudo: false
 
 script:
-  - cd HatsushimoServerTest
-  - dotnet test
-  - cd ..
-  
-  - cd HatsushimoServerMain
-  - dotnet build
-  - cd ..
+  - cd HatsushimoTest; dotnet test; cd ..
+  - cd MikazukiTest; dotnet build; cd ..
 
 branches:
   only:
