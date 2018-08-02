@@ -28,13 +28,13 @@ namespace Assets.Game
 
         IObservable<PlayerStatus> StatusReceived
         {
-            get { return status.Skip(1).AsObservable(); }
+            get { return status.AsObservable(); }
         }
         ReactiveProperty<PlayerStatus> status = new ReactiveProperty<PlayerStatus>();
 
         IObservable<MoveNotify> Moved
         {
-            get { return moved.Skip(1).AsObservable(); }
+            get { return moved.AsObservable(); }
         }
         ReactiveProperty<MoveNotify> moved = new ReactiveProperty<MoveNotify>();
 
