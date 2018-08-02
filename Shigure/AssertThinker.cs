@@ -186,10 +186,5 @@ namespace Shigure
             }
             return 0;
         }
-
-        Task<bool> IThinker.Run()
-        {
-            throw new NotImplementedException();
-        }
     }
 }
