@@ -77,6 +77,12 @@ namespace Shigure
 
             using (var ws = new WebSocket($"ws://127.0.0.1:{Config.ServerPort}/game"))
             {
+                Console.CancelKeyPress += delegate
+                {
+                    Console.WriteLine("ctrl-c exit program");
+                    ws.Close();
+                };
+
                 var conn = new Connection(ws);
                 var thinker = CreateThinker(conn, opts);
                 if (thinker == null) { return; }
