@@ -1,20 +1,20 @@
 using System;
 using System.Linq;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Hatsushimo;
-using Hatsushimo.Packets;
-using Optional.Unsafe;
-using System.Collections.Generic;
 
 namespace Shigure
 {
-    public class SimpleThinker : BaseThinker
+    // 맵을 적당히 돌아다니는 봇
+    public class WanderThinker : BaseThinker
     {
-        public SimpleThinker(Connection conn)
-        : base(conn, "simple")
+        readonly float lifetime;
+
+        public WanderThinker(Connection conn, float lifetime)
+        : base(conn, "wander")
         {
+            this.lifetime = lifetime;
         }
 
         public override async Task<bool> Run()
@@ -25,7 +25,8 @@ namespace Shigure
             var join = await WorldJoin();
             var ready = await runner.PlayerReady();
 
-            for (var i = 0; i < 10; i++)
+            var remain = lifetime;
+            while (remain > 0)
             {
                 var removeIDList = runner.GetRemovedIDs();
                 var dead = removeIDList.Where(id => id == playerID).Any();
@@ -38,9 +39,11 @@ namespace Shigure
                 float x = (float)(rand.NextDouble() - 0.5) * Config.RoomWidth;
                 float y = (float)(rand.NextDouble() - 0.5) * Config.RoomHeight;
                 runner.Move(x, y);
-                await Task.Delay(TimeSpan.FromSeconds(2));
-            }
 
+                float interval = (float)rand.NextDouble() * 5;
+                remain -= interval;
+                await Task.Delay(TimeSpan.FromSeconds(interval));
+            }
 
             var leave = await WorldLeave();
             LogoutAndDisconnect();

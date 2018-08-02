@@ -16,12 +16,19 @@ namespace Shigure
 {
     public class Client
     {
+        IThinker CreateThinker(Connection conn, string[] args)
+        {
+            //IThinker thinker = new AssertThinker(conn);
+            //IThinker thinker = new SimpleThinker(conn);
+            IThinker thinker = new WanderThinker(conn, 30);
+            return thinker;
+        }
+
         public void Run(string[] args)
         {
             var ws = new WebSocket($"ws://127.0.0.1:{Config.ServerPort}/game");
             var conn = new Connection(ws);
-            //IThinker thinker = new AssertThinker(conn);
-            IThinker thinker = new SimpleThinker(conn);
+            var thinker = CreateThinker(conn, args);
 
             ws.OnMessage += (sender, e) =>
             {

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -80,6 +81,16 @@ namespace Shigure
         public void Disconnect()
         {
             conn.Send(new DisconnectPacket());
+        }
+
+        public List<int> GetRemovedIDs()
+        {
+            var removeIDList = new List<int>();
+            var remove = conn.TryRecv<ReplicationRemovePacket>();
+            remove.MatchSome(v => removeIDList.Add(v.ID));
+            var removeBulk = conn.TryRecv<ReplicationBulkRemovePacket>();
+            removeBulk.MatchSome(v => removeIDList.AddRange(v.IDList));
+            return removeIDList;
         }
     }
 }
