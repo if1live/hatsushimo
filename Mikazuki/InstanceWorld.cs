@@ -113,7 +113,7 @@ namespace Mikazuki
             return playerTable[playerID];
         }
 
-        public bool Join(Session session, string nickname)
+        public bool Join(Session session, string nickname, PlayerMode mode)
         {
             if (session.WorldID != null) { return false; }
             session.WorldID = ID;
@@ -121,7 +121,7 @@ namespace Mikazuki
             sessions.Add(session);
 
             var sessionID = session.ID;
-            var player = new Player(sessionID, session);
+            var player = new Player(sessionID, session, mode);
             playerTable[sessionID] = player;
 
             return true;
@@ -144,7 +144,7 @@ namespace Mikazuki
 
         void HandleJoinReq(Session session, WorldJoinPacket p)
         {
-            var ok = Join(session, p.Nickname);
+            var ok = Join(session, p.Nickname, p.Mode);
             log.Info($"world join: id={session.ID} world={ID} ok={ok} size={sessions.Count}");
 
             var player = GetPlayer(session);

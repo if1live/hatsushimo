@@ -86,7 +86,7 @@ namespace Assets.Game
                     info.WorldID = WorldID;
                     info.Nickname = Nickname;
 
-                    var join = new WorldJoinPacket(WorldID, Nickname);
+                    var join = new WorldJoinPacket(WorldID, Nickname, PlayerMode.Player);
                     conn.SendImmediate(join);
                 }
             }).AddTo(this);

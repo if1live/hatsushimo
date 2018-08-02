@@ -8,9 +8,11 @@ using Hatsushimo.Utils;
 using System.Diagnostics;
 using NLog;
 using System.Numerics;
+using Hatsushimo.NetChan;
 
 namespace Mikazuki
 {
+
 
     public class Room
     {
@@ -24,36 +26,33 @@ namespace Mikazuki
         // 외부에서 정보를 직접 갖다쓰는 곳(주로 플레이어 리스트)은 락을 건다
         Object lockobj = new Object();
 
-        readonly List<Player> players = new List<Player>();
+        List<Player> players = new List<Player>();
         // 로직에 직접 참가하지 않는 유저목록
         // 방에는 참가했지만 로딩이 끝나지 않는 경우를 처리하는게 목적
-        readonly List<Player> waitingPlayers = new List<Player>();
-        readonly List<Food> foods = new List<Food>();
-        readonly List<Projectile> projectiles = new List<Projectile>();
+        List<Player> waitingPlayers = new List<Player>();
+        List<Projectile> projectiles = new List<Projectile>();
 
-        // TODO 옵져버. 디버깅용
+        // 옵져버. 디버깅용
         // 게임 로직에는 참가하지 않고 모든 패킷을 받아본다
-        // TODO player-observer를 구분하고 싶다
+        List<Player> observers = new List<Player>();
 
         // TODO 죽은 플레이어 목록
         // 죽은 유저를 즉시 방에서 쫒아내는것보다는 잠시라도 방에 남아있다가 쫒아내고 싶다
         // 방에 남아있으면 킬캠같은걸 구현 가능하다
         // 또는 제자리에서 부활하거나
 
-        // 방에서만 사용하는 객체는 id를 따로 발급
-        readonly IDPool foodIDPool = IDPool.MakeFoodID();
         readonly IDPool projectileIDPool = IDPool.MakeProjectileID();
+
+        readonly FoodLayer foodLayer;
+
+        Broadcaster broadcaster;
 
         public Room(string id)
         {
             this.ID = id;
 
-            // 방 만들때 음식 미리 만들기
-            for (var i = 0; i < Config.FoodCount; i++)
-            {
-                var food = MakeFood();
-                foods.Add(food);
-            }
+            broadcaster = new Broadcaster(playerGrid);
+            foodLayer = new FoodLayer(broadcaster);
         }
 
         public bool SpawnPlayer(Player player)
@@ -74,6 +73,9 @@ namespace Mikazuki
                 players.Add(player);
             }
 
+            // 새로운 유저가 생겼으면 좌표 정보를 갱신
+            RefreshPlayerGrid();
+
             // 신규 유저에게 월드 정보 알려주기
             player.Session.SendImmediate(GenerateReplicaitonAllPacket());
 
@@ -82,7 +84,7 @@ namespace Mikazuki
             player.Session.SendImmediate(new PlayerReadyPacket());
 
             // 기존 유저들에게 새로 생성된 플레이어 정보를 알려주기
-            var spawnPacket = player.GenerateCreatePacket();
+            var spawnPacket = player.Packets.Create();
             prevPlayers.ForEach(p =>
             {
                 p.Session.SendLazy(spawnPacket);
@@ -111,6 +113,9 @@ namespace Mikazuki
                 {
                     players.RemoveAt(found);
                 }
+
+                // 기존 유저가 나가면 격자 갱신
+                RefreshPlayerGrid();
             }
 
             // 로딩 끝나기전에 나가는 경우 처리
@@ -139,13 +144,7 @@ namespace Mikazuki
             return new Vector2(x, y);
         }
 
-        Food MakeFood()
-        {
-            var pos = GenerateRandomPosition();
-            var id = foodIDPool.Next();
-            var food = new Food(id, pos);
-            return food;
-        }
+
 
         public void RegisterProjectile(Projectile projectile)
         {
@@ -177,12 +176,6 @@ namespace Mikazuki
                 Speed = p.Speed,
             });
 
-            var foods = this.foods.Select(f => new FoodStatus()
-            {
-                ID = f.ID,
-                Pos = f.Position,
-            });
-
             var projectiles = this.projectiles.Select(p => new ProjectileStatus()
             {
                 ID = p.ID,
@@ -194,7 +187,7 @@ namespace Mikazuki
 
             return new ReplicationAllPacket(
                 players.ToArray(),
-                foods.ToArray(),
+                foodLayer.StatusList.ToArray(),
                 projectiles.ToArray()
             );
         }
@@ -202,29 +195,6 @@ namespace Mikazuki
         WorldJoinResultPacket GenerateRoomJoinPacket(Player player)
         {
             return new WorldJoinResultPacket(0, player.ID);
-        }
-
-        void SendFoodCreatePacket(Food food)
-        {
-            // 모든 유저에게 아이템 생성 패킷 전송
-            // TODO broadcast emit
-            var packet = food.GenerateCreatePacket();
-            players.ForEach(p =>
-            {
-                var session = p.Session;
-                session.SendLazy(packet);
-            });
-        }
-
-        void SendFoodRemovePacket(Food food)
-        {
-            this.players.ForEach(p =>
-            {
-                var packet = food.GenerateRemovePacket();
-                var session = p.Session;
-                session.SendLazy(packet);
-                log.Info($"sent food remove packet: {packet.ID}");
-            });
         }
 
         public void SendProjectileCreatePacket(Projectile projectile)
@@ -237,21 +207,12 @@ namespace Mikazuki
             });
         }
 
-        // 음식 생성. 맵에 어느정도의 먹을게 남아있도록 하는게 목적
-        void GenerateFoodLoop()
-        {
-            var requiredFoodCount = Config.FoodCount - foods.Count;
-            for (var i = 0; i < requiredFoodCount; i++)
-            {
-                var food = MakeFood();
-                foods.Add(food);
-                SendFoodCreatePacket(food);
-            }
-        }
+
 
         void PlayerUpdateLoop(float dt)
         {
             players.ForEach(player => player.UpdateMove(dt));
+            RefreshPlayerGrid();
         }
 
         void ProjectileUpdateLoop(float dt)
@@ -277,34 +238,18 @@ namespace Mikazuki
             // TODO quad tree 같은거 쓰면 최적화 가능
             players.ForEach(player =>
             {
-                var gainedFoods = foods.Select((food, idx) => new { food = food, idx = idx })
-                    .Where(pair =>
-                    {
-                        var ALLOW_DISTANCE = 1;
-                        var p1 = pair.food.Position;
-                        var p2 = player.Position;
-                        return VectorHelper.IsInRange(p1, p2, ALLOW_DISTANCE);
-                    });
+                var ALLOW_DISTANCE = 1;
+                var gainedFoods = foodLayer.GetFoods(player.Position, ALLOW_DISTANCE);
 
                 // 먹은 플레이어는 점수 획득
-                gainedFoods.Select(pair => pair.food).ToList()
-                    .ForEach(food => player.GainFoodScore(Config.FoodCount));
-
-                // 모든 플레이어에게 삭제 패킷 보내기
-                gainedFoods.Select(pair => pair.food).ToList()
-                    .ForEach(food =>
+                gainedFoods.Select(food =>
                 {
-                    SendFoodRemovePacket(food);
+                    player.GainFoodScore(Config.FoodScore);
+                    return food;
                 });
 
-                // 배열의 뒤에서부터 제거하면 검색으로 찾은 인덱스를 그대로 쓸수있다
-                gainedFoods.ToList()
-                    .OrderByDescending(pair => pair.idx).ToList()
-                    .ForEach(pair =>
-                    {
-                        foods.RemoveAt(pair.idx);
-                        foodIDPool.Release(pair.food.ID);
-                    });
+                var ids = gainedFoods.Select(food => food.ID);
+                foodLayer.Remove(ids);
             });
         }
 
@@ -341,15 +286,15 @@ namespace Mikazuki
                     // TODO 알려주는 범위 통제하면 대역폭을 아낄수 있다
                     // TODO 객체 삭제 패킷과 유저 죽음 패킷은 분리하는게 가능하다
                     var deadIds = hitPlayers.Select(p => p.player.ID);
-                    var deadPacket = new ReplicationBulkRemovePacket()
-                    {
-                        IDList = deadIds.ToArray(),
-                    };
+                    var deadPacket = new ReplicationBulkRemovePacket(deadIds.ToArray());
                     players.ForEach(p => p.Session.SendImmediate(deadPacket));
 
                     // 죽은 유저는 유저 목록에서 삭제
                     var idxList = hitPlayers.Select(p => p.idx).OrderByDescending(x => x).ToList();
                     idxList.ForEach(idx => players.RemoveAt(idx));
+
+                    // 플레이어가 죽었다면 좌표 정보도 영향 받는다
+                    RefreshPlayerGrid();
                 }
             });
         }
@@ -359,7 +304,7 @@ namespace Mikazuki
             float dt = 1.0f / 60;
             PlayerUpdateLoop(dt);
             ProjectileUpdateLoop(dt);
-            GenerateFoodLoop();
+            foodLayer.Update();
             CheckFoodLoop();
             CheckKillLoop();
         }
@@ -373,6 +318,34 @@ namespace Mikazuki
                 dst.Clear();
                 dst.AddRange(players);
                 return players.Count;
+            }
+        }
+
+        public int GetObservers(ref List<Player> dst)
+        {
+            lock (lockobj)
+            {
+                dst.Clear();
+                dst.AddRange(observers);
+                return observers.Count;
+            }
+        }
+
+        // TODO 객체의 좌표 관련 정보가 바뀐후에는 갱신해야한다
+        readonly Grid<Player> playerGrid = MakeGrid<Player>();
+
+        // grid 생성시 필요한 인자를 숨기고 싶다
+        static Grid<T> MakeGrid<T>()
+        {
+            return new Grid<T>(Config.CellSize, Config.RoomWidth / 2, Config.RoomHeight / 2);
+        }
+
+        void RefreshPlayerGrid()
+        {
+            playerGrid.Clear();
+            foreach (var player in players)
+            {
+                playerGrid.Add(player.Position, player);
             }
         }
     }

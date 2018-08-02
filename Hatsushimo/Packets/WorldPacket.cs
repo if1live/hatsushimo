@@ -4,6 +4,13 @@ using Hatsushimo.NetChan;
 
 namespace Hatsushimo.Packets
 {
+    public enum PlayerMode
+    {
+        None = 0,
+        Player,
+        Observer,
+    }
+
     public struct WorldJoinPacket : IPacket
     {
         public string WorldID { get { return _worldID; } }
@@ -12,10 +19,14 @@ namespace Hatsushimo.Packets
         public string Nickname { get { return _nickname; } }
         string _nickname;
 
-        public WorldJoinPacket(string worldID, string nickname)
+        public PlayerMode Mode { get { return (PlayerMode)_mode; } }
+        byte _mode;
+
+        public WorldJoinPacket(string worldID, string nickname, PlayerMode mode)
         {
             _worldID = worldID;
             _nickname = nickname;
+            _mode = (byte)mode;
         }
 
         public short Type => (short)PacketType.WorldJoin;
@@ -24,12 +35,14 @@ namespace Hatsushimo.Packets
         {
             r.ReadString(out _worldID);
             r.ReadString(out _nickname);
+            r.Read(out _mode);
         }
 
         public void Serialize(BinaryWriter w)
         {
             w.WriteString(WorldID);
             w.WriteString(Nickname);
+            w.Write(_mode);
         }
     }
 

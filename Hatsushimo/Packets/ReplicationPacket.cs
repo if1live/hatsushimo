@@ -149,13 +149,19 @@ namespace Hatsushimo.Packets
     // 객체의 ID만 알아도 지울수 있다
     public struct ReplicationBulkRemovePacket : IPacket
     {
-        public int[] IDList;
+        public int[] IDList { get { return _idList; } }
+        int[] _idList;
+
+        public ReplicationBulkRemovePacket(int[] idList)
+        {
+            _idList = idList;
+        }
 
         public short Type => (short)PacketType.ReplicationBulkRemove;
 
         public void Deserialize(BinaryReader r)
         {
-            r.ReadArray(out IDList);
+            r.ReadArray(out _idList);
         }
 
         public void Serialize(BinaryWriter w)

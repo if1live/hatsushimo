@@ -9,6 +9,7 @@ namespace Hatsushimo.Extensions
     {
         public static void Read(this BinaryReader r, out bool v) { v = r.ReadBoolean(); }
         public static void Read(this BinaryReader r, out char v) { v = r.ReadChar(); }
+        public static void Read(this BinaryReader r, out byte v) { v = r.ReadByte(); }
         public static void Read(this BinaryReader r, out short v) { v = r.ReadInt16(); }
         public static void Read(this BinaryReader r, out int v) { v = r.ReadInt32(); }
         public static void Read(this BinaryReader r, out long v) { v = r.ReadInt64(); }

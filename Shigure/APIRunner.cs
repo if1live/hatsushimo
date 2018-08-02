@@ -39,7 +39,7 @@ namespace Shigure
 
         public async Task<bool> WorldJoin(string worldID, string nickname)
         {
-            var send = new WorldJoinPacket(worldID, nickname);
+            var send = new WorldJoinPacket(worldID, nickname, PlayerMode.Player);
             var recv = await conn.SendRecv<WorldJoinPacket, WorldJoinResultPacket>(send);
             return true;
         }

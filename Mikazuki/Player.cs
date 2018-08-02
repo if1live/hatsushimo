@@ -13,6 +13,7 @@ namespace Mikazuki
         static readonly Logger log = LogManager.GetLogger("Player");
 
         public Session Session { get; private set; }
+        public PlayerMode Mode { get; private set; }
 
         public Vector2 Position { get; private set; }
         public Vector2 TargetPosition { get; set; }
@@ -42,13 +43,18 @@ namespace Mikazuki
         public bool SkillPrimary { get; private set; } = true;
         public bool SKillSecondary { get; private set; } = true;
 
-        public Player(int id, Session session)
+        internal readonly PlayerPacketFactory Packets;
+
+        public Player(int id, Session session, PlayerMode mode)
         {
             this.ID = id;
             this.Session = session;
+            this.Mode = mode;
 
             SetPosition(Vector2.Zero);
             TargetPosition = Vector2.Zero;
+
+            Packets = new PlayerPacketFactory(this);
         }
 
         public void SetPosition(Vector2 pos)
@@ -145,16 +151,25 @@ namespace Mikazuki
                     break;
             }
         }
+    }
 
-        public ReplicationCreatePlayerPacket GenerateCreatePacket()
+    class PlayerPacketFactory
+    {
+        readonly Player player;
+        internal PlayerPacketFactory(Player p)
+        {
+            this.player = p;
+        }
+
+        public ReplicationCreatePlayerPacket Create()
         {
             var status = new PlayerStatus()
             {
-                ID = ID,
-                Pos = Position,
-                TargetPos = TargetPosition,
-                Speed = Speed,
-                Nickname = Session.Nickname,
+                ID = player.ID,
+                Pos = player.Position,
+                TargetPos = player.TargetPosition,
+                Speed = player.Speed,
+                Nickname = player.Session.Nickname,
             };
             return new ReplicationCreatePlayerPacket(status);
         }

@@ -39,28 +39,28 @@ namespace MikazukiTest
 
             {
                 var coord = zone.GetCellCoord(new Vector2(2, 7));
-                var cell = zone.GetCell(coord.Item1, coord.Item2);
+                var cell = zone.GetCell(coord);
                 Assert.Equal(1, cell.Count);
                 Assert.Equal(1, cell.ToArray()[0]);
             }
 
             {
                 var coord = zone.GetCellCoord(new Vector2(-2, 7));
-                var cell = zone.GetCell(coord.Item1, coord.Item2);
+                var cell = zone.GetCell(coord);
                 Assert.Equal(1, cell.Count);
                 Assert.Equal(2, cell.ToArray()[0]);
             }
 
             {
                 var coord = zone.GetCellCoord(new Vector2(2, -7));
-                var cell = zone.GetCell(coord.Item1, coord.Item2);
+                var cell = zone.GetCell(coord);
                 Assert.Equal(1, cell.Count);
                 Assert.Equal(3, cell.ToArray()[0]);
             }
 
             {
                 var coord = zone.GetCellCoord(new Vector2(-2, -7));
-                var cell = zone.GetCell(coord.Item1, coord.Item2);
+                var cell = zone.GetCell(coord);
                 Assert.Equal(1, cell.Count);
                 Assert.Equal(4, cell.ToArray()[0]);
             }

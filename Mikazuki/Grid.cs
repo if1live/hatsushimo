@@ -6,6 +6,41 @@ using System.Diagnostics;
 
 namespace Mikazuki
 {
+    public struct CellCoord
+    {
+        public int X;
+        public int Y;
+
+        // 인접한 셀
+        public static readonly CellCoord[] Offsets = new CellCoord[]
+        {
+            new CellCoord(-1, -1),
+            new CellCoord(-1, 0),
+            new CellCoord(-1, +1),
+
+            new CellCoord(0, -1),
+            new CellCoord(0, 0),
+            new CellCoord(0, +1),
+
+            new CellCoord(+1, -1),
+            new CellCoord(+1, 0),
+            new CellCoord(+1, +1),
+        };
+
+        public CellCoord(int x, int y)
+        {
+            this.X = x;
+            this.Y = y;
+        }
+
+        public static CellCoord operator +(CellCoord a, CellCoord b)
+        {
+            var x = a.X + b.X;
+            var y = a.Y + b.Y;
+            return new CellCoord(x, y);
+        }
+    }
+
     public class Cell<T>
     {
         readonly List<T> elems = new List<T>();
@@ -19,13 +54,19 @@ namespace Mikazuki
     public class Grid<T>
     {
         // width, height가 동일한 정사각형을 grid로 정의
-        readonly int cellSize;
+        public readonly int CellSize;
 
         readonly int halfWidth;
         readonly int halfHeight;
 
-        readonly int horizontalCount;
-        readonly int verticalCount;
+        public readonly int HorizontalCount;
+        public readonly int VerticalCount;
+
+        public int MinCellX { get { return -(HorizontalCount / 2); } }
+        public int MaxCellX { get { return HorizontalCount / 2 - 1; } }
+        public int MinCellY { get { return -(VerticalCount / 2); } }
+        public int MaxCellY { get { return VerticalCount / 2 - 1; } }
+
 
         readonly List<Cell<T>> cells;
 
@@ -39,45 +80,43 @@ namespace Mikazuki
             Debug.Assert(hx % size == 0);
             Debug.Assert(hy % size == 0);
 
-            this.cellSize = size;
+            this.CellSize = size;
             this.halfWidth = hx;
             this.halfHeight = hy;
 
-            this.horizontalCount = (halfWidth / cellSize) * 2;
-            this.verticalCount = (halfHeight / cellSize) * 2;
-            var gridCount = horizontalCount * verticalCount;
+            this.HorizontalCount = (halfWidth / CellSize) * 2;
+            this.VerticalCount = (halfHeight / CellSize) * 2;
+            var gridCount = HorizontalCount * VerticalCount;
             cells = new List<Cell<T>>(gridCount);
             for (var i = 0; i < gridCount; i++) { cells.Add(new Cell<T>()); }
         }
 
         int ToCellIndex(int x, int y)
         {
-            var halfX = horizontalCount / 2;
-            var halfY = verticalCount / 2;
-            if (x < -halfX)
+            if (x < MinCellX)
             {
-                var msg = $"min cell x={-halfX}, input={x}";
+                var msg = $"min cell x={MinCellX}, input={x}";
                 throw new IndexOutOfRangeException(msg);
             }
-            if (x >= halfX)
+            if (x > MaxCellX)
             {
-                var msg = $"max cell x={halfX-1}, input={x}";
+                var msg = $"max cell x={MaxCellX}, input={x}";
                 throw new IndexOutOfRangeException(msg);
             }
-            if (y < -halfY)
+            if (y < MinCellY)
             {
-                var msg = $"min cell y={-halfY}, input={y}";
+                var msg = $"min cell y={MinCellY}, input={y}";
                 throw new IndexOutOfRangeException(msg);
             }
-            if (y >= halfY)
+            if (y > MaxCellY)
             {
-                var msg = $"max cell y={halfY-1}, input={y}";
+                var msg = $"max cell y={MaxCellY}, input={y}";
                 throw new IndexOutOfRangeException(msg);
             }
 
-            var cellX = halfX + x;
-            var cellY = halfY + y;
-            return cellX * horizontalCount + cellY;
+            var cellX = HorizontalCount / 2 + x;
+            var cellY = VerticalCount / 2 + y;
+            return cellX * HorizontalCount + cellY;
         }
 
         // ...
@@ -89,22 +128,22 @@ namespace Mikazuki
             if (v >= 0)
             {
                 var floor = (int)v;
-                var idx = floor / cellSize;
+                var idx = floor / CellSize;
                 return idx;
             }
             else
             {
                 var absval = -v;
                 var floor = (int)absval;
-                var idx = floor / cellSize + 1;
+                var idx = floor / CellSize + 1;
                 return -idx;
             }
         }
-        public Tuple<int, int> GetCellCoord(Vector2 v)
+        public CellCoord GetCellCoord(Vector2 v)
         {
             var x = GetCellIndex(v.X);
             var y = GetCellIndex(v.Y);
-            return new Tuple<int, int>(x, y);
+            return new CellCoord(x, y);
         }
 
         public void Clear()
@@ -114,18 +153,26 @@ namespace Mikazuki
 
         public void Add(Vector2 pos, T el)
         {
-            var cellX = GetCellIndex(pos.X);
-            var cellY = GetCellIndex(pos.Y);
-            var subIdx = ToCellIndex(cellX, cellY);
-            var cell = cells[subIdx];
+            var coord = GetCellCoord(pos);
+            var cell = GetCell(coord);
             cell.Add(el);
         }
 
-        public Cell<T> GetCell(int cellX, int cellY)
+        public Cell<T> GetCell(CellCoord coord)
         {
-            var subIdx = ToCellIndex(cellX, cellY);
+            var subIdx = ToCellIndex(coord.X, coord.Y);
             var cell = cells[subIdx];
             return cell;
         }
+
+        public IEnumerable<CellCoord> FilterCellCoords(IEnumerable<CellCoord> iter)
+        {
+            return iter.Where(coord => coord.X >= MinCellX)
+                .Where(coord => coord.X <= MaxCellX)
+                .Where(coord => coord.Y >= MinCellY)
+                .Where(coord => coord.Y <= MaxCellY);
+        }
+
+        public int Count { get { return cells.Sum(cell => cell.Count); } }
     }
 }

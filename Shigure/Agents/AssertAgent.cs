@@ -100,7 +100,7 @@ namespace Shigure.Agents
             var auth = await conn.Recv<AuthenticationResultPacket>();
             HandleAuthentication(auth.ValueOrFailure());
 
-            conn.Send(new WorldJoinPacket(worldID, nickname));
+            conn.Send(new WorldJoinPacket(worldID, nickname, PlayerMode.Player));
             var join = await conn.Recv<WorldJoinResultPacket>();
             HandleWorldJoin(join.ValueOrFailure());
 

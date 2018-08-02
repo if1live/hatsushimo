@@ -9,7 +9,7 @@ namespace HatsushimoTest.Packets
         [Fact]
         public void TestSerde()
         {
-            var a = new WorldJoinPacket("foo", "test");
+            var a = new WorldJoinPacket("foo", "test", PlayerMode.Observer);
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }
