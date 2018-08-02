@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using Hatsushimo;
@@ -8,10 +10,10 @@ using NLog;
 
 namespace Mikazuki
 {
-    public class Player : Actor, IRankable
+    public class Player : IRankable
     {
         static readonly Logger log = LogManager.GetLogger("Player");
-
+        public int ID { get; private set; }
         public Session Session { get; private set; }
         public PlayerMode Mode { get; private set; }
 
@@ -22,8 +24,6 @@ namespace Mikazuki
         // 방향을 sin/cos로 표현할수 있도록 +x를 기준으로 잡는다
         // 공격을 구현할 경우 방향을 알아야한다
         public Vector2 Direction { get; private set; } = new Vector2(1, 0);
-
-        public override ActorType Type => ActorType.Player;
 
         public int Score
         {
@@ -43,7 +43,7 @@ namespace Mikazuki
         public bool SkillPrimary { get; private set; } = true;
         public bool SKillSecondary { get; private set; } = true;
 
-        internal readonly PlayerPacketFactory Packets;
+
 
         public Player(int id, Session session, PlayerMode mode)
         {
@@ -53,8 +53,6 @@ namespace Mikazuki
 
             SetPosition(Vector2.Zero);
             TargetPosition = Vector2.Zero;
-
-            Packets = new PlayerPacketFactory(this);
         }
 
         public void SetPosition(Vector2 pos)
@@ -150,28 +148,6 @@ namespace Mikazuki
                 default:
                     break;
             }
-        }
-    }
-
-    class PlayerPacketFactory
-    {
-        readonly Player player;
-        internal PlayerPacketFactory(Player p)
-        {
-            this.player = p;
-        }
-
-        public ReplicationCreatePlayerPacket Create()
-        {
-            var status = new PlayerStatus()
-            {
-                ID = player.ID,
-                Pos = player.Position,
-                TargetPos = player.TargetPosition,
-                Speed = player.Speed,
-                Nickname = player.Session.Nickname,
-            };
-            return new ReplicationCreatePlayerPacket(status);
         }
     }
 }

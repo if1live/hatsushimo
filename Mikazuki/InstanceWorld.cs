@@ -170,10 +170,7 @@ namespace Mikazuki
         {
             var player = GetPlayer(session);
             player.UseSkill(p.Mode);
-
-            var projectile = room.MakeProjectile(player);
-            room.RegisterProjectile(projectile);
-            room.SendProjectileCreatePacket(projectile);
+            room.LaunchProjectile(player);
         }
 
         void HandleMove(Session session, MovePacket p)

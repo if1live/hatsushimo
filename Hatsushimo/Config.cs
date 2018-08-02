@@ -5,9 +5,9 @@ namespace Hatsushimo
         public const int Version = 1234;
         public const int ServerPort = 3000;
 
-        public const int CellSize = 5;
-        public const int RoomWidth = 20;
-        public const int RoomHeight = 30;
+        public const int CellSize = 40;
+        public const int RoomWidth = 80;
+        public const int RoomHeight = 80;
 
         public const int FoodCount = 10;
         public const int LeaderboardSize = 5;

@@ -8,21 +8,16 @@ namespace Mikazuki
 {
     public class Broadcaster
     {
-        readonly Grid<Player> grid;
-
-        public Broadcaster(Grid<Player> grid)
-        {
-            this.grid = grid;
-        }
+        public Grid<Player> Grid { get; set; }
 
         // 특정 좌표에서 발생한 이벤트를 받을 필요가 있는 유저 목록 얻기
         List<Player> FindPlayers(Vector2 pos)
         {
-            var cellcoord = grid.GetCellCoord(pos);
-            var cellcoords = grid.FilterCellCoords(
+            var cellcoord = Grid.GetCellCoord(pos);
+            var cellcoords = Grid.FilterCellCoords(
                 CellCoord.Offsets.Select(offset => offset + cellcoord)
             );
-            var cells = cellcoords.Select(coord => grid.GetCell(coord));
+            var cells = cellcoords.Select(coord => Grid.GetCell(coord));
             var players = cells.SelectMany(cell => cell.ToArray());
             return players.ToList();
         }

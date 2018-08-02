@@ -4,9 +4,9 @@ using Hatsushimo.Packets;
 
 namespace Mikazuki
 {
-    public class Projectile : Actor
+    public class Projectile
     {
-        public override ActorType Type => ActorType.Projectile;
+        public int ID { get; private set; }
 
         // 죽창을 던진 유저가 자신의 창을 맞고 자살하는걸 방지하고 싶다
         public int OwnerID { get; private set; }
@@ -59,19 +59,6 @@ namespace Mikazuki
             {
                 this.Position = FinalPosition;
             }
-        }
-
-        public ReplicationCreateProjectilePacket GenerateCreatePacket()
-        {
-            var status = new ProjectileStatus()
-            {
-                ID = ID,
-                Position = Position,
-                FinalPosition = FinalPosition,
-                LifeTimeMillis = (short)(LifeTime * 1000),
-                MoveTimeMillis = (short)(MoveTime * 1000),
-            };
-            return new ReplicationCreateProjectilePacket(status);
         }
     }
 }

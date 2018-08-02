@@ -12,7 +12,7 @@ namespace MikazukiTest
         public void TestGetFoods()
         {
             var broadcaster = new Broadcaster(null);
-            var foodlayer = new FoodLayer(broadcaster);
+            var foodlayer = new FoodManager(broadcaster);
 
             foodlayer.Create(new Vector2(5.600638f, -2.408553f));
             foodlayer.RefreshGrid();
