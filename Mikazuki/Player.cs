@@ -63,7 +63,7 @@ namespace Mikazuki
                 var diff = next - prev;
                 Direction = Vector2.Normalize(diff);
 
-                log.Info($"pos={next.X}\t{next.Y}");
+                //log.Info($"pos={next.X}\t{next.Y}");
             }
 
             Position = next;

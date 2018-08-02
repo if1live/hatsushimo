@@ -20,7 +20,8 @@ namespace Shigure
         {
             var ws = new WebSocket($"ws://127.0.0.1:{Config.ServerPort}/game");
             var conn = new Connection(ws);
-            IThinker thinker = new AssertThinker(conn);
+            //IThinker thinker = new AssertThinker(conn);
+            IThinker thinker = new SimpleThinker(conn);
 
             ws.OnMessage += (sender, e) =>
             {
