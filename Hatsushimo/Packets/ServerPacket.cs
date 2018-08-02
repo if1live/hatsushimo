@@ -24,15 +24,24 @@ namespace Hatsushimo.Packets
 
     public struct WelcomePacket : IPacket
     {
-        public int UserID;
-        public int Version;
+        public int UserID { get { return _userID; } }
+        int _userID;
+
+        public int Version { get { return _version; } }
+        int _version;
+
+        public WelcomePacket(int userID, int version)
+        {
+            this._userID = userID;
+            this._version = version;
+        }
 
         public short Type => (short)PacketType.Welcome;
 
         public void Deserialize(BinaryReader r)
         {
-            r.Read(out UserID);
-            r.Read(out Version);
+            r.Read(out _userID);
+            r.Read(out _version);
         }
 
         public void Serialize(BinaryWriter w)
@@ -44,18 +53,24 @@ namespace Hatsushimo.Packets
 
     public struct PingPacket : IPacket
     {
-        public int millis;
+        public int Millis { get { return _millis; } }
+        int _millis;
+
+        public PingPacket(int millis)
+        {
+            _millis = millis;
+        }
 
         public short Type => (short)PacketType.Ping;
 
         public void Deserialize(BinaryReader r)
         {
-            r.Read(out millis);
+            r.Read(out _millis);
         }
 
         public void Serialize(BinaryWriter w)
         {
-            w.Write(millis);
+            w.Write(Millis);
         }
     }
 
@@ -70,13 +85,19 @@ namespace Hatsushimo.Packets
 
     public struct SignUpPacket : IPacket
     {
-        public short Type => (short)PacketType.SignUpResult;
+        public string Uuid { get { return _uuid; } }
+        string _uuid;
 
-        public string Uuid;
+        public SignUpPacket(string uuid)
+        {
+            this._uuid = uuid;
+        }
+
+        public short Type => (short)PacketType.SignUpResult;
 
         public void Deserialize(BinaryReader r)
         {
-            r.ReadString(out Uuid);
+            r.ReadString(out _uuid);
         }
 
         public void Serialize(BinaryWriter w)
@@ -87,13 +108,19 @@ namespace Hatsushimo.Packets
 
     public struct SignUpResultPacket : IPacket
     {
-        public int ResultCode;
+        public int ResultCode { get { return _resultCode; } }
+        int _resultCode;
+
+        public SignUpResultPacket(int resultcode)
+        {
+            _resultCode = resultcode;
+        }
 
         public short Type => (short)PacketType.SignUp;
 
         public void Deserialize(BinaryReader r)
         {
-            r.Read(out ResultCode);
+            r.Read(out _resultCode);
         }
 
         public void Serialize(BinaryWriter w)
@@ -104,13 +131,19 @@ namespace Hatsushimo.Packets
 
     public struct AuthenticationPacket : IPacket
     {
-        public short Type => (short)PacketType.Authentication;
+        public string Uuid { get { return _uuid; } }
+        string _uuid;
 
-        public string Uuid;
+        public AuthenticationPacket(string uuid)
+        {
+            this._uuid = uuid;
+        }
+
+        public short Type => (short)PacketType.Authentication;
 
         public void Deserialize(BinaryReader r)
         {
-            r.ReadString(out Uuid);
+            r.ReadString(out _uuid);
         }
 
         public void Serialize(BinaryWriter w)
@@ -121,13 +154,19 @@ namespace Hatsushimo.Packets
 
     public struct AuthenticationResultPacket : IPacket
     {
-        public short Type => (short)PacketType.AuthenticationResult;
+        public int ResultCode { get { return _resultCode; } }
+        int _resultCode;
 
-        public int ResultCode;
+        public AuthenticationResultPacket(int resultcode)
+        {
+            _resultCode = resultcode;
+        }
+
+        public short Type => (short)PacketType.AuthenticationResult;
 
         public void Deserialize(BinaryReader r)
         {
-            r.Read(out ResultCode);
+            r.Read(out _resultCode);
         }
 
         public void Serialize(BinaryWriter w)

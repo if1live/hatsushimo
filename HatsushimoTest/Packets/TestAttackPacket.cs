@@ -8,10 +8,7 @@ namespace HatsushimoTest.Packets
         [Fact]
         public void TestSerde()
         {
-            var a = new AttackPacket()
-            {
-                Mode = 123,
-            };
+            var a = new AttackPacket(123);
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }

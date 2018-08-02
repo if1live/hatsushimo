@@ -25,32 +25,21 @@ namespace Shigure
 
         public async Task<int> SignUp(string uuid)
         {
-            var send = new SignUpPacket()
-            {
-                Uuid = uuid,
-            };
+            var send = new SignUpPacket(uuid);
             var recv = await conn.SendRecv<SignUpPacket, SignUpResultPacket>(send);
             return recv.ResultCode;
         }
 
         public async Task<int> Authentication(string uuid)
         {
-            var send = new AuthenticationPacket()
-            {
-                Uuid = uuid,
-            };
+            var send = new AuthenticationPacket(uuid);
             var recv = await conn.SendRecv<AuthenticationPacket, AuthenticationResultPacket>(send);
             return recv.ResultCode;
         }
 
         public async Task<bool> WorldJoin(string worldID, string nickname)
         {
-            var send = new WorldJoinPacket()
-            {
-                WorldID = worldID,
-                Nickname = nickname,
-            };
-
+            var send = new WorldJoinPacket(worldID, nickname);
             var recv = await conn.SendRecv<WorldJoinPacket, WorldJoinResultPacket>(send);
             return true;
         }
@@ -71,10 +60,8 @@ namespace Shigure
 
         public void Move(float x, float y)
         {
-            var p = new MovePacket()
-            {
-                TargetPos = new Vector2(x, y)
-            };
+            var targetPos = new Vector2(x, y);
+            var p = new MovePacket(targetPos);
             conn.Send(p);
         }
 

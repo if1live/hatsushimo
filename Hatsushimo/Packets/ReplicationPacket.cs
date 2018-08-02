@@ -109,17 +109,33 @@ namespace Hatsushimo.Packets
 
     public struct ReplicationAllPacket : IPacket
     {
-        public PlayerStatus[] Players;
-        public FoodStatus[] Foods;
-        public ProjectileStatus[] Projectiles;
+        public PlayerStatus[] Players { get { return _players; } }
+        PlayerStatus[] _players;
+
+        public FoodStatus[] Foods { get { return _foods; } }
+        FoodStatus[] _foods;
+
+        public ProjectileStatus[] Projectiles { get { return _projectiles; } }
+        ProjectileStatus[] _projectiles;
+
+        public ReplicationAllPacket(
+            PlayerStatus[] players,
+            FoodStatus[] foods,
+            ProjectileStatus[] projectiles
+        )
+        {
+            _players = players;
+            _foods = foods;
+            _projectiles = projectiles;
+        }
 
         public short Type => (short)PacketType.ReplicationAll;
 
         public void Deserialize(BinaryReader r)
         {
-            r.ReadValues(out Players);
-            r.ReadValues(out Foods);
-            r.ReadValues(out Projectiles);
+            r.ReadValues(out _players);
+            r.ReadValues(out _foods);
+            r.ReadValues(out _projectiles);
         }
 
         public void Serialize(BinaryWriter w)
@@ -151,13 +167,19 @@ namespace Hatsushimo.Packets
     // remove bulk로 묶어서 처리하는 것을 구현하기 전까지는 낱개 삭제를 쓰자
     public struct ReplicationRemovePacket : IPacket
     {
-        public int ID;
+        public int ID { get { return _id; } }
+        int _id;
+
+        public ReplicationRemovePacket(int id)
+        {
+            _id = id;
+        }
 
         public short Type => (short)PacketType.ReplicationRemove;
 
         public void Deserialize(BinaryReader r)
         {
-            r.Read(out ID);
+            r.Read(out _id);
         }
 
         public void Serialize(BinaryWriter w)
@@ -168,27 +190,46 @@ namespace Hatsushimo.Packets
 
     public struct ReplicationCreateFoodPacket : IPacket
     {
-        public FoodStatus status;
+        public FoodStatus Status { get { return _status; } }
+        FoodStatus _status;
+
+        public ReplicationCreateFoodPacket(FoodStatus status)
+        {
+            _status = status;
+        }
+
         public short Type => (short)PacketType.ReplicationCreateFood;
-        public void Deserialize(BinaryReader r) { r.ReadValue(ref status); }
-        public void Serialize(BinaryWriter w) { w.WriteValue(status); }
+        public void Deserialize(BinaryReader r) { r.ReadValue(ref _status); }
+        public void Serialize(BinaryWriter w) { w.WriteValue(Status); }
     }
 
     public struct ReplicationCreatePlayerPacket : IPacket
     {
-        public PlayerStatus status;
+        public PlayerStatus Status { get { return _status; } }
+        PlayerStatus _status;
+
+        public ReplicationCreatePlayerPacket(PlayerStatus status)
+        {
+            _status = status;
+        }
 
         public short Type => (short)PacketType.ReplicationCreatePlayer;
-        public void Deserialize(BinaryReader r) { r.ReadValue(ref status); }
-        public void Serialize(BinaryWriter w) { w.WriteValue(status); }
+        public void Deserialize(BinaryReader r) { r.ReadValue(ref _status); }
+        public void Serialize(BinaryWriter w) { w.WriteValue(Status); }
     }
 
     public struct ReplicationCreateProjectilePacket : IPacket
     {
-        public ProjectileStatus status;
+        public ProjectileStatus Status { get { return _status; } }
+        ProjectileStatus _status;
+
+        public ReplicationCreateProjectilePacket(ProjectileStatus status)
+        {
+            _status = status;
+        }
 
         public short Type => (short)PacketType.ReplicationCreateProjectile;
-        public void Deserialize(BinaryReader r) { r.ReadValue(ref status); }
-        public void Serialize(BinaryWriter w) { w.WriteValue(status); }
+        public void Deserialize(BinaryReader r) { r.ReadValue(ref _status); }
+        public void Serialize(BinaryWriter w) { w.WriteValue(Status); }
     }
 }

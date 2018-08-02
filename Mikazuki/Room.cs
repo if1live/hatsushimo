@@ -31,6 +31,15 @@ namespace Mikazuki
         readonly List<Food> foods = new List<Food>();
         readonly List<Projectile> projectiles = new List<Projectile>();
 
+        // TODO 옵져버. 디버깅용
+        // 게임 로직에는 참가하지 않고 모든 패킷을 받아본다
+        // TODO player-observer를 구분하고 싶다
+
+        // TODO 죽은 플레이어 목록
+        // 죽은 유저를 즉시 방에서 쫒아내는것보다는 잠시라도 방에 남아있다가 쫒아내고 싶다
+        // 방에 남아있으면 킬캠같은걸 구현 가능하다
+        // 또는 제자리에서 부활하거나
+
         // 방에서만 사용하는 객체는 id를 따로 발급
         readonly IDPool foodIDPool = IDPool.MakeFoodID();
         readonly IDPool projectileIDPool = IDPool.MakeProjectileID();
@@ -183,22 +192,16 @@ namespace Mikazuki
                 MoveTimeMillis = (short)(p.MoveTime * 1000),
             });
 
-            return new ReplicationAllPacket()
-            {
-                Players = players.ToArray(),
-                Foods = foods.ToArray(),
-                Projectiles = projectiles.ToArray(),
-            };
+            return new ReplicationAllPacket(
+                players.ToArray(),
+                foods.ToArray(),
+                projectiles.ToArray()
+            );
         }
 
         WorldJoinResultPacket GenerateRoomJoinPacket(Player player)
         {
-            return new WorldJoinResultPacket()
-            {
-                WorldID = this.ID,
-                PlayerID = player.ID,
-                Nickname = player.Session.Nickname,
-            };
+            return new WorldJoinResultPacket(0, player.ID);
         }
 
         void SendFoodCreatePacket(Food food)
@@ -297,7 +300,8 @@ namespace Mikazuki
                 // 배열의 뒤에서부터 제거하면 검색으로 찾은 인덱스를 그대로 쓸수있다
                 gainedFoods.ToList()
                     .OrderByDescending(pair => pair.idx).ToList()
-                    .ForEach(pair => {
+                    .ForEach(pair =>
+                    {
                         foods.RemoveAt(pair.idx);
                         foodIDPool.Release(pair.food.ID);
                     });

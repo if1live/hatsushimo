@@ -21,7 +21,7 @@ namespace Assets.Game
             var conn = ConnectionManager.Instance;
             conn.MoveNotify.Received.ObserveOnMainThread().Subscribe(packet =>
             {
-                foreach (var move in packet.list) { ApplyMove(move); }
+                foreach (var move in packet.List) { ApplyMove(move); }
             }).AddTo(this);
         }
 

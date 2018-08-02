@@ -9,10 +9,8 @@ namespace HatsushimoTest.Packets
         [Fact]
         public void TestSerde()
         {
-            var a = new MovePacket()
-            {
-                TargetPos = new Vector2(1, 2),
-            };
+            var targetPos = new Vector2(1, 2);
+            var a = new MovePacket(targetPos);
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }

@@ -71,7 +71,7 @@ namespace Mikazuki
                 LifeTimeMillis = (short)(LifeTime * 1000),
                 MoveTimeMillis = (short)(MoveTime * 1000),
             };
-            return new ReplicationCreateProjectilePacket() { status = status };
+            return new ReplicationCreateProjectilePacket(status);
         }
     }
 }

@@ -22,7 +22,7 @@ namespace Mikazuki
                 ID = ID,
                 Pos = Position,
             };
-            return new ReplicationCreateFoodPacket() { status = status };
+            return new ReplicationCreateFoodPacket(status);
         }
     }
 

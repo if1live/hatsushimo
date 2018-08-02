@@ -26,15 +26,10 @@ namespace Assets.Game.InputSystem
             switch(type)
             {
                 case InputActionTypes.Command:
-                    return new AttackPacket
-                    {
-                        Mode = (short)mode,
-                    };
+                    return new AttackPacket((short)mode);
                 case InputActionTypes.Move:
-                    return new MovePacket
-                    {
-                        TargetPos = new System.Numerics.Vector2(target.x, target.y),
-                    };
+                    var p = new System.Numerics.Vector2(target.x, target.y);
+                    return new MovePacket(p);
                 default:
                     return null;
             }

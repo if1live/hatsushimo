@@ -74,15 +74,24 @@ namespace Hatsushimo.Packets
 
     public struct LeaderboardPacket : IPacket
     {
-        public int Players;
-        public Rank[] Top;
+        public int Players { get { return _players; } }
+        int _players;
+
+        public Rank[] Top { get { return _top; } }
+        Rank[] _top;
+
+        public LeaderboardPacket(int players, Rank[] top)
+        {
+            _players = players;
+            _top = top;
+        }
 
         public short Type => (short)PacketType.Leaderboard;
 
         public void Deserialize(BinaryReader r)
         {
-            r.Read(out Players);
-            r.ReadValues(out Top);
+            r.Read(out _players);
+            r.ReadValues(out _top);
         }
 
         public void Serialize(BinaryWriter w)

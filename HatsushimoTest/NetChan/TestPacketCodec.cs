@@ -15,11 +15,7 @@ namespace HatsushimoTest.NetChan
         {
             var codec = new PacketCodec();
 
-            var a = new WelcomePacket()
-            {
-                UserID = 12,
-                Version = 34,
-            };
+            var a = new WelcomePacket(12, 34);
             var stream = new MemoryStream();
             var writer = new BinaryWriter(stream);
             var data = codec.Encode(a);

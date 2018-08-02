@@ -59,7 +59,7 @@ namespace Mikazuki
 
         void HandlePing(Session session, PingPacket p)
         {
-            log.Debug($"ping packet received : {p.millis}");
+            log.Debug($"ping packet received : {p.Millis}");
             session.SendImmediate(p);
         }
 
@@ -71,11 +71,7 @@ namespace Mikazuki
 
         void HandleConnect(Session session, ConnectPacket p)
         {
-            var welcome = new WelcomePacket()
-            {
-                UserID = session.ID,
-                Version = Config.Version,
-            };
+            var welcome = new WelcomePacket(session.ID, Config.Version);
             log.Info($"connected: welcome id={session.ID}");
             session.SendLazy(welcome);
         }
@@ -113,7 +109,7 @@ namespace Mikazuki
         async void HandleSignUp(Session session, SignUpPacket packet)
         {
             var user = await conn.GetOrCreateUser(packet.Uuid);
-            var result = new SignUpResultPacket() { ResultCode = 0 };
+            var result = new SignUpResultPacket(0);
             session.SendLazy(result);
         }
 
@@ -124,13 +120,13 @@ namespace Mikazuki
             {
                 session.UserID = user.ID;
                 log.Info($"authentication: uuid={packet.Uuid} user_id={session.UserID}");
-                var result = new AuthenticationResultPacket() { ResultCode = 0 };
+                var result = new AuthenticationResultPacket(0);
                 session.SendLazy(result);
             });
             option.MatchNone(() =>
             {
                 log.Info($"authentication: uuid={packet.Uuid} not found");
-                var notFound = new AuthenticationResultPacket() { ResultCode = -1 };
+                var notFound = new AuthenticationResultPacket(-1);
                 session.SendLazy(notFound);
             });
         }

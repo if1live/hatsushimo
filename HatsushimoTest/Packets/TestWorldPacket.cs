@@ -9,11 +9,7 @@ namespace HatsushimoTest.Packets
         [Fact]
         public void TestSerde()
         {
-            var a = new WorldJoinPacket()
-            {
-                WorldID = "foo",
-                Nickname = "test",
-            };
+            var a = new WorldJoinPacket("foo", "test");
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }
@@ -24,12 +20,7 @@ namespace HatsushimoTest.Packets
         [Fact]
         public void TestSerde()
         {
-            var a = new WorldJoinResultPacket()
-            {
-                PlayerID = 123,
-                WorldID = "foo",
-                Nickname = "test",
-            };
+            var a = new WorldJoinResultPacket(0, 123);
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }
@@ -41,10 +32,7 @@ namespace HatsushimoTest.Packets
         [Fact]
         public void TestSerde()
         {
-            var a = new WorldLeaveResultPacket()
-            {
-                PlayerID = 123,
-            };
+            var a = new WorldLeaveResultPacket(123);
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }

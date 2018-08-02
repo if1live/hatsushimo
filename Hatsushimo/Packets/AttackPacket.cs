@@ -6,12 +6,20 @@ namespace Hatsushimo.Packets
 {
     public struct AttackPacket : IPacket
     {
-        public short Mode;
+        public short Mode { get { return _mode; } }
+        short _mode;
+
+        public AttackPacket(short mode)
+        {
+            _mode = mode;
+        }
+
+
         public short Type => (short)PacketType.Attack;
 
         public void Deserialize(BinaryReader r)
         {
-            r.Read(out Mode);
+            r.Read(out _mode);
         }
 
         public void Serialize(BinaryWriter w)
@@ -24,6 +32,10 @@ namespace Hatsushimo.Packets
     public struct AttackNotifyPacket : IPacket
     {
         ProjectileStatus inner;
+        public AttackNotifyPacket(ProjectileStatus status)
+        {
+            inner = status;
+        }
 
         public short Type => (short)PacketType.AttackNotify;
         public void Deserialize(BinaryReader r) { r.ReadValue(ref inner); }

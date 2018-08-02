@@ -34,7 +34,7 @@ namespace Shigure
 
         void HandlePing(PingPacket p)
         {
-            Debug.Assert(p.millis == ping);
+            Debug.Assert(p.Millis == ping);
         }
 
         void HandleSignUp(SignUpResultPacket p)
@@ -49,8 +49,7 @@ namespace Shigure
 
         void HandleWorldJoin(WorldJoinResultPacket p)
         {
-            Debug.Assert(nickname == p.Nickname);
-            Debug.Assert(worldID == p.WorldID);
+            Debug.Assert(0 == p.ResultCode);
         }
 
         void HandleWorldLeave(WorldLeaveResultPacket p)
@@ -72,7 +71,7 @@ namespace Shigure
 
         void HandleMoveNotify(MoveNotifyPacket p)
         {
-            var my = p.list.Where(el => el.ID == playerID).ToArray();
+            var my = p.List.Where(el => el.ID == playerID).ToArray();
             Debug.Assert(my.Length == 1);
         }
 
@@ -89,23 +88,19 @@ namespace Shigure
             var welcome = await conn.Recv<WelcomePacket>();
             HandleWelcome(welcome.ValueOrFailure());
 
-            conn.Send(new PingPacket() { millis = this.ping });
+            conn.Send(new PingPacket(this.ping));
             var ping = await conn.Recv<PingPacket>();
             HandlePing(ping.ValueOrFailure());
 
-            conn.Send(new SignUpPacket() { Uuid = botUuid });
+            conn.Send(new SignUpPacket(botUuid));
             var signup = await conn.Recv<SignUpResultPacket>();
             HandleSignUp(signup.ValueOrFailure());
 
-            conn.Send(new AuthenticationPacket() { Uuid = botUuid });
+            conn.Send(new AuthenticationPacket(botUuid));
             var auth = await conn.Recv<AuthenticationResultPacket>();
             HandleAuthentication(auth.ValueOrFailure());
 
-            conn.Send(new WorldJoinPacket()
-            {
-                WorldID = worldID,
-                Nickname = nickname,
-            });
+            conn.Send(new WorldJoinPacket(worldID, nickname));
             var join = await conn.Recv<WorldJoinResultPacket>();
             HandleWorldJoin(join.ValueOrFailure());
 
@@ -152,7 +147,7 @@ namespace Shigure
                 // 아무것도 안해도 이동패킷이 온다
                 var moveNotify = await conn.RecvMove();
                 var packet = moveNotify.ValueOrFailure();
-                var my = packet.list.Where(el => el.ID == playerID).ToArray();
+                var my = packet.List.Where(el => el.ID == playerID).ToArray();
                 Debug.Assert(my.Length == 1);
             }
 
@@ -160,10 +155,7 @@ namespace Shigure
             conn.FlushMove();
 
             // 이동 요청
-            conn.Send(new MovePacket()
-            {
-                TargetPos = targetPos,
-            });
+            conn.Send(new MovePacket(targetPos));
 
             // 요청한 좌표를 받았는지 확인하기
             // send 요청이 들어가기전에 이동 패킷을 받았을지모른다
@@ -174,7 +166,7 @@ namespace Shigure
                 // 요청된 좌표 정보를 돌려받는다
                 var moveNotify = await conn.RecvMove();
                 var packet = moveNotify.ValueOrFailure();
-                var my = packet.list.Where(el => el.ID == playerID).ToArray();
+                var my = packet.List.Where(el => el.ID == playerID).ToArray();
                 Debug.Assert(my.Length == 1);
                 var myNotify = my[0];
                 // TODO 최초의 targetPos가 0,0이어도 상관없나?

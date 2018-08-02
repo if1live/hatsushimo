@@ -46,9 +46,9 @@ namespace Assets.Game
                 foreach (var p in packet.Projectiles) { CreateProjectile(p); }
             }).AddTo(this);
 
-            conn.CreateFood.Received.Subscribe(p => CreateFood(p.status));
-            conn.CreatePlayer.Received.Subscribe(p => CreatePlayer(p.status));
-            conn.CreateProjectile.Received.Subscribe(p => CreateProjectile(p.status));
+            conn.CreateFood.Received.Subscribe(p => CreateFood(p.Status));
+            conn.CreatePlayer.Received.Subscribe(p => CreatePlayer(p.Status));
+            conn.CreateProjectile.Received.Subscribe(p => CreateProjectile(p.Status));
 
             conn.ReplicationRemove.Received.Subscribe(p => Remove(p.ID));
             conn.ReplicationBulkRemove.Received.Subscribe(packet =>

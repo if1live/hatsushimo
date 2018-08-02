@@ -36,7 +36,8 @@ namespace Assets.Game
         {
             var conn = ConnectionManager.Instance;
 
-            genUUIDButton.OnClickAsObservable().Subscribe(_ => {
+            genUUIDButton.OnClickAsObservable().Subscribe(_ =>
+            {
                 // 같은 클라에서 같은 uuid 생성되는게 싫을떄
                 // 같은 컴퓨터에서 실행할 경우
                 var uuid = Guid.NewGuid();
@@ -54,25 +55,24 @@ namespace Assets.Game
                 if (Nickname.Length == 0) { return; }
                 if (WorldID.Length == 0) { return; }
 
-                var p = new SignUpPacket()
-                {
-                    Uuid = UUID,
-                };
+                var p = new SignUpPacket(UUID);
                 conn.SendImmediate(p);
 
                 // 중복 클릭 방지
                 joinButton.interactable = false;
             }).AddTo(this);
 
+            conn.Welcome.Received.ObserveOnMainThread().Subscribe(p =>
+            {
+                var info = ConnectionInfo.Info;
+                info.PlayerID = p.UserID;
+            });
+
             conn.SignUp.Received.ObserveOnMainThread().Subscribe(p =>
             {
                 Debug.Log($"sign up result: {p.ResultCode}");
 
-                var auth = new AuthenticationPacket()
-                {
-                    Uuid = UUID,
-                };
-
+                var auth = new AuthenticationPacket(UUID);
                 conn.SendImmediate(auth);
             }).AddTo(this);
 
@@ -80,26 +80,27 @@ namespace Assets.Game
             {
                 Debug.Log($"authentication result: {p.ResultCode}");
 
-                if(p.ResultCode == 0)
+                if (p.ResultCode == 0)
                 {
-                    var join = new WorldJoinPacket
-                    {
-                        Nickname = Nickname,
-                        WorldID = WorldID
-                    };
+                    var info = ConnectionInfo.Info;
+                    info.WorldID = WorldID;
+                    info.Nickname = Nickname;
 
+                    var join = new WorldJoinPacket(WorldID, Nickname);
                     conn.SendImmediate(join);
                 }
             }).AddTo(this);
 
             conn.WorldJoin.Received.ObserveOnMainThread().Subscribe(p =>
             {
-                Debug.Log($"world id: {p.WorldID} / player id={p.PlayerID}");
+                Debug.Log($"player id={p.PlayerID}");
+                if (p.ResultCode != 0)
+                {
+                    var info = ConnectionInfo.Info;
+                    info.WorldID = "";
+                    info.Nickname = "";
+                }
 
-                var info = ConnectionInfo.Info;
-                info.PlayerID = p.PlayerID;
-                info.WorldID = p.WorldID;
-                info.Nickname = p.Nickname;
 
                 // TOOD async scene loading
                 SceneManager.LoadScene("Game", LoadSceneMode.Single);

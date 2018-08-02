@@ -156,7 +156,7 @@ namespace Mikazuki
                 Speed = Speed,
                 Nickname = Session.Nickname,
             };
-            return new ReplicationCreatePlayerPacket() { status = status };
+            return new ReplicationCreatePlayerPacket(status);
         }
     }
 }

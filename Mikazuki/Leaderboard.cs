@@ -58,11 +58,9 @@ namespace Mikazuki
 
         public LeaderboardPacket GenerateLeaderboardPacket()
         {
-            return new LeaderboardPacket()
-            {
-                Players = all.ToArray().Length,
-                Top = GetTopRanks(topSize).ToArray(),
-            };
+            var players = all.ToArray().Length;
+            var top = GetTopRanks(topSize).ToArray();
+            return new LeaderboardPacket(players, top);
         }
 
         public bool IsLeaderboardEqual(Leaderboard<T> o)

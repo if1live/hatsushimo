@@ -8,13 +8,19 @@ namespace Hatsushimo.Packets
     public struct MovePacket : IPacket
     {
         // 속도보다 목표 지점을 보내는게 보정하기 좋다더라
-        public Vector2 TargetPos;
+        public Vector2 TargetPos { get { return _targetPos; } }
+        Vector2 _targetPos;
+
+        public MovePacket(Vector2 targetPos)
+        {
+            _targetPos = targetPos;
+        }
 
         public short Type => (short)PacketType.Move;
 
         public void Deserialize(BinaryReader r)
         {
-            r.ReadVector(ref TargetPos);
+            r.ReadVector(ref _targetPos);
         }
 
         public void Serialize(BinaryWriter w)
@@ -47,18 +53,24 @@ namespace Hatsushimo.Packets
     // http://www.gabrielgambetta.com/client-server-game-architecture.html
     public struct MoveNotifyPacket : IPacket
     {
-        public MoveNotify[] list;
+        public MoveNotify[] List { get { return _list; } }
+        MoveNotify[] _list;
+
+        public MoveNotifyPacket(MoveNotify[] list)
+        {
+            _list = list;
+        }
 
         public short Type => (short)PacketType.MoveNotify;
 
         public void Deserialize(BinaryReader r)
         {
-            r.ReadValues(out list);
+            r.ReadValues(out _list);
         }
 
         public void Serialize(BinaryWriter w)
         {
-            w.WriteValues(list);
+            w.WriteValues(List);
         }
     }
 }

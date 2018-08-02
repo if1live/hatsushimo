@@ -8,11 +8,7 @@ namespace HatsushimoTest.Packets
         [Fact]
         public void TestSerde()
         {
-            var a = new WelcomePacket()
-            {
-                UserID = 12,
-                Version = 34,
-            };
+            var a = new WelcomePacket(12, 34);
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }
@@ -23,10 +19,7 @@ namespace HatsushimoTest.Packets
         [Fact]
         public void TestSerde()
         {
-            var a = new PingPacket()
-            {
-                millis = 1234,
-            };
+            var a = new PingPacket(1234);
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }
@@ -59,7 +52,7 @@ namespace HatsushimoTest.Packets
         [Fact]
         public void TestSerde()
         {
-            var a = new SignUpPacket() { Uuid = "hello", };
+            var a = new SignUpPacket("hello");
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }
@@ -70,7 +63,7 @@ namespace HatsushimoTest.Packets
         [Fact]
         public void TestSerde()
         {
-            var a = new SignUpResultPacket() { ResultCode = 12 };
+            var a = new SignUpResultPacket(12);
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
 
@@ -83,7 +76,7 @@ namespace HatsushimoTest.Packets
         [Fact]
         public void TestSerde()
         {
-            var a = new AuthenticationPacket() { Uuid = "hello" };
+            var a = new AuthenticationPacket("hello");
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }
@@ -94,7 +87,7 @@ namespace HatsushimoTest.Packets
         [Fact]
         public void TestSerde()
         {
-            var a = new AuthenticationResultPacket() { ResultCode = 12 };
+            var a = new AuthenticationResultPacket(12);
             var b = SerializeAndDeserialize(a);
             Assert.Equal(a, b);
         }

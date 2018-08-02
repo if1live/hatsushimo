@@ -64,17 +64,14 @@ namespace Assets.NetChan
         {
             var mgr = ConnectionManager.Instance;
             if (mgr == null) { return; }
-            var p = new PingPacket()
-            {
-                millis = TimeUtils.NowMillis,
-            };
+            var p = new PingPacket(TimeUtils.NowMillis);
             mgr.SendImmediate(p);
         }
 
         void HandlePing(PingPacket p)
         {
             var now = TimeUtils.NowMillis;
-            var diff = now - p.millis;
+            var diff = now - p.Millis;
             latency.OnNext(diff);
         }
     }

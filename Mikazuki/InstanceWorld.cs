@@ -102,10 +102,7 @@ namespace Mikazuki
                     ID = p.ID,
                     TargetPos = p.TargetPosition,
                 });
-                var packet = new MoveNotifyPacket()
-                {
-                    list = moves.ToArray(),
-                };
+                var packet = new MoveNotifyPacket(moves.ToArray());
                 player.Session.SendImmediate(packet);
             });
         }
@@ -153,12 +150,7 @@ namespace Mikazuki
             var player = GetPlayer(session);
             room.Join(player);
 
-            var resp = new WorldJoinResultPacket()
-            {
-                PlayerID = session.ID,
-                WorldID = ID,
-                Nickname = session.Nickname,
-            };
+            var resp = new WorldJoinResultPacket(0, session.ID);
             session.SendLazy(resp);
         }
 
@@ -170,10 +162,7 @@ namespace Mikazuki
             var ok = Leave(session);
             log.Info($"world leave: id={session.ID} world={ID} ok={ok} size={sessions.Count}");
 
-            var resp = new WorldLeaveResultPacket()
-            {
-                PlayerID = session.ID,
-            };
+            var resp = new WorldLeaveResultPacket(session.ID);
             player.Session.SendLazy(resp);
         }
 

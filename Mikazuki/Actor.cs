@@ -9,10 +9,7 @@ namespace Mikazuki
 
         public ReplicationRemovePacket GenerateRemovePacket()
         {
-            return new ReplicationRemovePacket()
-            {
-                ID = ID,
-            };
+            return new ReplicationRemovePacket(ID);
         }
 
         // TOOD generic 잘 쓰면 create packet 를 인터페이스로 분리할수 있을거같다
