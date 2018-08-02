@@ -30,10 +30,12 @@ namespace Shigure.Agents
 
             float x = (float)(rand.NextDouble() - 0.5) * Config.RoomWidth;
             float y = (float)(rand.NextDouble() - 0.5) * Config.RoomHeight;
+            Log.Info($"move: {x}\t{y}");
             runner.Move(x, y);
 
             float interval = (float)rand.NextDouble() * 5;
             remainLifetime -= interval;
+            Log.Info($"delay: {interval}s");
             await Task.Delay(TimeSpan.FromSeconds(interval));
             return true;
         }

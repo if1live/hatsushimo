@@ -3,14 +3,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using NLog;
 
 namespace Shigure.Agents
 {
     public abstract class BaseAgent : IAgent
     {
+        static readonly Logger log = LogManager.GetLogger("Agent");
+
         protected readonly Connection conn;
         protected readonly Random rand = new Random();
         protected readonly APIRunner runner;
+
+        // agent마다 logger 만들기 귀찮아서
+        protected Logger Log { get { return log; } }
 
         const string worldID = "default";
         readonly string uuid;
@@ -31,7 +37,7 @@ namespace Shigure.Agents
         public async Task<bool> Run()
         {
             var playerID = await ConnectAndLogin();
-            Console.WriteLine($"player_id = {playerID}");
+            Log.Info($"player_id = {playerID}");
 
             var join = await WorldJoin();
             var ready = await runner.PlayerReady();
@@ -42,7 +48,7 @@ namespace Shigure.Agents
                 var removeIDList = runner.GetRemovedIDs();
                 if (DoesDead(playerID, removeIDList))
                 {
-                    Console.WriteLine("dead - bulk");
+                    Log.Info("dead - bulk");
                     break;
                 }
 
