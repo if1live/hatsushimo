@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using CommandLine;
 using CommandLine.Text;
 using Newtonsoft.Json;
+using Shigure.Agents;
 
 namespace Shigure
 {
@@ -28,22 +29,23 @@ namespace Shigure
             public int Lifetime { get; set; }
         }
 
-        IThinker CreateThinker(Connection conn, Options opts)
+        IAgent CreateAgent(Connection conn, Options opts)
         {
             if (opts.Mode == "assert")
             {
-                IThinker thinker = new AssertThinker(conn);
-                return thinker;
+                return new AssertAgent(conn);
             }
             else if (opts.Mode == "simple")
             {
-                IThinker thinker = new SimpleThinker(conn);
-                return thinker;
+                return new SimpleAgent(conn);
             }
             else if (opts.Mode == "wander")
             {
-                IThinker thinker = new WanderThinker(conn, opts.Lifetime);
-                return thinker;
+                return new WanderAgent(conn, opts.Lifetime);
+            }
+            else if (opts.Mode == "idle")
+            {
+                return new IdleAgent(conn, opts.Lifetime);
             }
             else
             {
@@ -84,7 +86,7 @@ namespace Shigure
                 };
 
                 var conn = new Connection(ws);
-                var thinker = CreateThinker(conn, opts);
+                var thinker = CreateAgent(conn, opts);
                 if (thinker == null) { return; }
 
                 ws.OnMessage += (sender, e) =>

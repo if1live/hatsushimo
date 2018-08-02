@@ -6,9 +6,9 @@ using Hatsushimo;
 using Hatsushimo.Packets;
 using Optional.Unsafe;
 
-namespace Shigure
+namespace Shigure.Agents
 {
-    public class AssertThinker : IThinker
+    public class AssertAgent : IAgent
     {
         int ping = 1234;
         string botUuid = "bot-uuid";
@@ -19,7 +19,7 @@ namespace Shigure
 
         readonly Connection conn;
 
-        public AssertThinker(Connection conn)
+        public AssertAgent(Connection conn)
         {
             this.conn = conn;
         }
@@ -152,7 +152,7 @@ namespace Shigure
             }
 
             // 이동 요청 보내기전에 받은 패킷은 테스트에 필요없다
-            conn.FlushMove();
+            conn.ClearMove();
 
             // 이동 요청
             conn.Send(new MovePacket(targetPos));

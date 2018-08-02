@@ -8,6 +8,7 @@ using Hatsushimo.Packets;
 using Optional;
 using WebSocketSharp;
 using Optional.Unsafe;
+using System.Collections.Concurrent;
 
 namespace Shigure
 {
@@ -24,10 +25,9 @@ namespace Shigure
         // 큐처럼 FIFO가 유지되면서 원하는 타입만 꺼내고 싶어서
         readonly List<IPacket> commonQueue = new List<IPacket>();
 
-        // notify 계열 패킷 받는 큐. 서버에서 패킷을 계속 보낸다
-        readonly List<MoveNotifyPacket> moveQueue = new List<MoveNotifyPacket>();
-        readonly List<AttackNotifyPacket> attackQueue = new List<AttackNotifyPacket>();
-        readonly List<LeaderboardPacket> leaderboardQueue = new List<LeaderboardPacket>();
+        readonly SizedConcurrentQueue<MoveNotifyPacket> moveQueue = new SizedConcurrentQueue<MoveNotifyPacket>(10);
+        readonly SizedConcurrentQueue<AttackNotifyPacket> attackQueue = new SizedConcurrentQueue<AttackNotifyPacket>(10);
+        readonly SizedConcurrentQueue<LeaderboardPacket> leaderboardQueue = new SizedConcurrentQueue<LeaderboardPacket>(10);
 
         readonly object lockobj = new object();
 
@@ -52,9 +52,9 @@ namespace Shigure
             dispatcher.CreatePlayer += (p) => commonQueue.Add(p.Packet);
             dispatcher.CreateProjectile += (p) => commonQueue.Add(p.Packet);
 
-            dispatcher.AttackNotify += (p) => attackQueue.Add(p.Packet);
-            dispatcher.MoveNotify += (p) => moveQueue.Add(p.Packet);
-            dispatcher.Leaderboard += (p) => leaderboardQueue.Add(p.Packet);
+            dispatcher.AttackNotify += (p) => attackQueue.Enqueue(p.Packet);
+            dispatcher.MoveNotify += (p) => moveQueue.Enqueue(p.Packet);
+            dispatcher.Leaderboard += (p) => leaderboardQueue.Enqueue(p.Packet);
         }
 
         public void Shutdown()
@@ -78,39 +78,26 @@ namespace Shigure
 
         public async Task<Option<MoveNotifyPacket>> RecvMove()
         {
-            return await Recv(moveQueue);
+            return await moveQueue.Dequeue(1000, TimeSpan.FromMilliseconds(100));
         }
 
         public async Task<Option<AttackNotifyPacket>> RecvAttack()
         {
-            return await Recv(attackQueue);
+            return await attackQueue.Dequeue(1000, TimeSpan.FromMilliseconds(100));
         }
 
         public async Task<Option<LeaderboardPacket>> RecvLeaderboard()
         {
-            return await Recv(leaderboardQueue);
+            return await leaderboardQueue.Dequeue(1000, TimeSpan.FromMilliseconds(100));
         }
 
-        public void FlushMove() { FlushQueue(moveQueue); }
-        public void FlushAttack() { FlushQueue(attackQueue); }
-        public void FlushLeaderboard() { FlushQueue(leaderboardQueue); }
+        public void ClearMove() { moveQueue.Clear(); }
+        public void ClearAttack() { attackQueue.Clear(); }
+        public void ClearLeaderboard() { leaderboardQueue.Clear(); }
 
         void FlushQueue<T>(List<T> queue)
         {
             lock (lockobj) { queue.Clear(); }
-        }
-
-        async Task<Option<T>> Recv<T>(List<T> queue) where T : IPacket, new()
-        {
-            var tryCount = 1000;
-            for (var i = 0; i < tryCount; i++)
-            {
-                var found = TryRecv<T>(queue);
-                if (found.HasValue) { return found; }
-                await Task.Delay(TimeSpan.FromMilliseconds(100));
-            }
-            log.Warn($"timeout : packet type={typeof(T).Name}");
-            return Option.None<T>();
         }
 
         public async Task<Option<TPacket>> Recv<TPacket>() where TPacket : IPacket, new()
@@ -137,28 +124,6 @@ namespace Shigure
         Option<TPacket> TryRecvNoLock<TPacket>() where TPacket : IPacket, new()
         {
             var queue = commonQueue;
-            var dummy = new TPacket();
-            var expectedType = dummy.Type;
-
-            for (var i = 0; i < queue.Count; i++)
-            {
-                var packet = queue[i];
-                if (packet.Type == expectedType)
-                {
-                    queue.RemoveAt(i);
-                    return Option.Some((TPacket)packet);
-                }
-            }
-            return Option.None<TPacket>();
-        }
-
-        public Option<TPacket> TryRecv<TPacket>(List<TPacket> queue) where TPacket : IPacket, new()
-        {
-            lock (lockobj) { return TryRecvNoLock(queue); }
-        }
-
-        Option<TPacket> TryRecvNoLock<TPacket>(List<TPacket> queue) where TPacket : IPacket, new()
-        {
             var dummy = new TPacket();
             var expectedType = dummy.Type;
 
