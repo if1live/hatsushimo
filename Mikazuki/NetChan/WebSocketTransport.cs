@@ -17,6 +17,8 @@ namespace Mikazuki.NetChan
 
     public class WebSocketSession : WebSocketBehavior
     {
+        static readonly NLog.Logger log = LogManager.GetLogger("WebSocketSession");
+
         WebSocketTransport transport;
         Session session;
 
@@ -37,10 +39,13 @@ namespace Mikazuki.NetChan
 
         protected override void OnClose(CloseEventArgs e)
         {
+            log.Info($"OnClose: code={e.Code}, reason={e.Reason}, wasClean={e.WasClean}");
+
             // 소켓이 닫히는건 아래쪽 레이어에서 감지한다
             // 상위레이어로 소켓이 닫혔다는걸 알려주기
             var p = new DisconnectPacket();
-            session.SendImmediate(p);
+            var codec = new PacketCodec();
+            transport.Recv(codec.Encode(p));
 
             NetworkStack.Session.CloseSessionPassive(session);
             session = null;
@@ -52,7 +57,7 @@ namespace Mikazuki.NetChan
         }
         protected override void OnError(ErrorEventArgs e)
         {
-            // TODO ?
+            log.Error($"OnError: message={e.Message}");
         }
     }
 
