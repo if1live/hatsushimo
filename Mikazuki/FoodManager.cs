@@ -18,14 +18,14 @@ namespace Mikazuki
         // TODO room id를 seed로 쓴다면 버그 재연이 쉬울거같다
         readonly Random rand = new Random();
         readonly IDPool foodIDPool = IDPool.MakeFoodID();
-        readonly Broadcaster broadcaster;
+        readonly IBroadcaster broadcaster;
         readonly FoodPacketFactory packetFactory = new FoodPacketFactory();
 
         List<Food> foods = new List<Food>();
 
         public Grid<Food> Grid { get { return grid; } }
 
-        public FoodManager(Broadcaster broadcaster)
+        public FoodManager(IBroadcaster broadcaster)
         {
             this.broadcaster = broadcaster;
         }

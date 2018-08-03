@@ -13,7 +13,9 @@ namespace Assets.Game
         public InputField uuidField = null;
         public InputField nicknameField = null;
         public InputField roomField = null;
-        public Button joinButton = null;
+        public Button joinPlayerButton = null;
+        public Button joinObserverButton = null;
+
 
         public Button genUUIDButton = null;
 
@@ -22,7 +24,8 @@ namespace Assets.Game
             Debug.Assert(uuidField != null);
             Debug.Assert(nicknameField != null);
             Debug.Assert(roomField != null);
-            Debug.Assert(joinButton != null);
+            Debug.Assert(joinPlayerButton != null);
+            Debug.Assert(joinObserverButton != null);
 
             uuidField.text = SystemInfo.deviceUniqueIdentifier;
             Debug.Assert(genUUIDButton != null);
@@ -46,20 +49,18 @@ namespace Assets.Game
 
             ConnectionManager.Instance.ReadyObservable.ObserveOnMainThread().Subscribe(_ =>
             {
-                joinButton.interactable = true;
+                joinPlayerButton.interactable = true;
+                joinObserverButton.interactable = true;
             }).AddTo(this);
 
-            joinButton.OnClickAsObservable().Subscribe(_ =>
+            joinPlayerButton.OnClickAsObservable().Subscribe(_ =>
             {
-                if (UUID.Length == 0) { return; }
-                if (Nickname.Length == 0) { return; }
-                if (WorldID.Length == 0) { return; }
+                OnJoinButtonClicked(PlayerMode.Player);
+            }).AddTo(this);
 
-                var p = new SignUpPacket(UUID);
-                conn.SendImmediate(p);
-
-                // 중복 클릭 방지
-                joinButton.interactable = false;
+            joinObserverButton.OnClickAsObservable().Subscribe(_ =>
+            {
+                OnJoinButtonClicked(PlayerMode.Observer);
             }).AddTo(this);
 
             conn.Welcome.Received.ObserveOnMainThread().Subscribe(p =>
@@ -82,11 +83,14 @@ namespace Assets.Game
 
                 if (p.ResultCode == 0)
                 {
+                    Debug.Assert(mode != PlayerMode.None);
+
                     var info = ConnectionInfo.Info;
                     info.WorldID = WorldID;
                     info.Nickname = Nickname;
+                    info.PlayerMode = mode;
 
-                    var join = new WorldJoinPacket(WorldID, Nickname, PlayerMode.Player);
+                    var join = new WorldJoinPacket(WorldID, Nickname, mode);
                     conn.SendImmediate(join);
                 }
             }).AddTo(this);
@@ -105,6 +109,26 @@ namespace Assets.Game
                 // TOOD async scene loading
                 SceneManager.LoadScene("Game", LoadSceneMode.Single);
             }).AddTo(this);
+        }
+
+
+        PlayerMode mode = PlayerMode.None;
+
+        void OnJoinButtonClicked(PlayerMode mode)
+        {
+            if (UUID.Length == 0) { return; }
+            if (Nickname.Length == 0) { return; }
+            if (WorldID.Length == 0) { return; }
+
+            this.mode = mode;
+
+            var p = new SignUpPacket(UUID);
+            var conn = ConnectionManager.Instance;
+            conn.SendImmediate(p);
+
+            // 중복 클릭 방지
+            joinPlayerButton.interactable = false;
+            joinObserverButton.interactable = false;
         }
     }
 }

@@ -15,7 +15,6 @@ namespace Mikazuki
         static readonly Logger log = LogManager.GetLogger("Player");
         public int ID { get; private set; }
         public Session Session { get; private set; }
-        public PlayerMode Mode { get; private set; }
 
         public Vector2 Position { get; private set; }
         public Vector2 TargetPosition { get; set; }
@@ -45,11 +44,10 @@ namespace Mikazuki
 
 
 
-        public Player(int id, Session session, PlayerMode mode)
+        public Player(int id, Session session)
         {
             this.ID = id;
             this.Session = session;
-            this.Mode = mode;
 
             SetPosition(Vector2.Zero);
             TargetPosition = Vector2.Zero;

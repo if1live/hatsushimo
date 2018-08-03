@@ -29,7 +29,25 @@ namespace Mikazuki
 
         readonly Room room;
 
-        readonly Dictionary<int, Player> playerTable = new Dictionary<int, Player>();
+
+        struct PlayerHolder
+        {
+            public Player Player { get; private set; }
+            public Observer Observer { get; private set; }
+            public PlayerMode Mode { get; private set; }
+
+            public static PlayerHolder FromPlayer(Player p)
+            {
+                return new PlayerHolder() { Player = p, Mode = PlayerMode.Player };
+            }
+
+            public static PlayerHolder FromObserver(Observer o)
+            {
+                return new PlayerHolder() { Observer = o, Mode = PlayerMode.Observer };
+            }
+        }
+
+        readonly Dictionary<int, PlayerHolder> playerTable = new Dictionary<int, PlayerHolder>();
 
         readonly RxPacketDispatcher dispatcher = new RxPacketDispatcher();
 
@@ -77,14 +95,22 @@ namespace Mikazuki
             var players = new List<Player>();
             room.GetPlayers(ref players);
 
+            var observers = new List<Observer>();
+            room.GetObservers(ref observers);
+
             var newLeaderboard = new Leaderboard<Player>(players, Config.LeaderboardSize);
             if (!leaderboard.IsLeaderboardEqual(newLeaderboard))
             {
                 leaderboard = newLeaderboard;
                 var packet = newLeaderboard.GenerateLeaderboardPacket();
+                // TODO broadcaster 만들어둔거 쓰면 좋을거같은데
                 foreach (var player in players)
                 {
                     player.Session.SendLazy(packet);
+                }
+                foreach (var o in observers)
+                {
+                    o.Session.SendLazy(packet);
                 }
             }
         }
@@ -94,20 +120,29 @@ namespace Mikazuki
             var players = new List<Player>();
             room.GetPlayers(ref players);
 
+            var observers = new List<Observer>();
+            room.GetObservers(ref observers);
+
+            var moves = players.Select(p => new MoveNotify()
+            {
+                ID = p.ID,
+                TargetPos = p.TargetPosition,
+            });
+            var packet = new MoveNotifyPacket(moves.ToArray());
+
             // 위치 정보 갱신
+            // TOOD broadcast?
             foreach (var player in players)
             {
-                var moves = players.Select(p => new MoveNotify()
-                {
-                    ID = p.ID,
-                    TargetPos = p.TargetPosition,
-                });
-                var packet = new MoveNotifyPacket(moves.ToArray());
                 player.Session.SendImmediate(packet);
+            }
+            foreach (var o in observers)
+            {
+                o.Session.SendImmediate(packet);
             }
         }
 
-        Player GetPlayer(Session session)
+        PlayerHolder GetPlayerHolder(Session session)
         {
             var playerID = session.ID;
             return playerTable[playerID];
@@ -121,9 +156,19 @@ namespace Mikazuki
             sessions.Add(session);
 
             var sessionID = session.ID;
-            var player = new Player(sessionID, session, mode);
-            playerTable[sessionID] = player;
-
+            if (mode == PlayerMode.Player)
+            {
+                var p = new Player(sessionID, session);
+                playerTable[sessionID] = PlayerHolder.FromPlayer(p);
+                return true;
+            }
+            else if (mode == PlayerMode.Observer)
+            {
+                var o = new Observer(sessionID, session);
+                playerTable[sessionID] = PlayerHolder.FromObserver(o);
+                return true;
+            }
+            // else...
             return true;
         }
 
@@ -147,8 +192,16 @@ namespace Mikazuki
             var ok = Join(session, p.Nickname, p.Mode);
             log.Info($"world join: id={session.ID} world={ID} ok={ok} size={sessions.Count}");
 
-            var player = GetPlayer(session);
-            room.Join(player);
+            var holder = GetPlayerHolder(session);
+            if (holder.Mode == PlayerMode.Player)
+            {
+                room.Join(holder.Player);
+            }
+            else if (holder.Mode == PlayerMode.Observer)
+            {
+                room.Join(holder.Observer);
+            }
+            else { return; }
 
             var resp = new WorldJoinResultPacket(0, session.ID);
             session.SendLazy(resp);
@@ -156,29 +209,45 @@ namespace Mikazuki
 
         void HandleLeaveReq(Session session, WorldLeavePacket p)
         {
-            var player = GetPlayer(session);
-            room.Leave(player);
+            var holder = GetPlayerHolder(session);
+            if (holder.Mode == PlayerMode.Player)
+            {
+                room.Leave(holder.Player);
+            }
+            else if (holder.Mode == PlayerMode.Observer)
+            {
+                room.Leave(holder.Observer);
+            }
+            else { return; }
 
             var ok = Leave(session);
             log.Info($"world leave: id={session.ID} world={ID} ok={ok} size={sessions.Count}");
 
             var resp = new WorldLeaveResultPacket(session.ID);
-            player.Session.SendLazy(resp);
+            session.SendLazy(resp);
         }
 
         void HandleAttack(Session session, AttackPacket p)
         {
-            var player = GetPlayer(session);
-            player.UseSkill(p.Mode);
-            room.LaunchProjectile(player);
+            var holder = GetPlayerHolder(session);
+            if (holder.Mode == PlayerMode.Player)
+            {
+                var player = holder.Player;
+                player.UseSkill(p.Mode);
+                room.LaunchProjectile(player);
+            }
         }
 
         void HandleMove(Session session, MovePacket p)
         {
-            var player = GetPlayer(session);
-            var speed = Config.PlayerSpeed;
-            player.TargetPosition = p.TargetPos;
-            player.Speed = speed;
+            var holder = GetPlayerHolder(session);
+            if (holder.Mode == PlayerMode.Player)
+            {
+                var player = holder.Player;
+                var speed = Config.PlayerSpeed;
+                player.TargetPosition = p.TargetPos;
+                player.Speed = speed;
+            }
         }
 
         // 방에 접속하면 클라이언트에서 게임씬 로딩을 시작한다
@@ -186,9 +255,13 @@ namespace Mikazuki
         // 게임 로딩이 끝나기전에는 무적으로 만드는게 목적
         void HandlePlayerReady(Session session, PlayerReadyPacket p)
         {
-            var player = GetPlayer(session);
-            room.SpawnPlayer(player);
-            player.Session.SendImmediate(leaderboard.GenerateLeaderboardPacket());
+            var holder = GetPlayerHolder(session);
+            if (holder.Mode == PlayerMode.Player)
+            {
+                var player = holder.Player;
+                room.SpawnPlayer(player);
+                player.Session.SendImmediate(leaderboard.GenerateLeaderboardPacket());
+            }
         }
     }
 }

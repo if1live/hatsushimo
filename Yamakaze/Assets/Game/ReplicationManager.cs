@@ -59,6 +59,8 @@ namespace Assets.Game
 
         public Food CreateFood(FoodStatus status)
         {
+            Debug.Log($"create food: id={status.ID}");
+
             var id = status.ID;
             Debug.Assert(foodTable.ContainsKey(id) == false, $"food={id} already exist in food table");
             var food = Instantiate(prefab_food);
@@ -71,6 +73,8 @@ namespace Assets.Game
 
         public Player CreatePlayer(PlayerStatus status)
         {
+            Debug.Log($"create player: id={status.ID}");
+
             var id = status.ID;
             var pos = status.Pos.ToVector3();
             var player = GetOrCreatePlayer(id, pos);

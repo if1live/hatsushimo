@@ -174,5 +174,7 @@ namespace Mikazuki
         }
 
         public int Count { get { return cells.Sum(cell => cell.Count); } }
+
+        public IEnumerable<Cell<T>> GetCellEnumerable() { return cells; }
     }
 }

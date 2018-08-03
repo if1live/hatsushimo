@@ -14,11 +14,11 @@ namespace Mikazuki
         static readonly Logger log = LogManager.GetLogger("ProjectileManager");
         readonly Grid<Projectile> grid = new Grid<Projectile>(Config.CellSize, Config.RoomWidth / 2, Config.RoomHeight / 2);
         readonly IDPool projectileIDPool = IDPool.MakeProjectileID();
-        readonly Broadcaster broadcaster;
+        readonly IBroadcaster broadcaster;
         readonly ProjectilePacketFactory packetFactory = new ProjectilePacketFactory();
         List<Projectile> projectiles = new List<Projectile>();
 
-        public ProjectileManager(Broadcaster broadcaster)
+        public ProjectileManager(IBroadcaster broadcaster)
         {
             this.broadcaster = broadcaster;
         }

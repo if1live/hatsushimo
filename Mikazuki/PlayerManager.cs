@@ -13,12 +13,12 @@ namespace Mikazuki
         readonly Grid<Player> grid = new Grid<Player>(Config.CellSize, Config.RoomWidth / 2, Config.RoomHeight / 2);
         public Grid<Player> Grid { get { return grid; } }
 
-        readonly Broadcaster broadcaster;
+        readonly IBroadcaster broadcaster;
         readonly PlayerPacketFactory packetFactory = new PlayerPacketFactory();
 
         List<Player> players = new List<Player>();
 
-        public PlayerManager(Broadcaster broadcaster)
+        public PlayerManager(IBroadcaster broadcaster)
         {
             this.broadcaster = broadcaster;
         }

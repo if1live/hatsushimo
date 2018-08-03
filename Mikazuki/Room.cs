@@ -24,16 +24,12 @@ namespace Mikazuki
         // 기본적으로 게임 로직은 싱글 쓰레드로 돌아간다
         // 주기적으로 게임 정보를 클라에 보내주는데 이것은 비동기로 돌아간다
         // 외부에서 정보를 직접 갖다쓰는 곳(주로 플레이어 리스트)은 락을 건다
-        Object lockobj = new Object();
+        Object lock_player = new Object();
+        object lock_observer = new object();
 
         // 로직에 직접 참가하지 않는 유저목록
         // 방에는 참가했지만 로딩이 끝나지 않는 경우를 처리하는게 목적
         List<Player> waitingPlayers = new List<Player>();
-
-
-        // 옵져버. 디버깅용
-        // 게임 로직에는 참가하지 않고 모든 패킷을 받아본다
-        List<Player> observers = new List<Player>();
 
         // TODO 죽은 플레이어 목록
         // 죽은 유저를 즉시 방에서 쫒아내는것보다는 잠시라도 방에 남아있다가 쫒아내고 싶다
@@ -43,18 +39,26 @@ namespace Mikazuki
         readonly FoodManager foodMgr;
         readonly PlayerManager playerMgr;
         readonly ProjectileManager projectileMgr;
+        readonly ObserverManager observerMgr;
 
-        Broadcaster broadcaster;
+        readonly IBroadcaster broadcaster;
+        readonly Broadcaster playerCaster;
+        readonly ObserverBroadcaster observerCaster;
 
         public Room(string id)
         {
             this.ID = id;
 
-            broadcaster = new Broadcaster();
+            playerCaster = new Broadcaster();
+            observerCaster = new ObserverBroadcaster();
+            broadcaster = new BroadcasterGroup(new IBroadcaster[] { playerCaster, observerCaster });
+
             playerMgr = new PlayerManager(broadcaster);
             foodMgr = new FoodManager(broadcaster);
             projectileMgr = new ProjectileManager(broadcaster);
-            broadcaster.Grid = playerMgr.Grid;
+            observerMgr = new ObserverManager();
+
+            playerCaster.Grid = playerMgr.Grid;
         }
 
         public bool SpawnPlayer(Player player)
@@ -68,7 +72,7 @@ namespace Mikazuki
             // 유저를 로직에 합류시킴
             // 다른 비동기 작업에서 유저 목록을 사용할수도 있다
             // 락을 걸어서 문제가 생기지 않도록 하자
-            lock (lockobj)
+            lock (lock_player)
             {
                 playerMgr.Add(player);
             }
@@ -97,7 +101,7 @@ namespace Mikazuki
 
         public void Leave(Player player)
         {
-            lock (lockobj)
+            lock (lock_player)
             {
                 playerMgr.Remove(player);
             }
@@ -110,6 +114,29 @@ namespace Mikazuki
             }
 
             log.Info($"leave room: id={player.ID} room={ID} size={playerMgr.Count}");
+        }
+
+        public void Join(Observer observer)
+        {
+            lock (lock_observer)
+            {
+                observerMgr.Add(observer);
+                observerCaster.Add(observer);
+            }
+
+            observer.Session.SendImmediate(GenerateReplicaitonAllPacket());
+
+            log.Info($"join observer: id={observer.ID} room={ID} size={playerMgr.Count}");
+        }
+
+        public void Leave(Observer observer)
+        {
+            lock (lock_observer)
+            {
+                observerMgr.Remove(observer.ID);
+                observerCaster.Remove(observer);
+            }
+            log.Info($"leave observer: id={observer.ID} room={ID} size={playerMgr.Count}");
         }
 
         public void LaunchProjectile(Player player)
@@ -196,7 +223,7 @@ namespace Mikazuki
                     // TODO 알려주는 범위 통제하면 대역폭을 아낄수 있다
                     // TODO 객체 삭제 패킷과 유저 죽음 패킷은 분리하는게 가능하다
                     var deadPacket = new ReplicationRemovePacket(player.ID);
-                    broadcaster.Broadcast(player.Position, deadPacket);
+                    playerCaster.Broadcast(player.Position, deadPacket);
 
                     // TODO 유저가 죽었다는것과 유저가 나갔다는것을 구분해야한다
                     // 죽은 유저를 방에서 즉시 제거하는게 최선인가?
@@ -209,6 +236,7 @@ namespace Mikazuki
         public void GameLoop()
         {
             float dt = 1.0f / 60;
+            observerMgr.Update();
             playerMgr.Update(dt);
             projectileMgr.Update(dt);
             foodMgr.Update();
@@ -220,19 +248,17 @@ namespace Mikazuki
         // TODO 리스트 안의 요속까지 통쨰로 복사해야하나?
         public int GetPlayers(ref List<Player> dst)
         {
-            lock (lockobj)
+            lock (lock_player)
             {
                 return playerMgr.GetPlayers(ref dst);
             }
         }
 
-        public int GetObservers(ref List<Player> dst)
+        public int GetObservers(ref List<Observer> dst)
         {
-            lock (lockobj)
+            lock (lock_observer)
             {
-                dst.Clear();
-                dst.AddRange(observers);
-                return observers.Count;
+                return observerMgr.GetObservers(ref dst);
             }
         }
     }

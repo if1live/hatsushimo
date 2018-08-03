@@ -1,4 +1,5 @@
 using Hatsushimo;
+using Hatsushimo.Packets;
 
 namespace Assets.NetChan
 {
@@ -41,5 +42,6 @@ namespace Assets.NetChan
         public int PlayerID { get; set; }
         public string WorldID { get; set; }
         public string Nickname { get; set; }
+        public PlayerMode PlayerMode { get; set; }
     }
 }
