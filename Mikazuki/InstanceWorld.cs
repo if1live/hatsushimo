@@ -82,10 +82,10 @@ namespace Mikazuki
             {
                 leaderboard = newLeaderboard;
                 var packet = newLeaderboard.GenerateLeaderboardPacket();
-                players.ForEach(player =>
+                foreach (var player in players)
                 {
                     player.Session.SendLazy(packet);
-                });
+                }
             }
         }
 
@@ -95,7 +95,7 @@ namespace Mikazuki
             room.GetPlayers(ref players);
 
             // 위치 정보 갱신
-            players.ForEach(player =>
+            foreach (var player in players)
             {
                 var moves = players.Select(p => new MoveNotify()
                 {
@@ -104,7 +104,7 @@ namespace Mikazuki
                 });
                 var packet = new MoveNotifyPacket(moves.ToArray());
                 player.Session.SendImmediate(packet);
-            });
+            }
         }
 
         Player GetPlayer(Session session)

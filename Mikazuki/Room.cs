@@ -147,7 +147,8 @@ namespace Mikazuki
             // TODO quad tree 같은거 쓰면 최적화 가능
             var players = new List<Player>();
             playerMgr.GetPlayers(ref players);
-            players.ForEach(player =>
+
+            foreach (var player in players)
             {
                 var ALLOW_DISTANCE = 1;
                 var gainedFoods = foodMgr.GetFoods(player.Position, ALLOW_DISTANCE);
@@ -161,7 +162,7 @@ namespace Mikazuki
 
                 var ids = gainedFoods.Select(food => food.ID);
                 foodMgr.Remove(ids);
-            });
+            };
         }
 
         void CheckKillLoop()
@@ -169,7 +170,7 @@ namespace Mikazuki
             var players = new List<Player>();
             playerMgr.GetPlayers(ref players);
 
-            players.ForEach(player =>
+            foreach (var player in players)
             {
                 var ALLOW_DISTANCE = 1;
                 // 플레이어와 가까운 투사체 목록
@@ -179,11 +180,14 @@ namespace Mikazuki
                 var hits = projectiles.Where(p => p.OwnerID != player.ID);
 
                 // 투사체의 소유자는 점수를 킬카운트 증가
-                hits.ToList().ForEach(projectile =>
+                foreach (var projectile in hits)
                 {
-                    players.Where(p => p.ID == projectile.OwnerID).ToList()
-                        .ForEach(owner => owner.GainKillScore(1));
-                });
+                    var owner = players.Where(p => p.ID == projectile.OwnerID).First();
+                    if (owner != null)
+                    {
+                        owner.GainKillScore(1);
+                    }
+                }
 
                 // 플레이어는 죽창에 맞았으니 죽어야한다
                 if (hits.Count() > 0)
@@ -199,7 +203,7 @@ namespace Mikazuki
                     // 죽은 유저는 유저 목록에서 삭제
                     playerMgr.Remove(player);
                 }
-            });
+            }
         }
 
         public void GameLoop()

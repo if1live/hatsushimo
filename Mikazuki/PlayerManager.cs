@@ -34,7 +34,10 @@ namespace Mikazuki
 
         public void Update(float dt)
         {
-            players.ForEach(player => player.UpdateMove(dt));
+            foreach (var player in players)
+            {
+                player.UpdateMove(dt);
+            }
             RefreshGrid();
         }
 

@@ -122,15 +122,18 @@ namespace Mikazuki
         {
             if (ids.Count() < 0) { return; }
 
-            foods.Where(food => ids.Contains(food.ID)).ToList()
-            .ForEach(food =>
+            var removeFoods = from food in foods
+                              where ids.Contains(food.ID)
+                              select food;
+            foreach (var food in removeFoods)
             {
                 foodIDPool.Release(food.ID);
                 BroadcastFoodRemove(food);
-            });
+            }
 
-            var existFoods = foods
-                .Where(food => ids.Contains(food.ID) == false);
+            var existFoods = from food in foods
+                             where ids.Contains(food.ID) == false
+                             select food;
             foods = existFoods.ToList();
             RefreshGrid();
         }

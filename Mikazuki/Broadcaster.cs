@@ -11,7 +11,7 @@ namespace Mikazuki
         public Grid<Player> Grid { get; set; }
 
         // 특정 좌표에서 발생한 이벤트를 받을 필요가 있는 유저 목록 얻기
-        List<Player> FindPlayers(Vector2 pos)
+        IEnumerable<Player> FindPlayers(Vector2 pos)
         {
             var cellcoord = Grid.GetCellCoord(pos);
             var cellcoords = Grid.FilterCellCoords(
@@ -19,7 +19,7 @@ namespace Mikazuki
             );
             var cells = cellcoords.Select(coord => Grid.GetCell(coord));
             var players = cells.SelectMany(cell => cell.ToArray());
-            return players.ToList();
+            return players;
         }
 
         // pos근처의 유저한테만 패킷을 전송하고싶다

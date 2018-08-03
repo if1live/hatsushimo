@@ -57,7 +57,10 @@ namespace Mikazuki
 
         public void Update(float dt)
         {
-            projectiles.ForEach(p => p.Update(dt));
+            foreach(var p in projectiles)
+            {
+                p.Update(dt);
+            }
             RefreshGrid();
 
             var deadList = projectiles
